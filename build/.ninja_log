@@ -1,7 +1,11 @@
 # ninja log v7
-3	3178	8123079648883846	CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj	e129483de5210828
-3198	3641	8123079680895389	ege-demo.exe	1693d2a4d7bb0702
-9	3370	8123082147025180	CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj	e129483de5210828
-3372	3850	8123082180680956	ege-demo.exe	1693d2a4d7bb0702
 9	3585	8123082790887575	CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj	e129483de5210828
 3586	4086	8123082826627639	ege-demo.exe	1693d2a4d7bb0702
+18	422	8123593449900352	build.ninja	9d1c0dbbaf607c4b
+18	422	8123593449900352	D:/Mokthyn/build/cmake_install.cmake	9d1c0dbbaf607c4b
+21	436	8123593454008982	build.ninja	9d1c0dbbaf607c4b
+21	436	8123593454008982	D:/Mokthyn/build/cmake_install.cmake	9d1c0dbbaf607c4b
+18	642	8123593459710336	build.ninja	9d1c0dbbaf607c4b
+18	642	8123593459710336	D:/Mokthyn/build/cmake_install.cmake	9d1c0dbbaf607c4b
+18	451	8123593465090252	build.ninja	9d1c0dbbaf607c4b
+18	451	8123593465090252	D:/Mokthyn/build/cmake_install.cmake	9d1c0dbbaf607c4b

@@ -1,5 +1,4 @@
 ﻿#include <graphics.h>
-#include <iostream>
 #include <string>
 #include <windows.h>
 
@@ -15,13 +14,7 @@ int main() {
     }
 
     std::wstring imagePath(executablePath, pathLength);
-    const std::wstring::size_type separator = imagePath.find_last_of(L"\\/");
-    if (separator == std::wstring::npos) {
-        MessageBoxW(getHWnd(), L"无法确定程序所在目录。", L"错误", MB_OK | MB_ICONERROR);
-        closegraph();
-        return -1;
-    }
-    imagePath.resize(separator + 1);
+    imagePath.resize(imagePath.find_last_of(L"\\/") + 1);
     imagePath += L"image\\go lift.png";
 
     PIMAGE img = newimage();
