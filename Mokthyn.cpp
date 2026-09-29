@@ -12,6 +12,14 @@ int main() {
     PIMAGE img = newimage();
     getimage(img, imagePath.c_str());
     putimage(100, 100, img);
+    int x, y;
+    if (kbhit()) {
+        int ch = getch();
+        if (ch == 'd') {
+            y--;
+            putimage(x, y, img);
+        }
+    }
     delimage(img);
     getch();
     closegraph();
