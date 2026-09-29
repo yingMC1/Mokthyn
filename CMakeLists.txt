@@ -40,7 +40,7 @@ set_target_properties(${MY_TARGET_NAME} PROPERTIES
 add_custom_target(copy-runtime-assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/image"
-        "$<TARGET_FILE_DIR:${MY_TARGET_NAME}>/image"
+        "${CMAKE_BINARY_DIR}/$<CONFIG>/image"
     VERBATIM
 )
 add_dependencies(${MY_TARGET_NAME} copy-runtime-assets)

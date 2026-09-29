@@ -39,7 +39,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "Build type for single-configuration generators (Makefile Generators, Ninja, etc.). Typical values: Debug, Release, RelWithDebInfo, MinSizeRel; custom build types may also be defined."
+					"value" : "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..."
 				}
 			],
 			"type" : "STRING",
@@ -159,7 +159,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86_64-w64-mingw32-g++"
+			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -299,7 +299,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86_64-w64-mingw32-gcc"
+			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-gcc.exe"
 		},
 		{
 			"name" : "CMAKE_DIAGNOSTIC_INIT",
@@ -887,7 +887,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86_64-w64-mingw32-windres"
+			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-windres.exe"
 		},
 		{
 			"name" : "CMAKE_RC_COMPILER_WORKS",
@@ -1283,7 +1283,7 @@
 				}
 			],
 			"type" : "UNINITIALIZED",
-			"value" : "x86_64-w64-mingw32-pkg-config"
+			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-pkg-config.exe"
 		},
 		{
 			"name" : "ege-demo_BINARY_DIR",

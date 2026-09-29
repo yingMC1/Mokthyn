@@ -6,28 +6,28 @@
   "configurations": [
     {
       "name": "Launch Debug",
-      "type": "cppvsdbg",
+      "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/build/Debug/ege-demo.exe",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/build/Debug",
       "environment": [],
-      "externalConsole": false,
+      "externalConsole": true,
       "MIMode": "gdb",
       "miDebuggerPath": "D:/mingw64/bin/gdb.exe",
       "preLaunchTask": "Build Project (Debug)"
     },
     {
       "name": "Launch Release",
-      "type": "cppvsdbg",
+      "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/build/Release/ege-demo.exe",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/build/Release",
       "environment": [],
-      "externalConsole": false,
+      "externalConsole": true,
       "MIMode": "gdb",
       "miDebuggerPath": "D:/mingw64/bin/gdb.exe",
       "preLaunchTask": "Build Project (Release)"

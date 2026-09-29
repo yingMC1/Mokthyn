@@ -51,4 +51,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/ege-demo.dir/DependInfo.cmake"
+  "CMakeFiles/copy-runtime-assets.dir/DependInfo.cmake"
   )

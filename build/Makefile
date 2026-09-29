@@ -128,6 +128,19 @@ ege-demo/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ege-demo.dir\build.make CMakeFiles/ege-demo.dir/build
 .PHONY : ege-demo/fast
 
+#=============================================================================
+# Target rules for targets named copy-runtime-assets
+
+# Build rule for target.
+copy-runtime-assets: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 copy-runtime-assets
+.PHONY : copy-runtime-assets
+
+# fast build rule for target.
+copy-runtime-assets/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\copy-runtime-assets.dir\build.make CMakeFiles/copy-runtime-assets.dir/build
+.PHONY : copy-runtime-assets/fast
+
 Mokthyn.obj: Mokthyn.cpp.obj
 .PHONY : Mokthyn.obj
 
@@ -160,6 +173,7 @@ help:
 	@echo ... depend
 	@echo ... edit_cache
 	@echo ... rebuild_cache
+	@echo ... copy-runtime-assets
 	@echo ... ege-demo
 	@echo ... Mokthyn.obj
 	@echo ... Mokthyn.i

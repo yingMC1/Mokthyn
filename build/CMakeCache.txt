@@ -20,9 +20,8 @@ CMAKE_ADDR2LINE:FILEPATH=D:/mingw64/bin/addr2line.exe
 //Path to a program.
 CMAKE_AR:FILEPATH=D:/mingw64/bin/ar.exe
 
-//Build type for single-configuration generators (Makefile Generators,
-// Ninja, etc.). Typical values: Debug, Release, RelWithDebInfo,
-// MinSizeRel; custom build types may also be defined.
+//Choose the type of build, options are: None Debug Release RelWithDebInfo
+// MinSizeRel ...
 CMAKE_BUILD_TYPE:STRING=Debug
 
 //Enable/Disable color output during build.
@@ -31,7 +30,7 @@ CMAKE_COLOR_MAKEFILE:BOOL=ON
 //Full path to the compiler used for language <LANG>. Set by CMake
 // during compiler detection on the first configure; users may
 // override on the command line to select a specific toolchain.
-CMAKE_CXX_COMPILER:UNINITIALIZED=x86_64-w64-mingw32-g++
+CMAKE_CXX_COMPILER:UNINITIALIZED=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -62,7 +61,7 @@ CMAKE_CXX_STANDARD_LIBRARIES:STRING=-lkernel32 -luser32 -lgdi32 -lwinspool -lshe
 //Full path to the compiler used for language <LANG>. Set by CMake
 // during compiler detection on the first configure; users may
 // override on the command line to select a specific toolchain.
-CMAKE_C_COMPILER:UNINITIALIZED=x86_64-w64-mingw32-gcc
+CMAKE_C_COMPILER:UNINITIALIZED=D:/mingw64/bin/x86_64-w64-mingw32-gcc.exe
 
 //Path to a program.
 CMAKE_DLLTOOL:FILEPATH=D:/mingw64/bin/dlltool.exe
@@ -161,7 +160,7 @@ CMAKE_RANLIB:FILEPATH=D:/mingw64/bin/ranlib.exe
 //Full path to the compiler used for language <LANG>. Set by CMake
 // during compiler detection on the first configure; users may
 // override on the command line to select a specific toolchain.
-CMAKE_RC_COMPILER:UNINITIALIZED=x86_64-w64-mingw32-windres
+CMAKE_RC_COMPILER:UNINITIALIZED=D:/mingw64/bin/x86_64-w64-mingw32-windres.exe
 
 //Flags for Windows Resource Compiler during all build types.
 CMAKE_RC_FLAGS:STRING=
@@ -246,7 +245,7 @@ CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //No help, variable specified on the command line.
-PKG_CONFIG_EXECUTABLE:UNINITIALIZED=x86_64-w64-mingw32-pkg-config
+PKG_CONFIG_EXECUTABLE:UNINITIALIZED=D:/mingw64/bin/x86_64-w64-mingw32-pkg-config.exe
 
 //Value Computed by CMake
 ege-demo_BINARY_DIR:STATIC=D:/Mokthyn/build

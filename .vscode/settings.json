@@ -3,14 +3,14 @@
   "C_Cpp.errorSquiggles": "disabled",
   "cmake.configureArgs": [
     "-DCMAKE_SYSTEM_NAME=Windows",
-    "-DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc",
-    "-DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++",
-    "-DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres",
+    "-DCMAKE_C_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
+    "-DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe",
+    "-DCMAKE_RC_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-windres.exe",
     "-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER",
     "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
     "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY",
-    "-DPKG_CONFIG_EXECUTABLE=x86_64-w64-mingw32-pkg-config"
+    "-DPKG_CONFIG_EXECUTABLE=D:/mingw64/bin/x86_64-w64-mingw32-pkg-config.exe"
   ],
   "cmake.cmakePath": "C:/Program Files/CMake/bin/cmake.exe",
-  "C_Cpp.default.compilerPath": "x86_64-w64-mingw32-g++"
+  "C_Cpp.default.compilerPath": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
 }
