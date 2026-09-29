@@ -13,7 +13,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& 'C:/Program Files/CMake/bin/cmake.exe' -S . -B build -DCMAKE_BUILD_TYPE=Debug"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build -DCMAKE_BUILD_TYPE=Debug"
         ],
         "options": { "cwd": "${workspaceFolder}" }
       }
@@ -35,7 +35,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& 'C:/Program Files/CMake/bin/cmake.exe' -S . -B build -DCMAKE_BUILD_TYPE=Debug; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & 'C:/Program Files/CMake/bin/cmake.exe' --build build --config Debug --parallel; exit $LASTEXITCODE"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build -DCMAKE_BUILD_TYPE=Debug; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build --config Debug --parallel; exit $LASTEXITCODE"
         ],
         "options": { "cwd": "${workspaceFolder}" }
       }
@@ -57,7 +57,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& 'C:/Program Files/CMake/bin/cmake.exe' -S . -B build -DCMAKE_BUILD_TYPE=Release; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & 'C:/Program Files/CMake/bin/cmake.exe' --build build --config Release --parallel; exit $LASTEXITCODE"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build -DCMAKE_BUILD_TYPE=Release; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build --config Release --parallel; exit $LASTEXITCODE"
         ],
         "options": { "cwd": "${workspaceFolder}" }
       }
@@ -118,8 +118,12 @@
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": "$gcc",
       "windows": {
-        "command": "C:/Program Files/CMake/bin/cmake.exe",
-        "args": ["--build", "build", "--target", "clean"],
+        "command": "powershell",
+        "args": [
+          "-NoProfile",
+          "-Command",
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build --target clean"
+        ],
         "options": { "cwd": "${workspaceFolder}" }
       }
     }

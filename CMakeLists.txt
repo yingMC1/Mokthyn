@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
 if(CMAKE_HOST_UNIX)
-add_custom_command(TARGET ${MY_TARGET_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/image"
-        "$<TARGET_FILE_DIR:${MY_TARGET_NAME}>/image"
-    VERBATIM
-)
     set(CMAKE_SYSTEM_NAME Windows)
     set(TOOLCHAIN_PREFIX x86_64-w64-mingw32)
 

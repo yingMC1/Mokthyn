@@ -1,8 +1,0 @@
-[
-{
-  "directory": "D:/Mokthyn/build",
-  "command": "D:\\mingw64\\bin\\x86_64-w64-mingw32-g++.exe  @CMakeFiles\\ege-demo.dir\\includes_CXX.rsp -g -D_FORTIFY_SOURCE=0 -o CMakeFiles\\ege-demo.dir\\Mokthyn.cpp.obj -c D:\\Mokthyn\\Mokthyn.cpp",
-  "file": "D:/Mokthyn/Mokthyn.cpp",
-  "output": "CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj"
-}
-]
