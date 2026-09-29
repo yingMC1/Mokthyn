@@ -8,10 +8,10 @@ int main() {
     const DWORD pathLength = GetModuleFileNameW(nullptr, executablePath, MAX_PATH);
     std::wstring imagePath(executablePath, pathLength);
     imagePath.resize(imagePath.find_last_of(L"\\/") + 1);
-    imagePath += L"image\\go lift.png";
+    imagePath += L"image\\stand.png";
     PIMAGE img = newimage();
     getimage(img, imagePath.c_str());
-    putimage(1, 1, img);
+    putimage(100, 100, img);
     delimage(img);
     getch();
     closegraph();
