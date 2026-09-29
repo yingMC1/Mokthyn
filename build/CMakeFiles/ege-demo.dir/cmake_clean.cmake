@@ -1,9 +1,9 @@
 file(REMOVE_RECURSE
   "CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj"
   "CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj.d"
-  "ege-demo.exe"
-  "ege-demo.exe.manifest"
-  "ege-demo.pdb"
+  "Debug/ege-demo.exe"
+  "Debug/ege-demo.exe.manifest"
+  "Debug/ege-demo.pdb"
   "libege-demo.dll.a"
 )
 

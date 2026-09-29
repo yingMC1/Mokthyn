@@ -2,10 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "ege-demo.exe"
+			"path" : "Debug/ege-demo.exe"
 		},
 		{
-			"path" : "ege-demo.pdb"
+			"path" : "Debug/ege-demo.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -38,31 +38,31 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 118,
+				"line" : 122,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 124,
+				"line" : 128,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 119,
+				"line" : 123,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 117,
+				"line" : 121,
 				"parent" : 0
 			},
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 30,
+				"line" : 34,
 				"parent" : 0
 			}
 		]

@@ -155,11 +155,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
-			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
+			"type" : "UNINITIALIZED",
+			"value" : "x86_64-w64-mingw32-g++"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
