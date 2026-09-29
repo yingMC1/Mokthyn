@@ -130,7 +130,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
         set(osLibDir "mingw64")
     endif()
 
-    target_compile_options(${MY_TARGET_NAME} PRIVATE -D_FORTIFY_SOURCE=0)
+    target_compile_options(${MY_TARGET_NAME} PRIVATE -fstack-protector-strong)
     target_link_options(${MY_TARGET_NAME} PRIVATE -mwindows -static -static-libgcc -static-libstdc++)
     target_link_libraries(${MY_TARGET_NAME} PRIVATE graphics gdiplus gdi32 imm32 msimg32 ole32 oleaut32 winmm uuid)
 endif()

@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = @CMakeFiles\ege-demo.dir\includes_CXX.rsp
 
-CXX_FLAGS = -O3 -DNDEBUG -D_FORTIFY_SOURCE=0
+CXX_FLAGS = -O3 -DNDEBUG -fstack-protector-strong
 

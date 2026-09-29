@@ -135,7 +135,6 @@
     {
       "label": "Clean Project",
       "type": "shell",
-      "command": "cmake",
       "args": [
         "-l",
         "-c",
