@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.13)
 
 if(CMAKE_HOST_UNIX)
+add_custom_command(TARGET ${MY_TARGET_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/image"
+        "$<TARGET_FILE_DIR:${MY_TARGET_NAME}>/image"
+    VERBATIM
+)
     set(CMAKE_SYSTEM_NAME Windows)
     set(TOOLCHAIN_PREFIX x86_64-w64-mingw32)
 
@@ -30,6 +36,14 @@ set_target_properties(${MY_TARGET_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug"
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
 )
+
+add_custom_target(copy-runtime-assets ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/image"
+        "$<TARGET_FILE_DIR:${MY_TARGET_NAME}>/image"
+    VERBATIM
+)
+add_dependencies(${MY_TARGET_NAME} copy-runtime-assets)
 
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
 

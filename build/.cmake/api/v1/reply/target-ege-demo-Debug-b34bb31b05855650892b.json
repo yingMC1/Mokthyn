@@ -2,10 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "Release/ege-demo.exe"
+			"path" : "Debug/ege-demo.exe"
 		},
 		{
-			"path" : "Release/ege-demo.pdb"
+			"path" : "Debug/ege-demo.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -32,37 +32,37 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 28,
+				"line" : 34,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 122,
+				"line" : 128,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 128,
+				"line" : 134,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 123,
+				"line" : 129,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 121,
+				"line" : 127,
 				"parent" : 0
 			},
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 34,
+				"line" : 40,
 				"parent" : 0
 			}
 		]
@@ -78,7 +78,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-O3 -DNDEBUG"
+					"fragment" : "-g"
 				},
 				{
 					"backtrace" : 5,
@@ -105,7 +105,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-O3 -DNDEBUG",
+				"fragment" : "-g",
 				"role" : "flags"
 			},
 			{

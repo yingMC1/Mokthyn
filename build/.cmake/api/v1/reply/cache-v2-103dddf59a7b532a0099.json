@@ -39,11 +39,11 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..."
+					"value" : "Build type for single-configuration generators (Makefile Generators, Ninja, etc.). Typical values: Debug, Release, RelWithDebInfo, MinSizeRel; custom build types may also be defined."
 				}
 			],
 			"type" : "STRING",
-			"value" : "Release"
+			"value" : "Debug"
 		},
 		{
 			"name" : "CMAKE_CACHEFILE_DIR",
@@ -155,11 +155,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
+					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
 				}
 			],
-			"type" : "STRING",
-			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
+			"type" : "UNINITIALIZED",
+			"value" : "x86_64-w64-mingw32-g++"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -295,7 +295,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
 				}
 			],
 			"type" : "UNINITIALIZED",
@@ -311,7 +311,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "CMD_AUTHOR=WARN;CMD_DEPRECATED=WARN;CMD_EXPERIMENTAL=WARN;CMD_INSTALL_ABSOLUTE_DESTINATION=IGNORE;CMD_POLICY=WARN;CMD_UNINITIALIZED=IGNORE;CMD_UNUSED_CLI=WARN"
+			"value" : "CMD_AUTHOR=WARN;CMD_DEPRECATED=WARN;CMD_EXPERIMENTAL=WARN;CMD_INSTALL_ABSOLUTE_DESTINATION=IGNORE;CMD_POLICY=WARN;CMD_UNINITIALIZED=IGNORE;CMD_UNUSED_CLI=IGNORE"
 		},
 		{
 			"name" : "CMAKE_DLLTOOL",
@@ -451,7 +451,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Enable output of a compile_commands.json file listing the exact compiler invocation for each translation unit. Implemented by the Makefile and Ninja generators; ignored elsewhere."
 				}
 			],
 			"type" : "BOOL",
@@ -487,7 +487,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Control whether CMAKE_FIND_ROOT_PATH is used by find_file/find_path"
 				}
 			],
 			"type" : "UNINITIALIZED",
@@ -499,7 +499,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Control whether CMAKE_FIND_ROOT_PATH is used by find_library"
 				}
 			],
 			"type" : "UNINITIALIZED",
@@ -511,7 +511,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Control whether CMAKE_FIND_ROOT_PATH is used by find_program"
 				}
 			],
 			"type" : "UNINITIALIZED",
@@ -883,7 +883,7 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
 				}
 			],
 			"type" : "UNINITIALIZED",
@@ -1223,7 +1223,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "No help, variable specified on the command line."
+					"value" : "Name of the operating system being targeted (e.g. Linux, Darwin, Windows). Defaults to CMAKE_HOST_SYSTEM_NAME; set explicitly when first configuring a build tree to enable cross-compiling."
 				}
 			],
 			"type" : "UNINITIALIZED",

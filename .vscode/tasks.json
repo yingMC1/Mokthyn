@@ -1,27 +1,21 @@
 {
-  // See https://go.microsoft.com/fwlink/?LinkId=733558
-  // for the documentation about the tasks.json format
   "version": "2.0.0",
   "tasks": [
     {
       "label": "Load Project",
       "type": "shell",
       "command": "bash",
-      "args": ["-l", "-c", "mkdir -p build && cd build && cmake .."],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "group": "build",
+      "args": ["-l", "-c", "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug"],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
         "args": [
+          "-NoProfile",
           "-Command",
-          "if (!(Test-Path build)) { mkdir build }; cd build; cmake .."
+          "& 'C:/Program Files/CMake/bin/cmake.exe' -S . -B build -DCMAKE_BUILD_TYPE=Debug"
         ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        }
+        "options": { "cwd": "${workspaceFolder}" }
       }
     },
     {
@@ -31,22 +25,19 @@
       "args": [
         "-l",
         "-c",
-        "(test -d build || (mkdir -p build && pushd . && cd build && cmake .. && popd) ); cmake --build build --parallel $(getconf _NPROCESSORS_ONLN)"
+        "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --config Debug --parallel"
       ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "group": "build",
       "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
         "args": [
+          "-NoProfile",
           "-Command",
-          "if (!(Test-Path build)) { mkdir build; cd build; cmake .. }; cmake --build build --parallel $env:NUMBER_OF_PROCESSORS"
+          "& 'C:/Program Files/CMake/bin/cmake.exe' -S . -B build -DCMAKE_BUILD_TYPE=Debug; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & 'C:/Program Files/CMake/bin/cmake.exe' --build build --config Debug --parallel; exit $LASTEXITCODE"
         ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        }
+        "options": { "cwd": "${workspaceFolder}" }
       }
     },
     {
@@ -56,41 +47,32 @@
       "args": [
         "-l",
         "-c",
-        "(test -d build || (mkdir -p build && pushd . && cd build && cmake .. && popd) ); cmake --build build --config Release --parallel $(getconf _NPROCESSORS_ONLN)"
+        "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --parallel"
       ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "options": { "cwd": "${workspaceFolder}" },
       "group": "build",
       "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
         "args": [
+          "-NoProfile",
           "-Command",
-          "if (!(Test-Path build)) { mkdir build; cd build; cmake .. }; cmake --build build --config Release --parallel $env:NUMBER_OF_PROCESSORS"
+          "& 'C:/Program Files/CMake/bin/cmake.exe' -S . -B build -DCMAKE_BUILD_TYPE=Release; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & 'C:/Program Files/CMake/bin/cmake.exe' --build build --config Release --parallel; exit $LASTEXITCODE"
         ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        }
+        "options": { "cwd": "${workspaceFolder}" }
       }
     },
     {
       "label": "Load And Build Project (Debug)",
-      "type": "shell",
-      "command": "echo",
-      "args": ["Load And Build Project (Debug) - Done"],
-      "group": "build",
       "dependsOn": ["Load Project", "Build Project (Debug)"],
-      "dependsOrder": "sequence"
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     },
     {
       "label": "Load And Build Project (Release)",
-      "type": "shell",
-      "command": "echo",
-      "args": ["Load And Build Project (Release) - Done"],
-      "group": "build",
       "dependsOn": ["Load Project", "Build Project (Release)"],
-      "dependsOrder": "sequence"
+      "dependsOrder": "sequence",
+      "problemMatcher": []
     },
     {
       "label": "Run Project (Debug)",
@@ -99,20 +81,15 @@
       "args": [
         "-l",
         "-c",
-        "if command -v wine64; then wine64 ege-demo.exe; else wine ege-demo.exe; fi"
+        "if command -v wine64 >/dev/null 2>&1; then wine64 ./ege-demo.exe; else wine ./ege-demo.exe; fi"
       ],
-      "options": {
-        "cwd": "${workspaceFolder}/build"
-      },
-      "group": "build",
-      "problemMatcher": "$gcc",
+      "options": { "cwd": "${workspaceFolder}/build/Debug" },
       "dependsOn": ["Build Project (Debug)"],
+      "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
-        "args": ["-Command", ".\\ege-demo.exe"],
-        "options": {
-          "cwd": "${workspaceFolder}/build"
-        }
+        "args": ["-NoProfile", "-Command", ".\\ege-demo.exe"],
+        "options": { "cwd": "${workspaceFolder}/build/Debug" }
       }
     },
     {
@@ -122,41 +99,28 @@
       "args": [
         "-l",
         "-c",
-        "if command -v wine64; then wine64 ege-demo.exe; else wine ege-demo.exe; fi"
+        "if command -v wine64 >/dev/null 2>&1; then wine64 ./ege-demo.exe; else wine ./ege-demo.exe; fi"
       ],
-      "options": {
-        "cwd": "${workspaceFolder}/build"
-      },
-      "group": "build",
-      "problemMatcher": "$gcc",
+      "options": { "cwd": "${workspaceFolder}/build/Release" },
       "dependsOn": ["Build Project (Release)"],
+      "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
-        "args": ["-Command", ".\\ege-demo.exe"],
-        "options": {
-          "cwd": "${workspaceFolder}/build"
-        }
+        "args": ["-NoProfile", "-Command", ".\\ege-demo.exe"],
+        "options": { "cwd": "${workspaceFolder}/build/Release" }
       }
     },
     {
       "label": "Clean Project",
       "type": "shell",
-      "command": "bash",
-      "args": ["-l", "-c", "git clean -fdx build || rm -rf build"],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "group": "build",
+      "command": "cmake",
+      "args": ["--build", "build", "--target", "clean"],
+      "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": "$gcc",
       "windows": {
-        "command": "powershell",
-        "args": [
-          "-Command",
-          "if (Get-Command git -ErrorAction SilentlyContinue) { git clean -fdx build } else { Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue }"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        }
+        "command": "C:/Program Files/CMake/bin/cmake.exe",
+        "args": ["--build", "build", "--target", "clean"],
+        "options": { "cwd": "${workspaceFolder}" }
       }
     }
   ]
