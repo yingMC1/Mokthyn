@@ -1,4 +1,0 @@
-D:/Mokthyn/build/cmake-Debug/CMakeFiles/ege-demo.dir
-D:/Mokthyn/build/cmake-Debug/CMakeFiles/copy-runtime-assets.dir
-D:/Mokthyn/build/cmake-Debug/CMakeFiles/edit_cache.dir
-D:/Mokthyn/build/cmake-Debug/CMakeFiles/rebuild_cache.dir
