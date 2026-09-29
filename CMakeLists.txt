@@ -18,23 +18,27 @@ endif()
 
 set(MY_PROJECT_NAME ege-demo)
 set(MY_TARGET_NAME ege-demo)
+set(MY_OUTPUT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/build")
 
 project(${MY_PROJECT_NAME} LANGUAGES CXX)
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build configuration" FORCE)
+endif()
 
-file(GLOB DEMO_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB DEMO_SOURCE CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 message("DEMO_SOURCE: ${DEMO_SOURCE}")
 
 add_executable(${MY_TARGET_NAME} ${DEMO_SOURCE})
 set_target_properties(${MY_TARGET_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${MY_OUTPUT_ROOT}/Debug"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${MY_OUTPUT_ROOT}/Release"
 )
 
 add_custom_target(copy-runtime-assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/image"
-        "${CMAKE_BINARY_DIR}/$<CONFIG>/image"
+        "${MY_OUTPUT_ROOT}/$<CONFIG>/image"
     VERBATIM
 )
 add_dependencies(${MY_TARGET_NAME} copy-runtime-assets)

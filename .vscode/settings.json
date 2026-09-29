@@ -1,17 +1,16 @@
 {
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "C_Cpp.errorSquiggles": "disabled",
-  "[windows]": {
-    "cmake.cmakePath": "C:/Program Files/CMake/bin/cmake.exe",
-    "cmake.configureArgs": [
-      "-DCMAKE_SYSTEM_NAME=Windows",
-      "-DCMAKE_C_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-gcc.exe",
-      "-DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe",
-      "-DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe",
-      "-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER",
-      "-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY",
-      "-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY"
-    ],
-    "C_Cpp.default.compilerPath": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
-  }
+  "cmake.cmakePath": "${env:ProgramFiles}/CMake/bin/cmake.exe",
+  "cmake.generator": "MinGW Makefiles",
+  "cmake.buildDirectory": "${workspaceFolder}/build/cmake-${buildType}",
+  "cmake.configureSettings": {
+    "CMAKE_SYSTEM_NAME": "Windows",
+    "CMAKE_CXX_COMPILER": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe",
+    "CMAKE_RC_COMPILER": "D:/mingw64/bin/windres.exe",
+    "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "NEVER",
+    "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "ONLY",
+    "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY"
+  },
+  "C_Cpp.default.compilerPath": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
 }

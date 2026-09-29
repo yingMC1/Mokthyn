@@ -5,17 +5,27 @@
       "label": "Load Project",
       "type": "shell",
       "command": "bash",
-      "args": ["-l", "-c", "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug"],
-      "options": { "cwd": "${workspaceFolder}" },
+      "args": [
+        "-l",
+        "-c",
+        "cmake -S . -B build/cmake-debug -DCMAKE_BUILD_TYPE=Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "CMAKE_GENERATOR": "Unix Makefiles" }
+      },
       "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
         "args": [
           "-NoProfile",
           "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build -DCMAKE_BUILD_TYPE=Debug"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe"
         ],
-        "options": { "cwd": "${workspaceFolder}" }
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": { "CMAKE_GENERATOR": "MinGW Makefiles" }
+        }
       }
     },
     {
@@ -25,9 +35,12 @@
       "args": [
         "-l",
         "-c",
-        "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --config Debug --parallel"
+        "cmake -S . -B build/cmake-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/cmake-debug --config Debug --parallel"
       ],
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "CMAKE_GENERATOR": "Unix Makefiles" }
+      },
       "group": "build",
       "problemMatcher": "$gcc",
       "windows": {
@@ -35,9 +48,12 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build -DCMAKE_BUILD_TYPE=Debug; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build --config Debug --parallel; exit $LASTEXITCODE"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-debug --config Debug --parallel; exit $LASTEXITCODE"
         ],
-        "options": { "cwd": "${workspaceFolder}" }
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": { "CMAKE_GENERATOR": "MinGW Makefiles" }
+        }
       }
     },
     {
@@ -47,9 +63,12 @@
       "args": [
         "-l",
         "-c",
-        "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --parallel"
+        "cmake -S . -B build/cmake-release -DCMAKE_BUILD_TYPE=Release && cmake --build build/cmake-release --config Release --parallel"
       ],
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "CMAKE_GENERATOR": "Unix Makefiles" }
+      },
       "group": "build",
       "problemMatcher": "$gcc",
       "windows": {
@@ -57,9 +76,12 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build -DCMAKE_BUILD_TYPE=Release; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build --config Release --parallel; exit $LASTEXITCODE"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-release -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-release --config Release --parallel; exit $LASTEXITCODE"
         ],
-        "options": { "cwd": "${workspaceFolder}" }
+        "options": {
+          "cwd": "${workspaceFolder}",
+          "env": { "CMAKE_GENERATOR": "MinGW Makefiles" }
+        }
       }
     },
     {
@@ -114,7 +136,12 @@
       "label": "Clean Project",
       "type": "shell",
       "command": "cmake",
-      "args": ["--build", "build", "--target", "clean"],
+      "args": [
+        "-l",
+        "-c",
+        "cmake --build build/cmake-debug --target clean && cmake --build build/cmake-release --target clean"
+      ],
+      "command": "bash",
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": "$gcc",
       "windows": {
@@ -122,7 +149,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build --target clean"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-debug --target clean; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-release --target clean; exit $LASTEXITCODE"
         ],
         "options": { "cwd": "${workspaceFolder}" }
       }
