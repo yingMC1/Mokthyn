@@ -13,22 +13,21 @@ int main() {
     imagePath += L"image\\stand.png";
     PIMAGE img = newimage();
     getimage(img, imagePath.c_str());
-    putimage(100, 100, img);
     int x = 1, y = 1;
     while (!kbhit()) {
         char ch = getch();
-        if (ch == 'd') {
-            if (y == graphy) continue;
-            y--;
-        } else if (ch == 'a') {
+        if (ch == 'w') {
             if (y == 1) continue;
+            y--;
+        } else if (ch == 's') {
+            if (y == graphy) continue;
             y++;
-        } else if (ch == 'w') {
+        } else if (ch == 'a') {
             if (x == 1) continue;
             x--;
-        } else if (ch == 's') {
+        } else if (ch == 'd') {
             if (x == graphx) continue;
-            x--;
+            x++;
         }
         putimage(x, y, img);
     }
