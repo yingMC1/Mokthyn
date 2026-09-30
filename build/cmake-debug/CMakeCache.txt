@@ -20,23 +20,22 @@ CMAKE_ADDR2LINE:FILEPATH=D:/mingw64/bin/addr2line.exe
 //Path to a program.
 CMAKE_AR:FILEPATH=D:/mingw64/bin/ar.exe
 
-//Choose the type of build, options are: None Debug Release RelWithDebInfo
-// MinSizeRel ...
+//Build configuration
 CMAKE_BUILD_TYPE:STRING=Debug
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
 
 //CXX compiler
-CMAKE_CXX_COMPILER:STRING=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe
+CMAKE_CXX_COMPILER:STRING=D:/mingw64/bin/g++.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_CXX_COMPILER_AR:FILEPATH=D:/mingw64/bin/x86_64-w64-mingw32-gcc-ar.exe
+CMAKE_CXX_COMPILER_AR:FILEPATH=D:/mingw64/bin/gcc-ar.exe
 
 //A wrapper around 'ranlib' adding the appropriate '--plugin' option
 // for the GCC compiler
-CMAKE_CXX_COMPILER_RANLIB:FILEPATH=D:/mingw64/bin/x86_64-w64-mingw32-gcc-ranlib.exe
+CMAKE_CXX_COMPILER_RANLIB:FILEPATH=D:/mingw64/bin/gcc-ranlib.exe
 
 //Flags used by the CXX compiler during all build types.
 CMAKE_CXX_FLAGS:STRING=
@@ -136,10 +135,8 @@ CMAKE_PROJECT_SPDX_LICENSE:STATIC=
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=D:/mingw64/bin/ranlib.exe
 
-//Full path to the compiler used for language <LANG>. Set by CMake
-// during compiler detection on the first configure; users may
-// override on the command line to select a specific toolchain.
-CMAKE_RC_COMPILER:UNINITIALIZED=D:/mingw64/bin/windres.exe
+//RC compiler
+CMAKE_RC_COMPILER:FILEPATH=D:/mingw64/bin/windres.exe
 
 //Flags for Windows Resource Compiler during all build types.
 CMAKE_RC_FLAGS:STRING=
@@ -209,11 +206,6 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 //Path to a program.
 CMAKE_STRIP:FILEPATH=D:/mingw64/bin/strip.exe
 
-//Name of the operating system being targeted (e.g. Linux, Darwin,
-// Windows). Defaults to CMAKE_HOST_SYSTEM_NAME; set explicitly
-// when first configuring a build tree to enable cross-compiling.
-CMAKE_SYSTEM_NAME:UNINITIALIZED=Windows
-
 //Path to a program.
 CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
 
@@ -277,7 +269,7 @@ CMAKE_CXX_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 CMAKE_CXX_STANDARD_LIBRARIES-ADVANCED:INTERNAL=1
 //Set initial state for CMake diagnostics; used to persist state
 // set by command-line options across invocations.
-CMAKE_DIAGNOSTIC_INIT:INTERNAL=CMD_AUTHOR=WARN;CMD_DEPRECATED=WARN;CMD_EXPERIMENTAL=WARN;CMD_INSTALL_ABSOLUTE_DESTINATION=IGNORE;CMD_POLICY=WARN;CMD_UNINITIALIZED=IGNORE;CMD_UNUSED_CLI=WARN
+CMAKE_DIAGNOSTIC_INIT:INTERNAL=CMD_AUTHOR=WARN;CMD_DEPRECATED=WARN;CMD_EXPERIMENTAL=WARN;CMD_INSTALL_ABSOLUTE_DESTINATION=IGNORE;CMD_POLICY=WARN;CMD_UNINITIALIZED=IGNORE;CMD_UNUSED_CLI=IGNORE
 //ADVANCED property for variable: CMAKE_DLLTOOL
 CMAKE_DLLTOOL-ADVANCED:INTERNAL=1
 //Path to cache edit program executable.
