@@ -9,8 +9,8 @@
 namespace mokthyn {
 using Clock = std::chrono::steady_clock;
 
-inline constexpr int WindowWidth = 1600;
-inline constexpr int WindowHeight = 900;
+inline constexpr int WindowWidth = 1200;
+inline constexpr int WindowHeight = 675;
 inline constexpr int MapColumns = 22;
 inline constexpr int MapRows = 17;
 inline constexpr int TileSize = 40;

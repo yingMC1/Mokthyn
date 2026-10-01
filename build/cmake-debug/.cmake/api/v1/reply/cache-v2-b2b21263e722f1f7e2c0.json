@@ -39,7 +39,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "Build type for single-configuration generators (Makefile Generators, Ninja, etc.). Typical values: Debug, Release, RelWithDebInfo, MinSizeRel; custom build types may also be defined."
+					"value" : "Build configuration"
 				}
 			],
 			"type" : "STRING",
@@ -155,11 +155,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
+					"value" : "CXX compiler"
 				}
 			],
-			"type" : "FILEPATH",
-			"value" : "D:/mingw64/bin/g++.exe"
+			"type" : "STRING",
+			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -175,7 +175,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "D:/mingw64/bin/gcc-ar.exe"
+			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-gcc-ar.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -191,7 +191,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "D:/mingw64/bin/gcc-ranlib.exe"
+			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-gcc-ranlib.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -288,18 +288,6 @@
 			],
 			"type" : "STRING",
 			"value" : "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32"
-		},
-		{
-			"name" : "CMAKE_C_COMPILER",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
-				}
-			],
-			"type" : "FILEPATH",
-			"value" : "D:/mingw64/bin/gcc.exe"
 		},
 		{
 			"name" : "CMAKE_DIAGNOSTIC_INIT",
@@ -446,18 +434,6 @@
 			"value" : ""
 		},
 		{
-			"name" : "CMAKE_EXPORT_COMPILE_COMMANDS",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Enable output of a compile_commands.json file listing the exact compiler invocation for each translation unit. Implemented by the Makefile and Ninja generators; ignored elsewhere."
-				}
-			],
-			"type" : "BOOL",
-			"value" : "TRUE"
-		},
-		{
 			"name" : "CMAKE_EXTRA_GENERATOR",
 			"properties" : 
 			[
@@ -480,42 +456,6 @@
 			],
 			"type" : "STATIC",
 			"value" : "D:/Mokthyn/build/cmake-debug/CMakeFiles/pkgRedirects"
-		},
-		{
-			"name" : "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Control whether CMAKE_FIND_ROOT_PATH is used by find_file/find_path"
-				}
-			],
-			"type" : "STRING",
-			"value" : "ONLY"
-		},
-		{
-			"name" : "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Control whether CMAKE_FIND_ROOT_PATH is used by find_library"
-				}
-			],
-			"type" : "STRING",
-			"value" : "ONLY"
-		},
-		{
-			"name" : "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Control whether CMAKE_FIND_ROOT_PATH is used by find_program"
-				}
-			],
-			"type" : "STRING",
-			"value" : "NEVER"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -883,10 +823,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
+					"value" : "RC compiler"
 				}
 			],
-			"type" : "STRING",
+			"type" : "FILEPATH",
 			"value" : "D:/mingw64/bin/windres.exe"
 		},
 		{
@@ -1216,18 +1156,6 @@
 			],
 			"type" : "FILEPATH",
 			"value" : "D:/mingw64/bin/strip.exe"
-		},
-		{
-			"name" : "CMAKE_SYSTEM_NAME",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Name of the operating system being targeted (e.g. Linux, Darwin, Windows). Defaults to CMAKE_HOST_SYSTEM_NAME; set explicitly when first configuring a build tree to enable cross-compiling."
-				}
-			],
-			"type" : "STRING",
-			"value" : "Windows"
 		},
 		{
 			"name" : "CMAKE_TAPI",
