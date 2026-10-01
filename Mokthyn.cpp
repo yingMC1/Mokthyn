@@ -1,115 +1,31 @@
-#include <algorithm>
-#include <array>
-#include <chrono>
-#include <cmath>
 #define WIN32_LEAN_AND_MEAN
+#include "GameLogic.h"
+#include "GameNetwork.h"
+#include "GameRender.h"
+#include "GameState.h"
+#include "GameTypes.h"
 #include <graphics.h>
-#include <random>
-#include <sstream>
-#include <string>
-#include <vector>
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-namespace {
-using Clock = std::chrono::steady_clock;
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cmath>
+#include <random>
+#include <sstream>
+#include <string>
+#include <vector>
 
-constexpr int LogicalWidth = 1600;
-constexpr int LogicalHeight = 900;
-constexpr int WindowWidth = 1200;
-constexpr int WindowHeight = 675;
-constexpr float RenderScale = 0.75f;
-constexpr int MapColumns = 22;
-constexpr int MapRows = 17;
-constexpr int TileSize = 40;
-constexpr int MapLeft = 64;
-constexpr int MapTop = 128;
-constexpr int ViewRadius = 10;
-constexpr int EnemyHealth = 45;
-
-const ege::color_t Background = EGERGB(12, 18, 24);
-const ege::color_t Panel = EGERGB(21, 30, 37);
-const ege::color_t PanelLight = EGERGB(30, 42, 49);
-const ege::color_t Text = EGERGB(226, 235, 230);
-const ege::color_t Muted = EGERGB(137, 157, 157);
-const ege::color_t Green = EGERGB(101, 220, 155);
-const ege::color_t Yellow = EGERGB(245, 194, 90);
-const ege::color_t Red = EGERGB(235, 99, 91);
-const ege::color_t Cyan = EGERGB(91, 200, 214);
-
-enum Tile : int { Floor, Wall, AmmoPickup, ExitTile, MedkitPickup };
-enum class Screen { Menu, Shop, Help, Playing, Paused, Result, HostLobby, JoinIp, JoinLobby };
-
-struct Enemy {
-    int x = 0;
-    int y = 0;
-    int hp = EnemyHealth;
-    bool alive = true;
-    bool awake = false;
-    Clock::time_point nextAttack = Clock::now();
-};
-
-std::array<std::array<int, MapColumns>, MapRows> world{};
-std::array<std::array<bool, MapColumns>, MapRows> visible{};
-std::vector<Enemy> enemies;
-std::mt19937 randomEngine(static_cast<unsigned int>(Clock::now().time_since_epoch().count()));
-
-Screen screen = Screen::Menu;
-int playerX = MapColumns / 2;
-int playerY = MapRows / 2;
-int health = 100;
-int ammo = 30;
-int medkits = 2;
-int money = 200;
-int armorTier = 0;
-int armorDurability = 0;
-int kills = 0;
-int totalEnemies = 0;
-bool armorOn = false;
-bool healing = false;
-bool extracting = false;
-bool won = false;
-Clock::time_point healStarted{};
-Clock::time_point extractStarted{};
-Clock::time_point lastMove{};
-Clock::time_point lastEnemyTurn{};
-Clock::time_point nextPlayerHit{};
-Clock::time_point messageUntil{};
-std::wstring message;
-int shopSelection = 0;
-PIMAGE frameBuffer = nullptr;
-SOCKET networkSocket = INVALID_SOCKET;
-sockaddr_in peerAddress{};
-bool networkStarted = false;
-bool networkActive = false;
-bool networkHost = false;
-bool peerConnected = false;
-int peerX = -1;
-int peerY = -1;
-int peerHealth = 100;
-int peerArmorTier = 0;
-int peerArmorDurability = 0;
-bool peerArmorOn = false;
-std::string hostIpInput;
-std::wstring networkStatus;
-Clock::time_point lastNetworkSend{};
-Clock::time_point lastNetworkReceive{};
-Clock::time_point lastConnectAttempt{};
-Clock::time_point peerExtractStarted{};
-bool peerExtracting = false;
-
-const std::array<int, 5> ArmorPrices = {0, 100, 200, 350, 550};
-const std::array<int, 5> ArmorDurability = {0, 50, 75, 100, 125};
-const std::array<int, 5> ArmorReduction = {0, 4, 7, 10, 13};
-
-int scaled(int value) { return static_cast<int>(std::lround(value * RenderScale)); }
+namespace mokthyn {
+int scaled(int value) { return value; }
 
 int randomInt(int low, int high) {
     return std::uniform_int_distribution<int>(low, high)(randomEngine);
 }
 
-void setMessage(const std::wstring& text, int milliseconds = 1800) {
+void setMessage(const std::wstring& text, int milliseconds) {
     message = text;
     messageUntil = Clock::now() + std::chrono::milliseconds(milliseconds);
 }
@@ -236,7 +152,7 @@ void fillCircle(int x, int y, int radius, ege::color_t color) {
     fillcircle(scaled(x), scaled(y), std::max(1, scaled(radius)));
 }
 
-void drawText(int x, int y, const std::wstring& value, int size = 20, ege::color_t color = Text) {
+void drawText(int x, int y, const std::wstring& value, int size, ege::color_t color) {
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(Background, frameBuffer);
     setfont(std::max(1, scaled(size)), 0, L"Microsoft YaHei UI");
@@ -1069,9 +985,10 @@ void drawPlaying() {
         drawText(MapLeft + 12, 836, L"撤离中  " + std::to_wstring(seconds) + L" 秒", 18, Green);
     }
 }
-} // namespace
+} // namespace mokthyn
 
 int main() {
+    using namespace mokthyn;
     setinitmode(INIT_DEFAULT);
     initgraph(WindowWidth, WindowHeight);
     ege_enable_aa(true);
@@ -1185,7 +1102,7 @@ int main() {
             break;
         case Screen::Paused:
             drawPlaying();
-            fillRect(0, 0, LogicalWidth, LogicalHeight, EGEARGB(170, 5, 10, 13));
+            fillRect(0, 0, WindowWidth, WindowHeight, EGEARGB(170, 5, 10, 13));
             drawText(630, 365, L"已暂停", 48, Text);
             drawText(594, 435, L"按 P 继续  /  ESC 返回菜单", 20, Muted);
             if (keyPressed('P'))
