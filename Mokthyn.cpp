@@ -1,3 +1,4 @@
+#include <bits/stdc++.h>
 #include <graphics.h>
 #include <string>
 #include <windows.h>
@@ -9,29 +10,32 @@ int main() {
     wchar_t executablePath[MAX_PATH] = {};
     const DWORD pathLength = GetModuleFileNameW(nullptr, executablePath, MAX_PATH);
     std::wstring imagePath(executablePath, pathLength);
-    imagePath.resize(imagePath.find_last_of(L"\\/") + 1);
-    imagePath += L"image\\stand.png";
     PIMAGE img = newimage();
-    getimage(img, imagePath.c_str());
-    int x = 1, y = 1;
-    while (!kbhit()) {
-        char ch = getch();
-        if (ch == 'w') {
-            if (y == 1) continue;
-            y--;
-        } else if (ch == 's') {
-            if (y == graphy) continue;
-            y++;
-        } else if (ch == 'a') {
-            if (x == 1) continue;
-            x--;
-        } else if (ch == 'd') {
-            if (x == graphx) continue;
-            x++;
-        }
-        putimage(x, y, img);
-    }
-    delimage(img);
+    getimage(img, "Linmage\\go lift.png");
+    putimage(100, 100, img);
+    // imagePath.resize(imagePath.find_last_of(L"\\/") + 1);
+    // imagePath += L"image\\stand.png";
+    // PIMAGE img = newimage();
+    // getimage(img, imagePath.c_str());
+    // int x = 1, y = 1;
+    // while (!kbhit()) {
+    //     char ch = getch();
+    //     if (ch == 'w') {
+    //         if (y == 1) continue;
+    //         y--;
+    //     } else if (ch == 's') {
+    //         if (y == graphy) continue;
+    //         y++;
+    //     } else if (ch == 'a') {
+    //         if (x == 1) continue;
+    //         x--;
+    //     } else if (ch == 'd') {
+    //         if (x == graphx) continue;
+    //         x++;
+    //     }
+    //     putimage(x, y, img);
+    // }
+    // delimage(img);
     getch();
     closegraph();
     return 0;
