@@ -451,14 +451,14 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:/Mokthyn/Mokthyn.cpp \
   D:/mingw64/x86_64-w64-mingw32/include/ws2def.h \
   D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h \
   D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h \
-  D:/Mokthyn/GameLogic.h \
-  D:/Mokthyn/GameLogicImpl.h \
-  D:/Mokthyn/GameNetwork.h \
-  D:/Mokthyn/GameNetworkImpl.h \
-  D:/Mokthyn/GameRender.h \
-  D:/Mokthyn/GameRenderImpl.h \
-  D:/Mokthyn/GameState.h \
-  D:/Mokthyn/GameTypes.h
+  D:/Mokthyn/game.h/GameLogic.h \
+  D:/Mokthyn/game.h/GameLogicImpl.h \
+  D:/Mokthyn/game.h/GameNetwork.h \
+  D:/Mokthyn/game.h/GameNetworkImpl.h \
+  D:/Mokthyn/game.h/GameRender.h \
+  D:/Mokthyn/game.h/GameRenderImpl.h \
+  D:/Mokthyn/game.h/GameState.h \
+  D:/Mokthyn/game.h/GameTypes.h
 
 
 D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/amxint8intrin.h:
@@ -552,6 +552,8 @@ D:/mingw64/include/c++/16.1.0/bits/basic_ios.h:
 D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/avx2intrin.h:
 
 D:/mingw64/include/c++/16.1.0/bits/basic_ios.tcc:
+
+D:/Mokthyn/game.h/GameLogic.h:
 
 D:/mingw64/include/c++/16.1.0/bits/basic_string.h:
 
@@ -679,6 +681,8 @@ D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/wmmintrin.h:
 
 D:/mingw64/include/c++/16.1.0/bits/parse_numbers.h:
 
+D:/Mokthyn/game.h/GameRenderImpl.h:
+
 D:/mingw64/x86_64-w64-mingw32/include/winnt.h:
 
 D:/mingw64/include/c++/16.1.0/bits/ptr_traits.h:
@@ -771,8 +775,6 @@ D:/mingw64/include/c++/16.1.0/cwchar:
 
 D:/mingw64/include/c++/16.1.0/bits/streambuf.tcc:
 
-D:/Mokthyn/GameTypes.h:
-
 D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/xsaveintrin.h:
 
 D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/raointintrin.h:
@@ -806,6 +808,8 @@ D:/mingw64/include/c++/16.1.0/bits/uses_allocator_args.h:
 D:/mingw64/include/c++/16.1.0/bits/utility.h:
 
 D:/mingw64/include/c++/16.1.0/bits/vector.tcc:
+
+D:/Mokthyn/game.h/GameLogicImpl.h:
 
 D:/mingw64/include/c++/16.1.0/bits/version.h:
 
@@ -994,6 +998,8 @@ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/ctype_base.h:
 D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/error_constants.h:
 
 D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/gthr-default.h:
+
+D:/Mokthyn/game.h/GameTypes.h:
 
 D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/gthr.h:
 
@@ -1263,6 +1269,8 @@ D:/mingw64/x86_64-w64-mingw32/include/namedpipeapi.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/consoleapi.h:
 
+D:/Mokthyn/game.h/GameState.h:
+
 D:/mingw64/x86_64-w64-mingw32/include/corecrt_stdio_config.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/corecrt_wctype.h:
@@ -1349,8 +1357,6 @@ D:/mingw64/x86_64-w64-mingw32/include/wincon.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/wincontypes.h:
 
-D:/Mokthyn/GameLogic.h:
-
 D:/mingw64/x86_64-w64-mingw32/include/windows.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/winerror.h:
@@ -1365,14 +1371,8 @@ D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h:
 
-D:/Mokthyn/GameLogicImpl.h:
+D:/Mokthyn/game.h/GameNetwork.h:
 
-D:/Mokthyn/GameNetwork.h:
+D:/Mokthyn/game.h/GameNetworkImpl.h:
 
-D:/Mokthyn/GameNetworkImpl.h:
-
-D:/Mokthyn/GameRender.h:
-
-D:/Mokthyn/GameRenderImpl.h:
-
-D:/Mokthyn/GameState.h:
+D:/Mokthyn/game.h/GameRender.h:

@@ -452,12 +452,12 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj
  D:/mingw64/x86_64-w64-mingw32/include/ws2def.h
  D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h
  D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h
- D:/Mokthyn/GameLogic.h
- D:/Mokthyn/GameLogicImpl.h
- D:/Mokthyn/GameNetwork.h
- D:/Mokthyn/GameNetworkImpl.h
- D:/Mokthyn/GameRender.h
- D:/Mokthyn/GameRenderImpl.h
- D:/Mokthyn/GameState.h
- D:/Mokthyn/GameTypes.h
+ D:/Mokthyn/game.h/GameLogic.h
+ D:/Mokthyn/game.h/GameLogicImpl.h
+ D:/Mokthyn/game.h/GameNetwork.h
+ D:/Mokthyn/game.h/GameNetworkImpl.h
+ D:/Mokthyn/game.h/GameRender.h
+ D:/Mokthyn/game.h/GameRenderImpl.h
+ D:/Mokthyn/game.h/GameState.h
+ D:/Mokthyn/game.h/GameTypes.h
 

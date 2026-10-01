@@ -76,15 +76,15 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: CMakeFiles/ege-demo.dir/includes_CXX.rs
 CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:/Mokthyn/Mokthyn.cpp
 CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: CMakeFiles/ege-demo.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=D:\Mokthyn\build\cmake-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj"
-	D:\mingw64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj -MF CMakeFiles\ege-demo.dir\Mokthyn.cpp.obj.d -o CMakeFiles\ege-demo.dir\Mokthyn.cpp.obj -c D:\Mokthyn\Mokthyn.cpp
+	D:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj -MF CMakeFiles\ege-demo.dir\Mokthyn.cpp.obj.d -o CMakeFiles\ege-demo.dir\Mokthyn.cpp.obj -c D:\Mokthyn\Mokthyn.cpp
 
 CMakeFiles/ege-demo.dir/Mokthyn.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/ege-demo.dir/Mokthyn.cpp.i"
-	D:\mingw64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E D:\Mokthyn\Mokthyn.cpp > CMakeFiles\ege-demo.dir\Mokthyn.cpp.i
+	D:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E D:\Mokthyn\Mokthyn.cpp > CMakeFiles\ege-demo.dir\Mokthyn.cpp.i
 
 CMakeFiles/ege-demo.dir/Mokthyn.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/ege-demo.dir/Mokthyn.cpp.s"
-	D:\mingw64\bin\g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S D:\Mokthyn\Mokthyn.cpp -o CMakeFiles\ege-demo.dir\Mokthyn.cpp.s
+	D:\mingw64\bin\x86_64-w64-mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S D:\Mokthyn\Mokthyn.cpp -o CMakeFiles\ege-demo.dir\Mokthyn.cpp.s
 
 # Object files for target ege-demo
 ege__demo_OBJECTS = \
