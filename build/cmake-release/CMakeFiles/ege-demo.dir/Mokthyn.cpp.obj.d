@@ -1,216 +1,15 @@
 CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
- D:\Mokthyn\GameLogic.h D:\Mokthyn\GameState.h D:\Mokthyn\GameTypes.h \
- D:/mingw64/include/c++/16.1.0/array \
- D:/mingw64/include/c++/16.1.0/compare \
- D:/mingw64/include/c++/16.1.0/bits/version.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/c++config.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/os_defines.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/cpu_defines.h \
- D:/mingw64/include/c++/16.1.0/pstl/pstl_config.h \
- D:/mingw64/include/c++/16.1.0/concepts \
- D:/mingw64/include/c++/16.1.0/type_traits \
- D:/mingw64/include/c++/16.1.0/initializer_list \
- D:/mingw64/include/c++/16.1.0/bits/stdexcept_throw.h \
- D:/mingw64/include/c++/16.1.0/bits/exception_defines.h \
- D:/mingw64/include/c++/16.1.0/bits/stdexcept_throwfwd.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_algobase.h \
- D:/mingw64/include/c++/16.1.0/bits/cpp_type_traits.h \
- D:/mingw64/include/c++/16.1.0/ext/type_traits.h \
- D:/mingw64/include/c++/16.1.0/ext/numeric_traits.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_pair.h \
- D:/mingw64/include/c++/16.1.0/bits/move.h \
- D:/mingw64/include/c++/16.1.0/bits/utility.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_iterator_base_types.h \
- D:/mingw64/include/c++/16.1.0/bits/iterator_concepts.h \
- D:/mingw64/include/c++/16.1.0/bits/ptr_traits.h \
- D:/mingw64/include/c++/16.1.0/bits/ranges_cmp.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_iterator_base_funcs.h \
- D:/mingw64/include/c++/16.1.0/bits/concept_check.h \
- D:/mingw64/include/c++/16.1.0/debug/assertions.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_iterator.h \
- D:/mingw64/include/c++/16.1.0/new \
- D:/mingw64/include/c++/16.1.0/bits/exception.h \
- D:/mingw64/include/c++/16.1.0/bits/new_except.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_construct.h \
- D:/mingw64/include/c++/16.1.0/debug/debug.h \
- D:/mingw64/include/c++/16.1.0/bits/predefined_ops.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_function.h \
- D:/mingw64/include/c++/16.1.0/backward/binders.h \
- D:/mingw64/include/c++/16.1.0/bit \
- D:/mingw64/include/c++/16.1.0/bits/range_access.h \
- D:/mingw64/include/c++/16.1.0/chrono \
- D:/mingw64/include/c++/16.1.0/bits/chrono.h \
- D:/mingw64/include/c++/16.1.0/ratio \
- D:/mingw64/include/c++/16.1.0/cstdint \
- D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/stdint.h \
- D:/mingw64/x86_64-w64-mingw32/include/stdint.h \
- D:/mingw64/x86_64-w64-mingw32/include/crtdefs.h \
- D:/mingw64/x86_64-w64-mingw32/include/corecrt.h \
+ D:/mingw64/x86_64-w64-mingw32/include/winsock2.h \
+ D:/mingw64/x86_64-w64-mingw32/include/_mingw_unicode.h \
+ D:/mingw64/x86_64-w64-mingw32/include/windows.h \
  D:/mingw64/x86_64-w64-mingw32/include/_mingw.h \
  D:/mingw64/x86_64-w64-mingw32/include/_mingw_mac.h \
  D:/mingw64/x86_64-w64-mingw32/include/_mingw_secapi.h \
  D:/mingw64/x86_64-w64-mingw32/include/vadefs.h \
- D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/stddef.h \
- D:/mingw64/x86_64-w64-mingw32/include/stddef.h \
- D:/mingw64/include/c++/16.1.0/limits D:/mingw64/include/c++/16.1.0/ctime \
- D:/mingw64/x86_64-w64-mingw32/include/time.h \
- D:/mingw64/x86_64-w64-mingw32/include/sys/timeb.h \
- D:/mingw64/x86_64-w64-mingw32/include/sec_api/sys/timeb_s.h \
- D:/mingw64/x86_64-w64-mingw32/include/_timeval.h \
- D:/mingw64/x86_64-w64-mingw32/include/pthread_time.h \
- D:/mingw64/x86_64-w64-mingw32/include/pthread_compat.h \
- D:/mingw64/include/c++/16.1.0/bits/parse_numbers.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_algo.h \
- D:/mingw64/include/c++/16.1.0/bits/algorithmfwd.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_heap.h \
- D:/mingw64/include/c++/16.1.0/bits/uniform_int_dist.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_tempbuf.h \
- D:/mingw64/include/c++/16.1.0/cstdlib \
- D:/mingw64/x86_64-w64-mingw32/include/stdlib.h \
- D:/mingw64/x86_64-w64-mingw32/include/corecrt_wstdlib.h \
- D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/limits.h \
- D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/syslimits.h \
- D:/mingw64/x86_64-w64-mingw32/include/limits.h \
- D:/mingw64/x86_64-w64-mingw32/include/sec_api/stdlib_s.h \
- D:/mingw64/include/c++/16.1.0/stdlib.h \
- D:/mingw64/x86_64-w64-mingw32/include/malloc.h \
- D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/mm_malloc.h \
- D:/mingw64/x86_64-w64-mingw32/include/errno.h \
- D:/mingw64/include/c++/16.1.0/bits/std_abs.h \
- D:/mingw64/include/c++/16.1.0/sstream \
- D:/mingw64/include/c++/16.1.0/bits/requires_hosted.h \
- D:/mingw64/include/c++/16.1.0/istream D:/mingw64/include/c++/16.1.0/ios \
- D:/mingw64/include/c++/16.1.0/iosfwd \
- D:/mingw64/include/c++/16.1.0/bits/stringfwd.h \
- D:/mingw64/include/c++/16.1.0/bits/memoryfwd.h \
- D:/mingw64/include/c++/16.1.0/bits/postypes.h \
- D:/mingw64/include/c++/16.1.0/cwchar \
- D:/mingw64/x86_64-w64-mingw32/include/wchar.h \
- D:/mingw64/x86_64-w64-mingw32/include/corecrt_stdio_config.h \
- D:/mingw64/x86_64-w64-mingw32/include/corecrt_wconio.h \
- D:/mingw64/x86_64-w64-mingw32/include/sec_api/wconio_s.h \
- D:/mingw64/x86_64-w64-mingw32/include/corecrt_wctype.h \
- D:/mingw64/x86_64-w64-mingw32/include/_mingw_off_t.h \
- D:/mingw64/x86_64-w64-mingw32/include/_mingw_stat64.h \
- D:/mingw64/x86_64-w64-mingw32/include/swprintf.inl \
- D:/mingw64/x86_64-w64-mingw32/include/sec_api/wchar_s.h \
- D:/mingw64/include/c++/16.1.0/exception \
- D:/mingw64/include/c++/16.1.0/bits/exception_ptr.h \
- D:/mingw64/include/c++/16.1.0/bits/cxxabi_init_exception.h \
- D:/mingw64/include/c++/16.1.0/typeinfo \
- D:/mingw64/include/c++/16.1.0/bits/hash_bytes.h \
- D:/mingw64/include/c++/16.1.0/bits/nested_exception.h \
- D:/mingw64/include/c++/16.1.0/bits/char_traits.h \
- D:/mingw64/include/c++/16.1.0/bits/localefwd.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/c++locale.h \
- D:/mingw64/include/c++/16.1.0/clocale \
- D:/mingw64/x86_64-w64-mingw32/include/locale.h \
- D:/mingw64/x86_64-w64-mingw32/include/stdio.h \
- D:/mingw64/x86_64-w64-mingw32/include/sec_api/stdio_s.h \
- D:/mingw64/include/c++/16.1.0/cctype \
- D:/mingw64/x86_64-w64-mingw32/include/ctype.h \
- D:/mingw64/include/c++/16.1.0/bits/ios_base.h \
- D:/mingw64/include/c++/16.1.0/ext/atomicity.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/gthr.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/gthr-default.h \
- D:/mingw64/x86_64-w64-mingw32/include/pthread.h \
- D:/mingw64/x86_64-w64-mingw32/include/sys/types.h \
- D:/mingw64/x86_64-w64-mingw32/include/process.h \
- D:/mingw64/x86_64-w64-mingw32/include/corecrt_startup.h \
- D:/mingw64/x86_64-w64-mingw32/include/signal.h \
- D:/mingw64/x86_64-w64-mingw32/include/pthread_signal.h \
- D:/mingw64/x86_64-w64-mingw32/include/sched.h \
- D:/mingw64/x86_64-w64-mingw32/include/pthread_unistd.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/atomic_word.h \
- D:/mingw64/include/c++/16.1.0/bits/locale_classes.h \
- D:/mingw64/include/c++/16.1.0/bits/functexcept.h \
- D:/mingw64/include/c++/16.1.0/string \
- D:/mingw64/include/c++/16.1.0/bits/allocator.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/c++allocator.h \
- D:/mingw64/include/c++/16.1.0/bits/new_allocator.h \
- D:/mingw64/include/c++/16.1.0/bits/new_throw.h \
- D:/mingw64/include/c++/16.1.0/bits/ostream_insert.h \
- D:/mingw64/include/c++/16.1.0/bits/cxxabi_forced.h \
- D:/mingw64/include/c++/16.1.0/bits/erase_if.h \
- D:/mingw64/include/c++/16.1.0/bits/basic_string.h \
- D:/mingw64/include/c++/16.1.0/ext/alloc_traits.h \
- D:/mingw64/include/c++/16.1.0/bits/alloc_traits.h \
- D:/mingw64/include/c++/16.1.0/string_view \
- D:/mingw64/include/c++/16.1.0/bits/functional_hash.h \
- D:/mingw64/include/c++/16.1.0/bits/ranges_base.h \
- D:/mingw64/include/c++/16.1.0/bits/max_size_type.h \
- D:/mingw64/include/c++/16.1.0/numbers \
- D:/mingw64/include/c++/16.1.0/bits/string_view.tcc \
- D:/mingw64/include/c++/16.1.0/ext/string_conversions.h \
- D:/mingw64/include/c++/16.1.0/cstdio \
- D:/mingw64/include/c++/16.1.0/cerrno \
- D:/mingw64/include/c++/16.1.0/bits/charconv.h \
- D:/mingw64/include/c++/16.1.0/bits/basic_string.tcc \
- D:/mingw64/include/c++/16.1.0/bits/memory_resource.h \
- D:/mingw64/include/c++/16.1.0/cstddef \
- D:/mingw64/include/c++/16.1.0/bits/uses_allocator.h \
- D:/mingw64/include/c++/16.1.0/bits/uses_allocator_args.h \
- D:/mingw64/include/c++/16.1.0/tuple \
- D:/mingw64/include/c++/16.1.0/bits/invoke.h \
- D:/mingw64/include/c++/16.1.0/bits/ranges_util.h \
- D:/mingw64/include/c++/16.1.0/bits/locale_classes.tcc \
- D:/mingw64/include/c++/16.1.0/system_error \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/error_constants.h \
- D:/mingw64/include/c++/16.1.0/stdexcept \
- D:/mingw64/include/c++/16.1.0/bits/stdexcept_except.h \
- D:/mingw64/include/c++/16.1.0/streambuf \
- D:/mingw64/include/c++/16.1.0/bits/streambuf.tcc \
- D:/mingw64/include/c++/16.1.0/bits/basic_ios.h \
- D:/mingw64/include/c++/16.1.0/bits/locale_facets.h \
- D:/mingw64/include/c++/16.1.0/cwctype \
- D:/mingw64/x86_64-w64-mingw32/include/wctype.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
- D:/mingw64/include/c++/16.1.0/bits/streambuf_iterator.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
- D:/mingw64/include/c++/16.1.0/bits/locale_facets.tcc \
- D:/mingw64/include/c++/16.1.0/bits/basic_ios.tcc \
- D:/mingw64/include/c++/16.1.0/ostream \
- D:/mingw64/include/c++/16.1.0/bits/ostream.h \
- D:/mingw64/include/c++/16.1.0/bits/ostream_print.h \
- D:/mingw64/include/c++/16.1.0/bits/ostream.tcc \
- D:/mingw64/include/c++/16.1.0/bits/istream.tcc \
- D:/mingw64/include/c++/16.1.0/bits/sstream.tcc \
- D:/mingw64/include/c++/16.1.0/vector \
- D:/mingw64/include/c++/16.1.0/bits/stl_uninitialized.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_vector.h \
- D:/mingw64/include/c++/16.1.0/bits/stl_bvector.h \
- D:/mingw64/include/c++/16.1.0/bits/vector.tcc \
- D:/mingw64/include/c++/16.1.0/bits/shared_ptr.h \
- D:/mingw64/include/c++/16.1.0/bits/shared_ptr_base.h \
- D:/mingw64/include/c++/16.1.0/bits/allocated_ptr.h \
- D:/mingw64/include/c++/16.1.0/bits/refwrap.h \
- D:/mingw64/include/c++/16.1.0/bits/unique_ptr.h \
- D:/mingw64/include/c++/16.1.0/ext/aligned_buffer.h \
- D:/mingw64/include/c++/16.1.0/ext/concurrence.h \
- D:/mingw64/include/c++/16.1.0/bits/align.h \
- D:/mingw64/include/c++/16.1.0/bits/chrono_io.h \
- D:/mingw64/include/c++/16.1.0/format \
- D:/mingw64/include/c++/16.1.0/charconv \
- D:/mingw64/include/c++/16.1.0/locale \
- D:/mingw64/include/c++/16.1.0/bits/locale_facets_nonio.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/time_members.h \
- D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/messages_members.h \
- D:/mingw64/include/c++/16.1.0/bits/codecvt.h \
- D:/mingw64/include/c++/16.1.0/bits/locale_facets_nonio.tcc \
- D:/mingw64/include/c++/16.1.0/bits/locale_conv.h \
- D:/mingw64/include/c++/16.1.0/optional \
- D:/mingw64/include/c++/16.1.0/bits/enable_special_members.h \
- D:/mingw64/include/c++/16.1.0/span \
- D:/mingw64/include/c++/16.1.0/bits/monostate.h \
- D:/mingw64/include/c++/16.1.0/bits/formatfwd.h \
- D:/mingw64/include/c++/16.1.0/bits/ranges_algobase.h \
- D:/mingw64/include/c++/16.1.0/bits/unicode.h \
- D:/mingw64/include/c++/16.1.0/bits/unicode-data.h \
- D:/Mokthyn/ege/include/graphics.h D:/Mokthyn/ege/include/ege.h \
- D:/Mokthyn/ege/include/ege/stdint.h \
- D:/mingw64/x86_64-w64-mingw32/include/windows.h \
  D:/mingw64/x86_64-w64-mingw32/include/sdkddkver.h \
  D:/mingw64/x86_64-w64-mingw32/include/excpt.h \
+ D:/mingw64/x86_64-w64-mingw32/include/crtdefs.h \
+ D:/mingw64/x86_64-w64-mingw32/include/corecrt.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/stdarg.h \
  D:/mingw64/x86_64-w64-mingw32/include/stdarg.h \
  D:/mingw64/x86_64-w64-mingw32/include/_mingw_stdarg.h \
@@ -222,7 +21,8 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/x86_64-w64-mingw32/include/concurrencysal.h \
  D:/mingw64/x86_64-w64-mingw32/include/driverspecs.h \
  D:/mingw64/x86_64-w64-mingw32/include/winnt.h \
- D:/mingw64/x86_64-w64-mingw32/include/_mingw_unicode.h \
+ D:/mingw64/x86_64-w64-mingw32/include/ctype.h \
+ D:/mingw64/x86_64-w64-mingw32/include/corecrt_wctype.h \
  D:/mingw64/x86_64-w64-mingw32/include/apiset.h \
  D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/intrin-impl.h \
  D:/mingw64/x86_64-w64-mingw32/include/basetsd.h \
@@ -232,6 +32,8 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/x86intrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/x86gprintrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/ia32intrin.h \
+ D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/stddef.h \
+ D:/mingw64/x86_64-w64-mingw32/include/stddef.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/adxintrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/bmiintrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/bmi2intrin.h \
@@ -272,6 +74,22 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/immintrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/mmintrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/xmmintrin.h \
+ D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/mm_malloc.h \
+ D:/mingw64/include/c++/16.1.0/stdlib.h \
+ D:/mingw64/include/c++/16.1.0/cstdlib \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/c++config.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/os_defines.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/cpu_defines.h \
+ D:/mingw64/include/c++/16.1.0/pstl/pstl_config.h \
+ D:/mingw64/x86_64-w64-mingw32/include/stdlib.h \
+ D:/mingw64/x86_64-w64-mingw32/include/corecrt_wstdlib.h \
+ D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/limits.h \
+ D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/syslimits.h \
+ D:/mingw64/x86_64-w64-mingw32/include/limits.h \
+ D:/mingw64/x86_64-w64-mingw32/include/sec_api/stdlib_s.h \
+ D:/mingw64/x86_64-w64-mingw32/include/malloc.h \
+ D:/mingw64/include/c++/16.1.0/bits/std_abs.h \
+ D:/mingw64/x86_64-w64-mingw32/include/errno.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/emmintrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/pmmintrin.h \
  D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/tmmintrin.h \
@@ -408,6 +226,203 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/x86_64-w64-mingw32/include/winsvc.h \
  D:/mingw64/x86_64-w64-mingw32/include/mcx.h \
  D:/mingw64/x86_64-w64-mingw32/include/imm.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ws1_undef.h \
+ D:/mingw64/x86_64-w64-mingw32/include/_timeval.h \
+ D:/mingw64/x86_64-w64-mingw32/include/_bsd_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/inaddr.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_socket_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_fd_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsadata.h \
+ D:/mingw64/x86_64-w64-mingw32/include/ws2def.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsa_errnos.h \
+ D:/mingw64/x86_64-w64-mingw32/include/qos.h \
+ D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h \
+ D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h \
+ D:/mingw64/x86_64-w64-mingw32/include/in6addr.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_mreq1.h \
+ D:/mingw64/x86_64-w64-mingw32/include/mstcpip.h \
+ D:/Mokthyn/ege/include/graphics.h D:/Mokthyn/ege/include/ege.h \
+ D:/Mokthyn/ege/include/ege/stdint.h \
+ D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/stdint.h \
+ D:/mingw64/x86_64-w64-mingw32/include/stdint.h D:\Mokthyn\GameTypes.h \
+ D:/mingw64/include/c++/16.1.0/array \
+ D:/mingw64/include/c++/16.1.0/compare \
+ D:/mingw64/include/c++/16.1.0/bits/version.h \
+ D:/mingw64/include/c++/16.1.0/concepts \
+ D:/mingw64/include/c++/16.1.0/type_traits \
+ D:/mingw64/include/c++/16.1.0/initializer_list \
+ D:/mingw64/include/c++/16.1.0/bits/stdexcept_throw.h \
+ D:/mingw64/include/c++/16.1.0/bits/exception_defines.h \
+ D:/mingw64/include/c++/16.1.0/bits/stdexcept_throwfwd.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_algobase.h \
+ D:/mingw64/include/c++/16.1.0/bits/cpp_type_traits.h \
+ D:/mingw64/include/c++/16.1.0/ext/type_traits.h \
+ D:/mingw64/include/c++/16.1.0/ext/numeric_traits.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_pair.h \
+ D:/mingw64/include/c++/16.1.0/bits/move.h \
+ D:/mingw64/include/c++/16.1.0/bits/utility.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_iterator_base_types.h \
+ D:/mingw64/include/c++/16.1.0/bits/iterator_concepts.h \
+ D:/mingw64/include/c++/16.1.0/bits/ptr_traits.h \
+ D:/mingw64/include/c++/16.1.0/bits/ranges_cmp.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_iterator_base_funcs.h \
+ D:/mingw64/include/c++/16.1.0/bits/concept_check.h \
+ D:/mingw64/include/c++/16.1.0/debug/assertions.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_iterator.h \
+ D:/mingw64/include/c++/16.1.0/new \
+ D:/mingw64/include/c++/16.1.0/bits/exception.h \
+ D:/mingw64/include/c++/16.1.0/bits/new_except.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_construct.h \
+ D:/mingw64/include/c++/16.1.0/debug/debug.h \
+ D:/mingw64/include/c++/16.1.0/bits/predefined_ops.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_function.h \
+ D:/mingw64/include/c++/16.1.0/backward/binders.h \
+ D:/mingw64/include/c++/16.1.0/bit \
+ D:/mingw64/include/c++/16.1.0/bits/range_access.h \
+ D:/mingw64/include/c++/16.1.0/chrono \
+ D:/mingw64/include/c++/16.1.0/bits/chrono.h \
+ D:/mingw64/include/c++/16.1.0/ratio \
+ D:/mingw64/include/c++/16.1.0/cstdint \
+ D:/mingw64/include/c++/16.1.0/limits D:/mingw64/include/c++/16.1.0/ctime \
+ D:/mingw64/x86_64-w64-mingw32/include/time.h \
+ D:/mingw64/x86_64-w64-mingw32/include/sys/timeb.h \
+ D:/mingw64/x86_64-w64-mingw32/include/sec_api/sys/timeb_s.h \
+ D:/mingw64/x86_64-w64-mingw32/include/pthread_time.h \
+ D:/mingw64/x86_64-w64-mingw32/include/pthread_compat.h \
+ D:/mingw64/include/c++/16.1.0/bits/parse_numbers.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_algo.h \
+ D:/mingw64/include/c++/16.1.0/bits/algorithmfwd.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_heap.h \
+ D:/mingw64/include/c++/16.1.0/bits/uniform_int_dist.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_tempbuf.h \
+ D:/mingw64/include/c++/16.1.0/sstream \
+ D:/mingw64/include/c++/16.1.0/bits/requires_hosted.h \
+ D:/mingw64/include/c++/16.1.0/istream D:/mingw64/include/c++/16.1.0/ios \
+ D:/mingw64/include/c++/16.1.0/iosfwd \
+ D:/mingw64/include/c++/16.1.0/bits/stringfwd.h \
+ D:/mingw64/include/c++/16.1.0/bits/memoryfwd.h \
+ D:/mingw64/include/c++/16.1.0/bits/postypes.h \
+ D:/mingw64/include/c++/16.1.0/cwchar \
+ D:/mingw64/x86_64-w64-mingw32/include/wchar.h \
+ D:/mingw64/x86_64-w64-mingw32/include/corecrt_stdio_config.h \
+ D:/mingw64/x86_64-w64-mingw32/include/corecrt_wconio.h \
+ D:/mingw64/x86_64-w64-mingw32/include/sec_api/wconio_s.h \
+ D:/mingw64/x86_64-w64-mingw32/include/_mingw_off_t.h \
+ D:/mingw64/x86_64-w64-mingw32/include/_mingw_stat64.h \
+ D:/mingw64/x86_64-w64-mingw32/include/swprintf.inl \
+ D:/mingw64/x86_64-w64-mingw32/include/sec_api/wchar_s.h \
+ D:/mingw64/include/c++/16.1.0/exception \
+ D:/mingw64/include/c++/16.1.0/bits/exception_ptr.h \
+ D:/mingw64/include/c++/16.1.0/bits/cxxabi_init_exception.h \
+ D:/mingw64/include/c++/16.1.0/typeinfo \
+ D:/mingw64/include/c++/16.1.0/bits/hash_bytes.h \
+ D:/mingw64/include/c++/16.1.0/bits/nested_exception.h \
+ D:/mingw64/include/c++/16.1.0/bits/char_traits.h \
+ D:/mingw64/include/c++/16.1.0/bits/localefwd.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/c++locale.h \
+ D:/mingw64/include/c++/16.1.0/clocale \
+ D:/mingw64/x86_64-w64-mingw32/include/locale.h \
+ D:/mingw64/x86_64-w64-mingw32/include/stdio.h \
+ D:/mingw64/x86_64-w64-mingw32/include/sec_api/stdio_s.h \
+ D:/mingw64/include/c++/16.1.0/cctype \
+ D:/mingw64/include/c++/16.1.0/bits/ios_base.h \
+ D:/mingw64/include/c++/16.1.0/ext/atomicity.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/gthr.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/gthr-default.h \
+ D:/mingw64/x86_64-w64-mingw32/include/pthread.h \
+ D:/mingw64/x86_64-w64-mingw32/include/sys/types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/process.h \
+ D:/mingw64/x86_64-w64-mingw32/include/corecrt_startup.h \
+ D:/mingw64/x86_64-w64-mingw32/include/signal.h \
+ D:/mingw64/x86_64-w64-mingw32/include/pthread_signal.h \
+ D:/mingw64/x86_64-w64-mingw32/include/sched.h \
+ D:/mingw64/x86_64-w64-mingw32/include/pthread_unistd.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/atomic_word.h \
+ D:/mingw64/include/c++/16.1.0/bits/locale_classes.h \
+ D:/mingw64/include/c++/16.1.0/bits/functexcept.h \
+ D:/mingw64/include/c++/16.1.0/string \
+ D:/mingw64/include/c++/16.1.0/bits/allocator.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/c++allocator.h \
+ D:/mingw64/include/c++/16.1.0/bits/new_allocator.h \
+ D:/mingw64/include/c++/16.1.0/bits/new_throw.h \
+ D:/mingw64/include/c++/16.1.0/bits/ostream_insert.h \
+ D:/mingw64/include/c++/16.1.0/bits/cxxabi_forced.h \
+ D:/mingw64/include/c++/16.1.0/bits/erase_if.h \
+ D:/mingw64/include/c++/16.1.0/bits/basic_string.h \
+ D:/mingw64/include/c++/16.1.0/ext/alloc_traits.h \
+ D:/mingw64/include/c++/16.1.0/bits/alloc_traits.h \
+ D:/mingw64/include/c++/16.1.0/string_view \
+ D:/mingw64/include/c++/16.1.0/bits/functional_hash.h \
+ D:/mingw64/include/c++/16.1.0/bits/ranges_base.h \
+ D:/mingw64/include/c++/16.1.0/bits/max_size_type.h \
+ D:/mingw64/include/c++/16.1.0/numbers \
+ D:/mingw64/include/c++/16.1.0/bits/string_view.tcc \
+ D:/mingw64/include/c++/16.1.0/ext/string_conversions.h \
+ D:/mingw64/include/c++/16.1.0/cstdio \
+ D:/mingw64/include/c++/16.1.0/cerrno \
+ D:/mingw64/include/c++/16.1.0/bits/charconv.h \
+ D:/mingw64/include/c++/16.1.0/bits/basic_string.tcc \
+ D:/mingw64/include/c++/16.1.0/bits/memory_resource.h \
+ D:/mingw64/include/c++/16.1.0/cstddef \
+ D:/mingw64/include/c++/16.1.0/bits/uses_allocator.h \
+ D:/mingw64/include/c++/16.1.0/bits/uses_allocator_args.h \
+ D:/mingw64/include/c++/16.1.0/tuple \
+ D:/mingw64/include/c++/16.1.0/bits/invoke.h \
+ D:/mingw64/include/c++/16.1.0/bits/ranges_util.h \
+ D:/mingw64/include/c++/16.1.0/bits/locale_classes.tcc \
+ D:/mingw64/include/c++/16.1.0/system_error \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/error_constants.h \
+ D:/mingw64/include/c++/16.1.0/stdexcept \
+ D:/mingw64/include/c++/16.1.0/bits/stdexcept_except.h \
+ D:/mingw64/include/c++/16.1.0/streambuf \
+ D:/mingw64/include/c++/16.1.0/bits/streambuf.tcc \
+ D:/mingw64/include/c++/16.1.0/bits/basic_ios.h \
+ D:/mingw64/include/c++/16.1.0/bits/locale_facets.h \
+ D:/mingw64/include/c++/16.1.0/cwctype \
+ D:/mingw64/x86_64-w64-mingw32/include/wctype.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/ctype_base.h \
+ D:/mingw64/include/c++/16.1.0/bits/streambuf_iterator.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/ctype_inline.h \
+ D:/mingw64/include/c++/16.1.0/bits/locale_facets.tcc \
+ D:/mingw64/include/c++/16.1.0/bits/basic_ios.tcc \
+ D:/mingw64/include/c++/16.1.0/ostream \
+ D:/mingw64/include/c++/16.1.0/bits/ostream.h \
+ D:/mingw64/include/c++/16.1.0/bits/ostream_print.h \
+ D:/mingw64/include/c++/16.1.0/bits/ostream.tcc \
+ D:/mingw64/include/c++/16.1.0/bits/istream.tcc \
+ D:/mingw64/include/c++/16.1.0/bits/sstream.tcc \
+ D:/mingw64/include/c++/16.1.0/vector \
+ D:/mingw64/include/c++/16.1.0/bits/stl_uninitialized.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_vector.h \
+ D:/mingw64/include/c++/16.1.0/bits/stl_bvector.h \
+ D:/mingw64/include/c++/16.1.0/bits/vector.tcc \
+ D:/mingw64/include/c++/16.1.0/bits/shared_ptr.h \
+ D:/mingw64/include/c++/16.1.0/bits/shared_ptr_base.h \
+ D:/mingw64/include/c++/16.1.0/bits/allocated_ptr.h \
+ D:/mingw64/include/c++/16.1.0/bits/refwrap.h \
+ D:/mingw64/include/c++/16.1.0/bits/unique_ptr.h \
+ D:/mingw64/include/c++/16.1.0/ext/aligned_buffer.h \
+ D:/mingw64/include/c++/16.1.0/ext/concurrence.h \
+ D:/mingw64/include/c++/16.1.0/bits/align.h \
+ D:/mingw64/include/c++/16.1.0/bits/chrono_io.h \
+ D:/mingw64/include/c++/16.1.0/format \
+ D:/mingw64/include/c++/16.1.0/charconv \
+ D:/mingw64/include/c++/16.1.0/locale \
+ D:/mingw64/include/c++/16.1.0/bits/locale_facets_nonio.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/time_members.h \
+ D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/messages_members.h \
+ D:/mingw64/include/c++/16.1.0/bits/codecvt.h \
+ D:/mingw64/include/c++/16.1.0/bits/locale_facets_nonio.tcc \
+ D:/mingw64/include/c++/16.1.0/bits/locale_conv.h \
+ D:/mingw64/include/c++/16.1.0/optional \
+ D:/mingw64/include/c++/16.1.0/bits/enable_special_members.h \
+ D:/mingw64/include/c++/16.1.0/span \
+ D:/mingw64/include/c++/16.1.0/bits/monostate.h \
+ D:/mingw64/include/c++/16.1.0/bits/formatfwd.h \
+ D:/mingw64/include/c++/16.1.0/bits/ranges_algobase.h \
+ D:/mingw64/include/c++/16.1.0/bits/unicode.h \
+ D:/mingw64/include/c++/16.1.0/bits/unicode-data.h D:\Mokthyn\GameState.h \
  D:/mingw64/include/c++/16.1.0/random D:/mingw64/include/c++/16.1.0/cmath \
  D:/mingw64/x86_64-w64-mingw32/include/math.h \
  D:/mingw64/include/c++/16.1.0/bits/specfun.h \
@@ -430,22 +445,8 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/include/c++/16.1.0/bits/stl_numeric.h \
  D:/mingw64/include/c++/16.1.0/pstl/glue_numeric_defs.h \
  D:/mingw64/include/c++/16.1.0/pstl/execution_defs.h \
- D:/mingw64/x86_64-w64-mingw32/include/winsock2.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ws1_undef.h \
- D:/mingw64/x86_64-w64-mingw32/include/_bsd_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/inaddr.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_socket_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_fd_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsadata.h \
- D:/mingw64/x86_64-w64-mingw32/include/ws2def.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsa_errnos.h \
- D:/mingw64/x86_64-w64-mingw32/include/qos.h D:\Mokthyn\GameNetwork.h \
- D:\Mokthyn\GameRender.h D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h \
- D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h \
- D:/mingw64/x86_64-w64-mingw32/include/in6addr.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_mreq1.h \
- D:/mingw64/x86_64-w64-mingw32/include/mstcpip.h \
- D:/mingw64/include/c++/16.1.0/algorithm \
+ D:\Mokthyn\GameLogic.h D:\Mokthyn\GameNetwork.h D:\Mokthyn\GameRender.h \
+ D:\Mokthyn\GameLogicImpl.h D:/mingw64/include/c++/16.1.0/algorithm \
  D:/mingw64/include/c++/16.1.0/bits/ranges_algo.h \
- D:/mingw64/include/c++/16.1.0/pstl/glue_algorithm_defs.h
+ D:/mingw64/include/c++/16.1.0/pstl/glue_algorithm_defs.h \
+ D:\Mokthyn\GameNetworkImpl.h D:\Mokthyn\GameRenderImpl.h

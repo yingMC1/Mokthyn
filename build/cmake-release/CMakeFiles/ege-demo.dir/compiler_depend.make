@@ -450,7 +450,12 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:/Mokthyn/Mokthyn.cpp \
   D:/mingw64/x86_64-w64-mingw32/include/wow64apiset.h \
   D:/mingw64/x86_64-w64-mingw32/include/ws2def.h \
   D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h \
-  D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h
+  D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h \
+  D:/Mokthyn/GameLogic.h \
+  D:/Mokthyn/GameNetwork.h \
+  D:/Mokthyn/GameRender.h \
+  D:/Mokthyn/GameState.h \
+  D:/Mokthyn/GameTypes.h
 
 
 D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/amxint8intrin.h:
@@ -762,6 +767,8 @@ D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/avx512ifmavlintrin.h:
 D:/mingw64/include/c++/16.1.0/cwchar:
 
 D:/mingw64/include/c++/16.1.0/bits/streambuf.tcc:
+
+D:/Mokthyn/GameTypes.h:
 
 D:/mingw64/lib/gcc/x86_64-w64-mingw32/16.1.0/include/xsaveintrin.h:
 
@@ -1339,6 +1346,8 @@ D:/mingw64/x86_64-w64-mingw32/include/wincon.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/wincontypes.h:
 
+D:/Mokthyn/GameLogic.h:
+
 D:/mingw64/x86_64-w64-mingw32/include/windows.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/winerror.h:
@@ -1352,3 +1361,9 @@ D:/mingw64/x86_64-w64-mingw32/include/wow64apiset.h:
 D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h:
 
 D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h:
+
+D:/Mokthyn/GameNetwork.h:
+
+D:/Mokthyn/GameRender.h:
+
+D:/Mokthyn/GameState.h:
