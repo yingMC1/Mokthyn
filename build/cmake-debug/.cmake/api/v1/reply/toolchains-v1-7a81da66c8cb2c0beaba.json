@@ -46,7 +46,7 @@
 						"kernel32"
 					]
 				},
-				"path" : "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe",
+				"path" : "D:/mingw64/bin/g++.exe",
 				"version" : "16.1.0"
 			},
 			"language" : "CXX",
