@@ -422,70 +422,6 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/x86_64-w64-mingw32/include/winnetwk.h \
  D:/mingw64/x86_64-w64-mingw32/include/wnnc.h \
  D:/mingw64/x86_64-w64-mingw32/include/virtdisk.h \
- D:/mingw64/x86_64-w64-mingw32/include/cderr.h \
- D:/mingw64/x86_64-w64-mingw32/include/dde.h \
- D:/mingw64/x86_64-w64-mingw32/include/ddeml.h \
- D:/mingw64/x86_64-w64-mingw32/include/dlgs.h \
- D:/mingw64/x86_64-w64-mingw32/include/lzexpand.h \
- D:/mingw64/x86_64-w64-mingw32/include/mmsystem.h \
- D:/mingw64/x86_64-w64-mingw32/include/mmsyscom.h \
- D:/mingw64/x86_64-w64-mingw32/include/mciapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/mmiscapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/mmiscapi2.h \
- D:/mingw64/x86_64-w64-mingw32/include/playsoundapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/mmeapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/timeapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/joystickapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/nb30.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpc.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcdce.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcdcep.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcnsi.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcnterr.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcasync.h \
- D:/mingw64/x86_64-w64-mingw32/include/shellapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/winperf.h \
- D:/mingw64/x86_64-w64-mingw32/include/winsock.h \
- D:/mingw64/x86_64-w64-mingw32/include/_bsd_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/inaddr.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_socket_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_fd_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_types.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_mreq1.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsadata.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_xmitfile.h \
- D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsa_errnos.h \
- D:/mingw64/x86_64-w64-mingw32/include/wincrypt.h \
- D:/mingw64/x86_64-w64-mingw32/include/bcrypt.h \
- D:/mingw64/x86_64-w64-mingw32/include/ncrypt.h \
- D:/mingw64/x86_64-w64-mingw32/include/dpapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/winefs.h \
- D:/mingw64/x86_64-w64-mingw32/include/winscard.h \
- D:/mingw64/x86_64-w64-mingw32/include/wtypes.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcndr.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcnsip.h \
- D:/mingw64/x86_64-w64-mingw32/include/rpcsal.h \
- D:/mingw64/x86_64-w64-mingw32/include/ole2.h \
- D:/mingw64/x86_64-w64-mingw32/include/objbase.h \
- D:/mingw64/x86_64-w64-mingw32/include/combaseapi.h \
- D:/mingw64/x86_64-w64-mingw32/include/wtypesbase.h \
- D:/mingw64/x86_64-w64-mingw32/include/unknwnbase.h \
- D:/mingw64/x86_64-w64-mingw32/include/objidlbase.h \
- D:/mingw64/x86_64-w64-mingw32/include/cguid.h \
- D:/mingw64/x86_64-w64-mingw32/include/objidl.h \
- D:/mingw64/x86_64-w64-mingw32/include/unknwn.h \
- D:/mingw64/x86_64-w64-mingw32/include/urlmon.h \
- D:/mingw64/x86_64-w64-mingw32/include/oleidl.h \
- D:/mingw64/x86_64-w64-mingw32/include/servprov.h \
- D:/mingw64/x86_64-w64-mingw32/include/msxml.h \
- D:/mingw64/x86_64-w64-mingw32/include/oaidl.h \
- D:/mingw64/x86_64-w64-mingw32/include/propidl.h \
- D:/mingw64/x86_64-w64-mingw32/include/oleauto.h \
- D:/mingw64/x86_64-w64-mingw32/include/winioctl.h \
- D:/mingw64/x86_64-w64-mingw32/include/winsmcrd.h \
- D:/mingw64/x86_64-w64-mingw32/include/winspool.h \
- D:/mingw64/x86_64-w64-mingw32/include/prsht.h \
- D:/mingw64/x86_64-w64-mingw32/include/commdlg.h \
  D:/mingw64/x86_64-w64-mingw32/include/stralign.h \
  D:/mingw64/x86_64-w64-mingw32/include/sec_api/stralign_s.h \
  D:/mingw64/x86_64-w64-mingw32/include/winsvc.h \
@@ -497,4 +433,20 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/include/c++/16.1.0/bits/random.tcc \
  D:/mingw64/include/c++/16.1.0/numeric \
  D:/mingw64/include/c++/16.1.0/bits/stl_numeric.h \
- D:/mingw64/include/c++/16.1.0/pstl/glue_numeric_defs.h
+ D:/mingw64/include/c++/16.1.0/pstl/glue_numeric_defs.h \
+ D:/mingw64/x86_64-w64-mingw32/include/winsock2.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ws1_undef.h \
+ D:/mingw64/x86_64-w64-mingw32/include/_bsd_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/inaddr.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_socket_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_fd_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_types.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsadata.h \
+ D:/mingw64/x86_64-w64-mingw32/include/ws2def.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsa_errnos.h \
+ D:/mingw64/x86_64-w64-mingw32/include/qos.h \
+ D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h \
+ D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h \
+ D:/mingw64/x86_64-w64-mingw32/include/in6addr.h \
+ D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_mreq1.h \
+ D:/mingw64/x86_64-w64-mingw32/include/mstcpip.h

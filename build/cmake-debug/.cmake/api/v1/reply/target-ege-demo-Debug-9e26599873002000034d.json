@@ -39,19 +39,25 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 134,
+				"line" : 135,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 140,
+				"line" : 141,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 135,
+				"line" : 47,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 136,
 				"parent" : 0
 			},
 			{
@@ -63,7 +69,7 @@
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 133,
+				"line" : 134,
 				"parent" : 0
 			},
 			{
@@ -88,14 +94,14 @@
 					"fragment" : "-g"
 				},
 				{
-					"backtrace" : 6,
+					"backtrace" : 7,
 					"fragment" : "-fstack-protector-strong"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 7,
+					"backtrace" : 8,
 					"path" : "D:/Mokthyn/ege/include"
 				}
 			],
@@ -109,7 +115,7 @@
 	"dependencies" : 
 	[
 		{
-			"backtrace" : 5,
+			"backtrace" : 6,
 			"id" : "copy-runtime-assets::@6890427a1f51a3e7e1df"
 		}
 	],
@@ -149,46 +155,51 @@
 			},
 			{
 				"backtrace" : 4,
+				"fragment" : "-lws2_32",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
 				"fragment" : "-lgraphics",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-lgdiplus",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-lgdi32",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-limm32",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-lmsimg32",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-lole32",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-loleaut32",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-lwinmm",
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
+				"backtrace" : 5,
 				"fragment" : "-luuid",
 				"role" : "libraries"
 			},
@@ -203,38 +214,42 @@
 	[
 		{
 			"backtrace" : 4,
+			"fragment" : "ws2_32"
+		},
+		{
+			"backtrace" : 5,
 			"fragment" : "graphics"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "gdiplus"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "gdi32"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "imm32"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "msimg32"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "ole32"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "oleaut32"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "winmm"
 		},
 		{
-			"backtrace" : 4,
+			"backtrace" : 5,
 			"fragment" : "uuid"
 		}
 	],
@@ -243,7 +258,7 @@
 	"orderDependencies" : 
 	[
 		{
-			"backtrace" : 5,
+			"backtrace" : 6,
 			"id" : "copy-runtime-assets::@6890427a1f51a3e7e1df"
 		}
 	],

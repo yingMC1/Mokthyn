@@ -44,6 +44,7 @@ add_custom_target(copy-runtime-assets ALL
 add_dependencies(${MY_TARGET_NAME} copy-runtime-assets)
 
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
+target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32)
 
 # 设置静态库搜索路径
 if(MSVC)
