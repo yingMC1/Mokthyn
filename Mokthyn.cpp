@@ -1,16 +1,16 @@
 #define WIN32_LEAN_AND_MEAN
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include "game.h/GameLogic.h"
+#include "game.h/GameLogicImpl.h"
+#include "game.h/GameNetwork.h"
+#include "game.h/GameNetworkImpl.h"
+#include "game.h/GameRender.h"
+#include "game.h/GameRenderImpl.h"
+#include "game.h/GameState.h"
+#include "game.h/GameTypes.h"
 #include <graphics.h>
 #include <windows.h>
-#include "GameTypes.h"
-#include "GameState.h"
-#include "GameLogic.h"
-#include "GameNetwork.h"
-#include "GameRender.h"
-#include "GameLogicImpl.h"
-#include "GameNetworkImpl.h"
-#include "GameRenderImpl.h"
+#include <winsock2.h>
+#include <ws2tcpip.h>
 int main() {
     using namespace mokthyn;
     setinitmode(INIT_DEFAULT);
