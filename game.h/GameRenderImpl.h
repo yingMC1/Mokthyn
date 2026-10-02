@@ -12,7 +12,7 @@
 #include <ws2tcpip.h>
 
 namespace mokthyn {
-int scaled(int value) { return value; }
+int scaled(int value) { return value * WindowWidth / DesignWidth; }
 
 void fillRect(int left, int top, int right, int bottom, ege::color_t color) {
     setfillcolor(color);
@@ -100,86 +100,91 @@ void drawMap() {
 }
 
 void drawHud() {
-    const int x = 1000;
-    fillRect(x, 104, 1535, 806, Panel);
-    fillRect(x, 104, 1006, 806, Green);
-    drawText(x + 34, 132, L"无限枪洲", 35, Text);
-    drawText(x + 35, 184, L"FIELD OPERATION  /  01", 15, Muted);
+    const int x = 900;
+    const int leftPad = 24;
+    const int rightPad = 28;
+    const int panelRight = 1172;
+    fillRect(x, 104, panelRight, 806, Panel);
+    fillRect(x, 104, x + 168, 806, Green);
+    drawText(x + 24, 132, L"无限枪洲", 35, Text);
+    drawText(x + 25, 184, L"FIELD OPERATION  /  01", 15, Muted);
 
-    drawText(x + 34, 232, L"生命", 18, Muted);
-    drawText(x + 420, 228, std::to_wstring(health) + L" / 100", 21,
+    drawText(x + leftPad, 232, L"生命", 18, Muted);
+    drawText(x + 220, 228, std::to_wstring(health) + L" / 100", 21,
              health > 60 ? Green : (health > 30 ? Yellow : Red));
-    drawBar(x + 34, 263, 452, 13, health, 100, health > 30 ? Green : Red);
+    drawBar(x + leftPad, 263, 232, 13, health, 100, health > 30 ? Green : Red);
 
-    drawText(x + 34, 309, L"弹药", 18, Muted);
-    drawText(x + 34, 343, std::to_wstring(ammo), 42, Yellow);
-    drawText(x + 167, 362, L"发", 17, Muted);
-    drawText(x + 282, 309, L"医疗包", 18, Muted);
-    drawText(x + 282, 343, std::to_wstring(medkits), 42, Cyan);
+    drawText(x + leftPad, 309, L"弹药", 18, Muted);
+    drawText(x + leftPad, 343, std::to_wstring(ammo), 42, Yellow);
+    drawText(x + 126, 362, L"发", 17, Muted);
+    drawText(x + 240, 309, L"医疗包", 18, Muted);
+    drawText(x + 240, 343, std::to_wstring(medkits), 42, Cyan);
 
-    fillRect(x + 34, 413, x + 486, 414, EGERGB(52, 65, 68));
-    drawText(x + 34, 438, L"任务进度", 18, Muted);
-    drawText(x + 34, 472,
+    fillRect(x + leftPad, 413, panelRight - rightPad, 414, EGERGB(52, 65, 68));
+    drawText(x + leftPad, 438, L"任务进度", 18, Muted);
+    drawText(x + leftPad, 472,
              std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies) + L"  目标", 25, Text);
-    drawBar(x + 34, 516, 452, 8, kills, totalEnemies, Green);
+    drawBar(x + leftPad, 516, 232, 8, kills, totalEnemies, Green);
 
-    drawText(x + 34, 558, L"护甲", 18, Muted);
-    drawText(x + 126, 555, armorOn ? L"等级 " + std::to_wstring(armorTier) : L"未装备", 19,
+    drawText(x + leftPad, 558, L"护甲", 18, Muted);
+    drawText(x + 100, 555, armorOn ? L"等级 " + std::to_wstring(armorTier) : L"未装备", 18,
              armorOn ? Cyan : Muted);
-    if (armorOn) drawBar(x + 34, 588, 452, 8, armorDurability, ArmorDurability[armorTier], Cyan);
-    drawText(x + 34, 626, L"金币", 18, Muted);
-    drawText(x + 128, 622, std::to_wstring(money), 24, Yellow);
+    if (armorOn)
+        drawBar(x + leftPad, 588, 232, 8, armorDurability, ArmorDurability[armorTier], Cyan);
+    drawText(x + leftPad, 626, L"金币", 18, Muted);
+    drawText(x + 100, 622, std::to_wstring(money), 24, Yellow);
     if (networkActive && peerConnected)
-        drawText(x + 268, 626, L"队友 " + std::to_wstring(peerHealth) + L" HP", 18,
+        drawText(x + 200, 626, L"队友 " + std::to_wstring(peerHealth) + L" HP", 17,
                  peerHealth > 30 ? Cyan : Red);
 
-    fillRect(x + 28, 668, x + 492, 669, EGERGB(52, 65, 68));
-    drawText(x + 34, 691, L"WASD 移动    方向键射击", 17, Text);
-    drawText(x + 34, 724, L"E 拾取   H 治疗   K 护甲", 17, Muted);
-    drawText(x + 34, 757, L"Q 撤离   P 暂停   ESC 菜单", 17, Muted);
+    fillRect(x + leftPad, 668, panelRight - rightPad, 669, EGERGB(52, 65, 68));
+    drawText(x + leftPad, 691, L"WASD 移动    方向键射击", 16, Text);
+    drawText(x + leftPad, 724, L"E 拾取   H 治疗   K 护甲", 16, Muted);
+    drawText(x + leftPad, 757, L"Q 撤离   P 暂停   ESC 菜单", 16, Muted);
 
     if (Clock::now() < messageUntil) {
-        fillRect(x + 24, 824, 1535, 872, PanelLight);
-        drawText(x + 42, 837, message, 19, Yellow);
+        fillRect(x + leftPad, 824, panelRight - rightPad, 872, PanelLight);
+        drawText(x + leftPad + 18, 837, message, 19, Yellow);
     }
 }
 
 void drawWeaponBackdrop() {
-    fillRect(780, 120, 1460, 810, EGERGB(12, 17, 22));
-    fillRect(780, 120, 815, 810, EGERGB(42, 54, 60));
+    fillRect(760, 110, 1175, 780, EGERGB(12, 17, 22));
+    fillRect(760, 110, 775, 780, EGERGB(42, 54, 60));
 
     setlinecolor(EGERGB(120, 220, 170));
     setlinestyle(PS_SOLID, 2);
-    line(1050, 650, 1180, 650);
-    line(1180, 650, 1260, 610);
-    line(1260, 610, 1360, 610);
-    line(1360, 610, 1420, 545);
-    line(1420, 545, 1435, 500);
-    line(1435, 500, 1420, 445);
-    line(1420, 445, 1345, 430);
-    line(1345, 430, 1275, 490);
-    line(1275, 490, 1210, 490);
-    line(1210, 490, 1155, 550);
-    line(1155, 550, 1050, 550);
-    line(1050, 550, 980, 610);
-    line(980, 610, 1025, 655);
-    line(1025, 655, 1050, 650);
+    line(scaled(830), scaled(610), scaled(930), scaled(610));
+    line(scaled(930), scaled(610), scaled(990), scaled(570));
+    line(scaled(990), scaled(570), scaled(1055), scaled(570));
+    line(scaled(1055), scaled(570), scaled(1105), scaled(515));
+    line(scaled(1105), scaled(515), scaled(1120), scaled(470));
+    line(scaled(1120), scaled(470), scaled(1105), scaled(420));
+    line(scaled(1105), scaled(420), scaled(1048), scaled(405));
+    line(scaled(1048), scaled(405), scaled(990), scaled(455));
+    line(scaled(990), scaled(455), scaled(935), scaled(455));
+    line(scaled(935), scaled(455), scaled(880), scaled(515));
+    line(scaled(880), scaled(515), scaled(815), scaled(515));
+    line(scaled(815), scaled(515), scaled(760), scaled(570));
+    line(scaled(760), scaled(570), scaled(800), scaled(610));
+    line(scaled(800), scaled(610), scaled(830), scaled(610));
 
     setlinecolor(EGERGB(191, 211, 219));
-    line(1105, 615, 1350, 615);
-    line(1165, 580, 1288, 580);
-    line(1220, 540, 1330, 540);
-    line(1290, 505, 1385, 505);
+    line(scaled(850), scaled(570), scaled(1035), scaled(570));
+    line(scaled(900), scaled(535), scaled(1000), scaled(535));
+    line(scaled(930), scaled(500), scaled(1010), scaled(500));
+    line(scaled(960), scaled(470), scaled(1030), scaled(470));
 
     setfillcolor(EGERGB(24, 31, 38));
-    solidellipse(1430, 500, 42, 20);
+    solidellipse(scaled(1090), scaled(455), scaled(26), scaled(16));
     setfillcolor(EGERGB(130, 216, 168));
-    solidellipse(1430, 500, 10, 10);
+    solidellipse(scaled(1090), scaled(455), scaled(7), scaled(7));
 
     setlinecolor(EGERGB(94, 140, 154));
     setlinestyle(PS_DOT, 1);
-    for (int i = 0; i < 6; ++i) {
-        line(900 + i * 50, 195 + (i % 2) * 12, 980 + i * 50, 195 + (i % 2) * 12);
+    for (int i = 0; i < 5; ++i) {
+        line(scaled(800 + i * 52), scaled(220 + (i % 2) * 10), scaled(860 + i * 52),
+             scaled(220 + (i % 2) * 10));
     }
     setlinestyle(PS_SOLID, 1);
 }
@@ -284,7 +289,7 @@ void drawHelp() {
         L"E               拾取脚下的弹药或医疗包",
         L"H               消耗医疗包，等待 3 秒恢复 20 点生命",
         L"K               穿上或脱下已购买的护甲",
-        L"Q               清除全部目标后，在撤离点开始撤离",
+        L"Q               到达撤离点后即可开始撤离",
         L"P / ESC         暂停行动 / 返回主菜单"};
     for (int i = 0; i < static_cast<int>(instructions.size()); ++i)
         drawText(200, 230 + i * 62, instructions[i], 22, i == 5 ? Green : Text);

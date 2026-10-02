@@ -11,12 +11,14 @@ using Clock = std::chrono::steady_clock;
 
 inline constexpr int WindowWidth = 1200;
 inline constexpr int WindowHeight = 675;
-inline constexpr int MapColumns = 22;
-inline constexpr int MapRows = 17;
-inline constexpr int TileSize = 40;
-inline constexpr int MapLeft = 64;
-inline constexpr int MapTop = 128;
-inline constexpr int ViewRadius = 10;
+inline constexpr int DesignWidth = 1600;
+inline constexpr int DesignHeight = 900;
+inline constexpr int MapColumns = 24;
+inline constexpr int MapRows = 18;
+inline constexpr int TileSize = 32;
+inline constexpr int MapLeft = 40;
+inline constexpr int MapTop = 62;
+inline constexpr int ViewRadius = 12;
 inline constexpr int EnemyHealth = 45;
 inline constexpr unsigned short NetworkPort = 8888;
 

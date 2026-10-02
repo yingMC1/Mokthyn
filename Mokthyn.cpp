@@ -126,7 +126,7 @@ int main() {
             break;
         case Screen::Paused:
             drawPlaying();
-            fillRect(0, 0, WindowWidth, WindowHeight, EGEARGB(170, 5, 10, 13));
+            fillRect(0, 0, DesignWidth, DesignHeight, EGEARGB(170, 5, 10, 13));
             drawText(630, 365, L"已暂停", 48, Text);
             drawText(594, 435, L"按 P 继续  /  ESC 返回菜单", 20, Muted);
             if (keyPressed('P'))

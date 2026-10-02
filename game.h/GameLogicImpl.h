@@ -1,9 +1,9 @@
 #pragma once
-#include "GameTypes.h"
-#include "GameState.h"
 #include "GameLogic.h"
 #include "GameNetwork.h"
 #include "GameRender.h"
+#include "GameState.h"
+#include "GameTypes.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -100,7 +100,7 @@ void startRun() {
             if (x > 0 && y > 0 && x < MapColumns - 1 && y < MapRows - 1) world[y][x] = Floor;
 
     enemies.clear();
-    for (int i = 0; i < 7; ++i) {
+    for (int i = 0; i < 9; ++i) {
         for (int attempt = 0; attempt < 400; ++attempt) {
             const int x = randomInt(1, MapColumns - 2);
             const int y = randomInt(1, MapRows - 2);
@@ -392,8 +392,6 @@ void updatePlaying() {
     if (keyPressed('Q')) {
         if (world[playerY][playerX] != ExitTile)
             setMessage(L"前往地图上的撤离点");
-        else if (kills < totalEnemies)
-            setMessage(L"区域仍有目标存活");
         else {
             extracting = true;
             extractStarted = now;
@@ -403,4 +401,4 @@ void updatePlaying() {
     }
 }
 
-}
+} // namespace mokthyn

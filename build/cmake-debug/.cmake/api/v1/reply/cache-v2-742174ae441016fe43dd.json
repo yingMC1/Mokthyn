@@ -39,7 +39,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "Build configuration"
+					"value" : "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..."
 				}
 			],
 			"type" : "STRING",
@@ -155,10 +155,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
+					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
 				}
 			],
-			"type" : "STRING",
+			"type" : "UNINITIALIZED",
 			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
 		},
 		{
@@ -823,10 +823,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "RC compiler"
+					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
 				}
 			],
-			"type" : "FILEPATH",
+			"type" : "UNINITIALIZED",
 			"value" : "D:/mingw64/bin/windres.exe"
 		},
 		{
@@ -1156,6 +1156,18 @@
 			],
 			"type" : "FILEPATH",
 			"value" : "D:/mingw64/bin/strip.exe"
+		},
+		{
+			"name" : "CMAKE_SYSTEM_NAME",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Name of the operating system being targeted (e.g. Linux, Darwin, Windows). Defaults to CMAKE_HOST_SYSTEM_NAME; set explicitly when first configuring a build tree to enable cross-compiling."
+				}
+			],
+			"type" : "UNINITIALIZED",
+			"value" : "Windows"
 		},
 		{
 			"name" : "CMAKE_TAPI",

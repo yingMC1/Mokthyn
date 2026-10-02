@@ -20,14 +20,17 @@ CMAKE_ADDR2LINE:FILEPATH=D:/mingw64/bin/addr2line.exe
 //Path to a program.
 CMAKE_AR:FILEPATH=D:/mingw64/bin/ar.exe
 
-//Build configuration
+//Choose the type of build, options are: None Debug Release RelWithDebInfo
+// MinSizeRel ...
 CMAKE_BUILD_TYPE:STRING=Debug
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
 
-//CXX compiler
-CMAKE_CXX_COMPILER:STRING=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe
+//Full path to the compiler used for language <LANG>. Set by CMake
+// during compiler detection on the first configure; users may
+// override on the command line to select a specific toolchain.
+CMAKE_CXX_COMPILER:UNINITIALIZED=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -135,8 +138,10 @@ CMAKE_PROJECT_SPDX_LICENSE:STATIC=
 //Path to a program.
 CMAKE_RANLIB:FILEPATH=D:/mingw64/bin/ranlib.exe
 
-//RC compiler
-CMAKE_RC_COMPILER:FILEPATH=D:/mingw64/bin/windres.exe
+//Full path to the compiler used for language <LANG>. Set by CMake
+// during compiler detection on the first configure; users may
+// override on the command line to select a specific toolchain.
+CMAKE_RC_COMPILER:UNINITIALIZED=D:/mingw64/bin/windres.exe
 
 //Flags for Windows Resource Compiler during all build types.
 CMAKE_RC_FLAGS:STRING=
@@ -205,6 +210,11 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
 CMAKE_STRIP:FILEPATH=D:/mingw64/bin/strip.exe
+
+//Name of the operating system being targeted (e.g. Linux, Darwin,
+// Windows). Defaults to CMAKE_HOST_SYSTEM_NAME; set explicitly
+// when first configuring a build tree to enable cross-compiling.
+CMAKE_SYSTEM_NAME:UNINITIALIZED=Windows
 
 //Path to a program.
 CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND
