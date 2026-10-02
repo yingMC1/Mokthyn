@@ -1,9 +1,9 @@
 #pragma once
-#include "GameTypes.h"
-#include "GameState.h"
 #include "GameLogic.h"
 #include "GameNetwork.h"
 #include "GameRender.h"
+#include "GameState.h"
+#include "GameTypes.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -31,7 +31,7 @@ void fillCircle(int x, int y, int radius, ege::color_t color) {
 
 void drawText(int x, int y, const std::wstring& value, int size, ege::color_t color) {
     setbkmode(TRANSPARENT, frameBuffer);
-    setfontbkcolor(Background, frameBuffer);
+    setfontbkcolor(TRANSPARENT, frameBuffer);
     setfont(std::max(1, scaled(size)), 0, L"Microsoft YaHei UI");
     settextcolor(color);
     outtextxy(scaled(x), scaled(y), value.c_str());
@@ -144,10 +144,52 @@ void drawHud() {
     }
 }
 
+void drawWeaponBackdrop() {
+    fillRect(780, 120, 1460, 810, EGERGB(12, 17, 22));
+    fillRect(780, 120, 815, 810, EGERGB(42, 54, 60));
+
+    setlinecolor(EGERGB(120, 220, 170));
+    setlinestyle(PS_SOLID, 2);
+    line(1050, 650, 1180, 650);
+    line(1180, 650, 1260, 610);
+    line(1260, 610, 1360, 610);
+    line(1360, 610, 1420, 545);
+    line(1420, 545, 1435, 500);
+    line(1435, 500, 1420, 445);
+    line(1420, 445, 1345, 430);
+    line(1345, 430, 1275, 490);
+    line(1275, 490, 1210, 490);
+    line(1210, 490, 1155, 550);
+    line(1155, 550, 1050, 550);
+    line(1050, 550, 980, 610);
+    line(980, 610, 1025, 655);
+    line(1025, 655, 1050, 650);
+
+    setlinecolor(EGERGB(191, 211, 219));
+    line(1105, 615, 1350, 615);
+    line(1165, 580, 1288, 580);
+    line(1220, 540, 1330, 540);
+    line(1290, 505, 1385, 505);
+
+    setfillcolor(EGERGB(24, 31, 38));
+    solidellipse(1430, 500, 42, 20);
+    setfillcolor(EGERGB(130, 216, 168));
+    solidellipse(1430, 500, 10, 10);
+
+    setlinecolor(EGERGB(94, 140, 154));
+    setlinestyle(PS_DOT, 1);
+    for (int i = 0; i < 6; ++i) {
+        line(900 + i * 50, 195 + (i % 2) * 12, 980 + i * 50, 195 + (i % 2) * 12);
+    }
+    setlinestyle(PS_SOLID, 1);
+}
+
 void drawMenu() {
     cleardevice();
     fillRect(80, 78, 1520, 822, Panel);
     fillRect(80, 78, 90, 822, Green);
+    drawWeaponBackdrop();
+
     drawText(150, 158, L"无限枪洲", 66, Text);
     drawText(155, 246, L"TACTICAL EXTRACTION", 20, Green);
     drawText(155, 333, L"深入失控区域，清除目标并带着物资撤离。", 25, Muted);
@@ -282,4 +324,4 @@ void drawPlaying() {
     }
 }
 
-}
+} // namespace mokthyn
