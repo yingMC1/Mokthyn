@@ -23,6 +23,6 @@
 - yingMC1，（[luogu账号](https://www.luogu.com.cn/user/1488732)）
 - yingMC-1（yingMC1的小号，应为 vscode 上绑的是yingMC-1来传代码）。
 
-### 后言
+## 后言
 
 Infinite-Shooter 感觉~~橡皮画质~~。
