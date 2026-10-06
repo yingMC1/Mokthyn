@@ -10,7 +10,7 @@
 - 要玩过 Mokthyn。
 - 和我交流过（yingMC：Ying110189@outlook.com）。
 
-写一个 .h（功能能和 game.h 相同）。
+写一个 .h（功能能和 game.h 不能相同）。
 
 ## 开发者
 
