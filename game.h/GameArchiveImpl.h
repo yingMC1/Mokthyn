@@ -69,8 +69,8 @@ bool loadArchive() {
         !validArchiveValue(storedArmorTier, 0, 4) ||
         !validArchiveValue(storedArmorDurability, 0, 125) ||
         !validArchiveValue(storedArmorOn, 0, 1) ||
-        !validArchiveValue(storedPlayerX, 0, MapColumns - 1) ||
-        !validArchiveValue(storedPlayerY, 0, MapRows - 1) ||
+        !validArchiveValue(storedPlayerX, 1, MapColumns - 2) ||
+        !validArchiveValue(storedPlayerY, 1, MapRows - 2) ||
         !validArchiveValue(storedKills, 0, 100000) ||
         !validArchiveValue(storedTotalEnemies, 0, 100000)) {
         archiveStatus = L"存档格式无效，已使用默认数据";
@@ -98,8 +98,8 @@ bool loadArchive() {
         Enemy enemy;
         int alive = 0, awake = 0;
         if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake) ||
-            !validArchiveValue(enemy.x, 0, MapColumns - 1) ||
-            !validArchiveValue(enemy.y, 0, MapRows - 1) ||
+            !validArchiveValue(enemy.x, 1, MapColumns - 2) ||
+            !validArchiveValue(enemy.y, 1, MapRows - 2) ||
             !validArchiveValue(enemy.hp, 0, EnemyHealth) || !validArchiveValue(alive, 0, 1) ||
             !validArchiveValue(awake, 0, 1)) {
             archiveStatus = L"存档敌人数据无效，已使用默认数据";
@@ -152,9 +152,61 @@ bool loadArchive() {
     return true;
 }
 
+void beginNetworkArchiveSession() {
+    if (networkRun) return;
+    networkArchiveSnapshot.world = world;
+    networkArchiveSnapshot.enemies = enemies;
+    networkArchiveSnapshot.playerX = playerX;
+    networkArchiveSnapshot.playerY = playerY;
+    networkArchiveSnapshot.health = health;
+    networkArchiveSnapshot.ammo = ammo;
+    networkArchiveSnapshot.medkits = medkits;
+    networkArchiveSnapshot.money = money;
+    networkArchiveSnapshot.armorTier = armorTier;
+    networkArchiveSnapshot.armorDurability = armorDurability;
+    networkArchiveSnapshot.kills = kills;
+    networkArchiveSnapshot.totalEnemies = totalEnemies;
+    networkArchiveSnapshot.uiScalePercent = uiScalePercent;
+    networkArchiveSnapshot.windowWidth = windowWidth;
+    networkArchiveSnapshot.windowHeight = windowHeight;
+    networkArchiveSnapshot.english = english;
+    networkArchiveSnapshot.hasSavedRun = hasSavedRun;
+    networkArchiveSnapshot.armorOn = armorOn;
+    networkArchiveSnapshot.valid = true;
+    networkRun = true;
+}
+
+void restoreNetworkArchiveSession() {
+    if (!networkRun || !networkArchiveSnapshot.valid) return;
+    world = networkArchiveSnapshot.world;
+    enemies = networkArchiveSnapshot.enemies;
+    playerX = networkArchiveSnapshot.playerX;
+    playerY = networkArchiveSnapshot.playerY;
+    health = networkArchiveSnapshot.health;
+    ammo = networkArchiveSnapshot.ammo;
+    medkits = networkArchiveSnapshot.medkits;
+    money = networkArchiveSnapshot.money;
+    armorTier = networkArchiveSnapshot.armorTier;
+    armorDurability = networkArchiveSnapshot.armorDurability;
+    kills = networkArchiveSnapshot.kills;
+    totalEnemies = networkArchiveSnapshot.totalEnemies;
+    uiScalePercent = networkArchiveSnapshot.uiScalePercent;
+    windowWidth = networkArchiveSnapshot.windowWidth;
+    windowHeight = networkArchiveSnapshot.windowHeight;
+    english = networkArchiveSnapshot.english;
+    hasSavedRun = networkArchiveSnapshot.hasSavedRun;
+    armorOn = networkArchiveSnapshot.armorOn;
+    healing = extracting = false;
+    won = false;
+    networkRun = false;
+    networkArchiveSnapshot.valid = false;
+    screen = Screen::Menu;
+    lastArchiveSave = Clock::now();
+}
+
 bool saveArchive() {
-    if (networkActive) {
-        archiveStatus.clear();
+    if (networkActive || networkRun) {
+        lastArchiveSave = Clock::now();
         return true;
     }
     lastArchiveSave = Clock::now();
@@ -183,7 +235,7 @@ bool saveArchive() {
            << safePlayerX << ' ' << safePlayerY << ' ' << std::clamp(kills, 0, 100000) << ' '
            << std::clamp(totalEnemies, 0, 100000) << '\n';
     for (const auto& row : world) {
-        for (int tile : row) output << std::clamp(tile, Floor, MedkitPickup) << ' ';
+        for (int tile : row) output << std::clamp(tile, static_cast<int>(Floor), static_cast<int>(MedkitPickup)) << ' ';
         output << '\n';
     }
     output << safeEnemyCount << '\n';

@@ -425,6 +425,7 @@ void drawMenu() {
     drawText(850, 385, L"7  设置", 23, Cyan);
     drawText(850, 440, L"ESC  退出", 23, Muted);
     if (!archiveStatus.empty()) drawText(500, 650, archiveStatus, 16, Yellow);
+    else if (Clock::now() < messageUntil) drawText(500, 650, message, 16, Yellow);
 }
 
 void drawNetworkLobby() {
@@ -514,6 +515,7 @@ void drawHelp() {
     drawText(160, 580, L"下载地址：Mokthyn - Download", 19, Cyan);
     drawText(160, 612, DownloadUrl, 19, Cyan);
     drawText(160, 660, L"按 ← → 或 ↑ ↓ 翻页    按 D 打开下载页面    ENTER / ESC 返回", 19, Muted);
+    if (Clock::now() < messageUntil) drawText(160, 710, message, 18, Yellow);
     drawText(visibleDesignWidth() - 110, 115, std::to_wstring(helpPage + 1) + L" / 3", 22,
              Green);
 }

@@ -7,6 +7,7 @@ inline int scaled(int value);
 inline int randomInt(int low, int high);
 inline void setMessage(const std::wstring& text, int milliseconds = 1800);
 inline void resetRunProgress();
+inline void cancelExtraction();
 inline bool lineOfSight(int fromX, int fromY, int toX, int toY);
 inline void computeVisibility();
 inline bool hasEnemyAt(int x, int y);

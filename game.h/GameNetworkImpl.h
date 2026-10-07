@@ -1,4 +1,5 @@
 #pragma once
+#include "GameArchive.h"
 #include "GameTypes.h"
 #include "GameState.h"
 #include "GameLogic.h"
@@ -28,8 +29,16 @@ void closeNetwork() {
     healing = false;
     extracting = false;
     peerExtracting = false;
+    peerExtractConfirmed = false;
+    peerArmorInitialized = false;
+    networkPause = false;
+    pausedAt = {};
     peerArmorTier = peerArmorDurability = 0;
     peerArmorOn = false;
+    peerAddress = {};
+    lastNetworkReceive = {};
+    lastConnectAttempt = {};
+    lastEvacSend = {};
 }
 
 bool initializeNetwork() {
@@ -62,6 +71,10 @@ bool beginHostNetwork() {
     networkHost = true;
     networkActive = true;
     peerConnected = false;
+    peerAddress = {};
+    peerArmorInitialized = false;
+    lastNetworkSend = {};
+    lastNetworkReceive = {};
     networkStatus = L"等待玩家连接 · UDP 8888";
     screen = Screen::HostLobby;
     return true;
@@ -79,6 +92,10 @@ bool beginJoinNetwork() {
     }
     networkHost = false;
     networkActive = true;
+    peerConnected = false;
+    peerAddress = {};
+    lastNetworkSend = {};
+    lastNetworkReceive = {};
     hostIpInput.clear();
     networkStatus = L"输入主机的局域网 IPv4 地址";
     screen = Screen::JoinIp;
@@ -123,6 +140,7 @@ void sendNetworkState() {
            << ' ' << peerHealth << ' ' << peerArmorTier << ' ' << peerArmorDurability << ' '
            << (peerArmorOn ? 1 : 0) << ' ' << kills << ' ' << totalEnemies << ' ' << money << ' '
            << (extracting ? 1 : 0) << ' ' << (peerExtracting ? 1 : 0) << ' '
+           << (screen == Screen::Paused ? 1 : 0) << ' '
            << (screen == Screen::Result ? 1 : 0) << ' ' << (won ? 1 : 0) << ' ' << enemies.size()
            << ' ';
     for (const Enemy& enemy : enemies)
@@ -139,7 +157,8 @@ void sendNetworkState() {
 void processNetwork() {
     if (!networkActive || networkSocket == INVALID_SOCKET) return;
     const auto now = Clock::now();
-    if (!networkHost && !peerConnected && peerAddress.sin_addr.s_addr != 0 &&
+    if (!networkHost && (!peerConnected || screen == Screen::JoinLobby) &&
+        peerAddress.sin_addr.s_addr != 0 &&
         peerAddress.sin_port != 0 &&
         now - lastConnectAttempt >= std::chrono::milliseconds(500)) {
         sendto(networkSocket, "CONNECT", 7, 0, reinterpret_cast<const sockaddr*>(&peerAddress),
@@ -157,28 +176,39 @@ void processNetwork() {
             if (WSAGetLastError() != WSAEWOULDBLOCK) networkStatus = L"网络接收错误";
             break;
         }
+        if (received >= static_cast<int>(sizeof(buffer) - 1)) continue;
         buffer[received] = '\0';
         const std::string data(buffer);
         const bool fromPeer = sender.sin_addr.s_addr == peerAddress.sin_addr.s_addr &&
                               sender.sin_port == peerAddress.sin_port;
 
         if (networkHost && data == "CONNECT") {
-            peerAddress = sender;
-            peerConnected = true;
-            peerX = peerY = -1;
-            peerHealth = 100;
-            networkStatus = L"玩家已连接，按 ENTER 开始";
+            const bool samePeer = peerAddress.sin_addr.s_addr == sender.sin_addr.s_addr &&
+                                  peerAddress.sin_port == sender.sin_port;
+            if (peerConnected && !samePeer) continue;
+            if (!peerConnected) {
+                peerAddress = sender;
+                peerConnected = true;
+                peerX = peerY = -1;
+                peerHealth = 100;
+                peerArmorTier = peerArmorDurability = 0;
+                peerArmorOn = false;
+                peerArmorInitialized = false;
+                peerExtracting = false;
+                networkStatus = L"玩家已连接，按 ENTER 开始";
+            }
             sendto(networkSocket, "ACK", 3, 0, reinterpret_cast<const sockaddr*>(&peerAddress),
                    sizeof(peerAddress));
             lastNetworkReceive = now;
             continue;
         }
-        if (!networkHost && !peerConnected && data == "ACK" &&
-            sender.sin_addr.s_addr == peerAddress.sin_addr.s_addr) {
+        if (!networkHost && data == "ACK" && peerAddress.sin_addr.s_addr != 0 &&
+            sender.sin_addr.s_addr == peerAddress.sin_addr.s_addr &&
+            sender.sin_port == htons(NetworkPort)) {
             peerAddress = sender;
             peerConnected = true;
             networkStatus = L"已连接，等待主机开始";
-            screen = Screen::JoinLobby;
+            if (screen == Screen::JoinIp) screen = Screen::JoinLobby;
             lastNetworkReceive = now;
             continue;
         }
@@ -194,14 +224,18 @@ void processNetwork() {
                 x < MapColumns - 1 && y > 0 && y < MapRows - 1 && world[y][x] != Wall) {
                 peerX = x;
                 peerY = y;
-                peerArmorTier = std::clamp(tier, 0, 4);
-                const int reportedDurability = std::clamp(durability, 0, ArmorDurability[peerArmorTier]);
-                if (peerArmorDurability == 0) {
+                const int reportedTier = std::clamp(tier, 0, 4);
+                const int reportedDurability =
+                    std::clamp(durability, 0, ArmorDurability[reportedTier]);
+                if (!peerArmorInitialized || peerArmorTier != reportedTier) {
+                    peerArmorTier = reportedTier;
                     peerArmorDurability = reportedDurability;
+                    peerArmorInitialized = true;
                 } else {
                     peerArmorDurability = std::min(peerArmorDurability, reportedDurability);
                 }
-                peerArmorOn = armorEnabled != 0 && peerArmorTier > 0 && peerArmorDurability > 0;
+                peerArmorOn =
+                    armorEnabled != 0 && peerArmorTier > 0 && peerArmorDurability > 0;
             }
         } else if (command == "HEAL" && networkHost) {
             peerHealth = std::min(100, peerHealth + 20);
@@ -228,9 +262,10 @@ void processNetwork() {
                 world[y][x] = Floor;
         } else if (command == "EVAC" && networkHost) {
             int status;
-            if (input >> status) {
-                peerExtracting = status == 1;
-                if (peerExtracting) peerExtractStarted = now;
+            if (input >> status && (status == 0 || status == 1)) {
+                const bool requested = status == 1;
+                if (requested && !peerExtracting) peerExtractStarted = now;
+                peerExtracting = requested;
             }
         } else if (command == "LEAVE" && networkHost) {
             peerConnected = false;
@@ -238,6 +273,7 @@ void processNetwork() {
             peerHealth = 0;
             peerArmorTier = peerArmorDurability = 0;
             peerArmorOn = false;
+            peerArmorInitialized = false;
             peerExtracting = false;
             networkStatus = L"队友已离开";
         } else if (command == "START" && !networkHost && screen == Screen::JoinLobby) {
@@ -245,15 +281,19 @@ void processNetwork() {
         } else if (command == "STATE" && !networkHost) {
             int hostX, hostY, hostHp, clientX, clientY, clientHp;
             int clientArmorTier, clientArmorDurability, clientArmorOn;
-            int syncedKills, syncedTotal, syncedMoney, hostEvacuating, peerEvacuating, finished,
-                result;
+            int syncedKills, syncedTotal, syncedMoney, hostEvacuating, peerEvacuating,
+                hostPaused, finished, result;
             int enemyCount;
             if (!(input >> hostX >> hostY >> hostHp >> clientX >> clientY >> clientHp >>
                   clientArmorTier >> clientArmorDurability >> clientArmorOn >> syncedKills >>
-                  syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> finished >>
-                  result >> enemyCount) ||
+                  syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
+                  finished >> result >> enemyCount) ||
                 enemyCount < 0 || enemyCount > 30)
                 continue;
+            beginNetworkArchiveSession();
+            const bool awaitingStart =
+                screen == Screen::JoinLobby || screen == Screen::JoinIp;
+            if (awaitingStart) startRun();
             peerAddress = sender;
             peerConnected = true;
             if (hostX >= 0 && hostX < MapColumns && hostY >= 0 && hostY < MapRows) {
@@ -269,9 +309,27 @@ void processNetwork() {
             totalEnemies = std::max(0, syncedTotal);
             money = std::max(0, syncedMoney);
             peerExtracting = hostEvacuating != 0;
-            if (screen == Screen::JoinLobby || screen == Screen::JoinIp) {
-                screen = Screen::Playing;
-                lastMove = lastEnemyTurn = nextPlayerHit = now;
+            if (extracting && peerEvacuating != 0) {
+                peerExtractConfirmed = true;
+            } else if (extracting && peerExtractConfirmed && peerEvacuating == 0) {
+                cancelExtraction();
+            }
+            const bool wasNetworkPaused = networkPause;
+            networkPause = hostPaused != 0;
+            if (networkPause && !wasNetworkPaused) {
+                pausedAt = now;
+                if (screen == Screen::Playing) screen = Screen::Paused;
+            } else if (!networkPause && wasNetworkPaused) {
+                const auto pausedFor = now - pausedAt;
+                if (healing) healStarted += pausedFor;
+                if (extracting) extractStarted += pausedFor;
+                lastMove += pausedFor;
+                lastEnemyTurn += pausedFor;
+                nextPlayerHit += pausedFor;
+                pausedAt = {};
+                if (screen == Screen::Paused) screen = Screen::Playing;
+            }
+            if (awaitingStart) {
                 setMessage(L"联机对局已开始");
             }
             std::vector<Enemy> syncedEnemies;
@@ -280,7 +338,9 @@ void processNetwork() {
                 Enemy enemy;
                 int alive, awake;
                 if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake)) break;
-                if (enemy.x >= 0 && enemy.x < MapColumns && enemy.y >= 0 && enemy.y < MapRows)
+                if (enemy.x > 0 && enemy.x < MapColumns - 1 && enemy.y > 0 &&
+                    enemy.y < MapRows - 1 && enemy.hp >= 0 && enemy.hp <= EnemyHealth &&
+                    (alive == 0 || alive == 1) && (awake == 0 || awake == 1))
                     syncedEnemies.push_back(
                         {enemy.x, enemy.y, enemy.hp, alive != 0, awake != 0, now});
             }
@@ -301,16 +361,23 @@ void processNetwork() {
         }
     }
 
-    if (networkHost && peerConnected && (screen == Screen::Playing || screen == Screen::Result) &&
+    if (networkHost && peerConnected &&
+        (screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result) &&
         now - lastNetworkSend >= std::chrono::milliseconds(200))
         sendNetworkState();
-    if (!networkHost && peerConnected && screen == Screen::Playing &&
+    if (!networkHost && peerConnected &&
+        (screen == Screen::Playing || screen == Screen::Paused) &&
         now - lastNetworkSend >= std::chrono::milliseconds(100)) {
         std::ostringstream packet;
         packet << "POS " << playerX << ' ' << playerY << ' ' << armorTier << ' ' << armorDurability
                << ' ' << (armorOn ? 1 : 0);
         sendNetworkPacket(packet.str());
         lastNetworkSend = now;
+    }
+    if (!networkHost && peerConnected && screen == Screen::Playing &&
+        now - lastEvacSend >= std::chrono::milliseconds(150)) {
+        sendNetworkPacket(std::string("EVAC ") + (extracting ? "1" : "0"));
+        lastEvacSend = now;
     }
     if (networkHost && peerExtracting && screen == Screen::Playing &&
         now - peerExtractStarted >= std::chrono::seconds(5)) {
@@ -319,7 +386,29 @@ void processNetwork() {
         peerExtracting = false;
         sendNetworkState();
     }
-    if (!networkHost && peerConnected && screen == Screen::Playing &&
+    if (networkHost && peerConnected &&
+        (screen == Screen::Playing || screen == Screen::Paused) &&
+        now - lastNetworkReceive > std::chrono::seconds(5)) {
+        peerConnected = false;
+        peerX = peerY = -1;
+        peerHealth = 0;
+        peerArmorTier = peerArmorDurability = 0;
+        peerArmorOn = false;
+        peerArmorInitialized = false;
+        peerExtracting = false;
+        networkStatus = L"队友连接中断";
+    }
+    if (!networkHost && !peerConnected && screen == Screen::JoinLobby &&
+        lastNetworkReceive != Clock::time_point{} &&
+        now - lastNetworkReceive > std::chrono::seconds(10)) {
+        networkStatus = L"连接超时，请检查主机地址和防火墙";
+        closeNetwork();
+        screen = Screen::Menu;
+        setMessage(networkStatus, 4000);
+    }
+    if (!networkHost && peerConnected &&
+        (screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result ||
+         screen == Screen::JoinLobby) &&
         now - lastNetworkReceive > std::chrono::seconds(5)) {
         networkStatus = L"主机连接中断";
         closeNetwork();

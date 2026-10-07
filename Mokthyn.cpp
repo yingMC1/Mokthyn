@@ -37,6 +37,9 @@ int main() {
         settarget(frameBuffer);
         switch (screen) {
         case Screen::Menu:
+            {
+            const bool newRunKeyPressed = keyPressed('1');
+            const bool enterPressed = keyPressed(VK_RETURN);
             if (keyPressed('L')) {
                 english = !english;
                 saveArchive();
@@ -45,9 +48,9 @@ int main() {
                 screen = Screen::Playing;
                 lastMove = lastEnemyTurn = nextPlayerHit = Clock::now();
                 setMessage(english ? L"Saved run resumed" : L"已继续存档行动");
-            } else if (keyPressed('1') || keyPressed(VK_RETURN))
+            } else if (newRunKeyPressed || enterPressed) {
                 startRun();
-            else if (keyPressed('2'))
+            } else if (keyPressed('2'))
                 screen = Screen::Shop;
             else if (keyPressed('3')) {
                 helpInputReady = false;
@@ -69,6 +72,7 @@ int main() {
             }
             drawMenu();
             break;
+            }
         case Screen::HostLobby:
             if (keyPressed(VK_ESCAPE)) {
                 closeNetwork();
@@ -95,6 +99,7 @@ int main() {
                         networkStatus = L"正在连接主机...";
                         screen = Screen::JoinLobby;
                         lastConnectAttempt = Clock::time_point{};
+                        lastNetworkReceive = Clock::now();
                     } else {
                         networkStatus = L"IP 格式无效，请输入 IPv4 地址";
                     }
@@ -202,12 +207,31 @@ int main() {
             drawPlaying();
             fillRect(0, 0, DesignWidth, DesignHeight, EGEARGB(170, 5, 10, 13));
             drawText(630, 365, L"已暂停", 48, Text);
-            drawText(594, 435, L"按 P 继续  /  ESC 返回菜单", 20, Muted);
-            if (keyPressed('P'))
+            drawText(594, 435,
+                     networkPause ? L"主机暂停中  /  ESC 返回菜单"
+                                  : L"按 P 继续  /  ESC 返回菜单",
+                     20, Muted);
+            if (keyPressed('P') && !networkPause) {
+                const auto pausedFor = Clock::now() - pausedAt;
+                if (healing) healStarted += pausedFor;
+                if (extracting) extractStarted += pausedFor;
+                lastMove += pausedFor;
+                lastEnemyTurn += pausedFor;
+                nextPlayerHit += pausedFor;
+                pausedAt = {};
                 screen = Screen::Playing;
-            else if (keyPressed(VK_ESCAPE)) {
-                saveArchive();
-                screen = Screen::Menu;
+            } else if (keyPressed(VK_ESCAPE)) {
+                if (networkActive) {
+                    sendNetworkPacket("LEAVE");
+                    closeNetwork();
+                }
+                if (networkRun)
+                    restoreNetworkArchiveSession();
+                else {
+                    resetRunProgress();
+                    saveArchive();
+                    screen = Screen::Menu;
+                }
             }
             break;
         case Screen::Result:
@@ -217,8 +241,13 @@ int main() {
                     sendNetworkPacket("LEAVE");
                     closeNetwork();
                 }
-                screen = Screen::Menu;
-                saveArchive();
+                if (networkRun)
+                    restoreNetworkArchiveSession();
+                else {
+                    resetRunProgress();
+                    screen = Screen::Menu;
+                    saveArchive();
+                }
             }
             break;
         }

@@ -30,6 +30,18 @@ void resetRunProgress() {
     extractStarted = {};
     peerExtracting = false;
     peerExtractStarted = {};
+    peerExtractConfirmed = false;
+    lastEvacSend = {};
+    networkPause = false;
+    pausedAt = {};
+}
+
+void cancelExtraction() {
+    extracting = false;
+    peerExtractConfirmed = false;
+    extractStarted = {};
+    lastEvacSend = {};
+    if (networkActive && !networkHost) sendNetworkPacket("EVAC 0");
 }
 
 bool lineOfSight(int fromX, int fromY, int toX, int toY) {
@@ -84,6 +96,12 @@ void placePickup(int type, int minimumDistance) {
 }
 
 void startRun() {
+    if (networkActive) {
+        beginNetworkArchiveSession();
+    } else {
+        networkRun = false;
+        hasSavedRun = true;
+    }
     for (auto& row : world)
         row.fill(Floor);
     for (int x = 0; x < MapColumns; ++x)
@@ -129,7 +147,6 @@ void startRun() {
         placePickup(MedkitPickup, 5);
     kills = 0;
     health = 100;
-    hasSavedRun = !networkActive;
     armorOn = armorTier > 0 && armorDurability > 0;
     resetRunProgress();
     lastMove = lastEnemyTurn = Clock::now();
@@ -216,7 +233,7 @@ void updateEnemies(Clock::time_point now) {
         if (enemy.awake && distance > 1) {
             const int dx = (targetX > enemy.x) - (targetX < enemy.x);
             const int dy = (targetY > enemy.y) - (targetY < enemy.y);
-            const std::array<std::array<int, 2>, 4> directions = {{{dx, 0}, {0, dy}, {dx, dy}, {0, 0}}};
+            const std::array<std::array<int, 2>, 3> directions = {{{dx, 0}, {0, dy}, {0, 0}}};
             for (const auto& direction : directions) {
                 const int nextX = enemy.x + direction[0];
                 const int nextY = enemy.y + direction[1];
@@ -250,7 +267,8 @@ void updateEnemies(Clock::time_point now) {
             nextPlayerHit = now + std::chrono::milliseconds(850);
             if (targetPeer && peerExtracting) peerExtracting = false;
             if (healing || extracting) {
-                healing = extracting = false;
+                healing = false;
+                if (extracting) cancelExtraction();
                 setMessage(L"受到攻击，动作已中断");
             } else {
                 setMessage(L"受到攻击");
@@ -294,8 +312,8 @@ void movePlayer(int dx, int dy) {
     playerX = nextX;
     playerY = nextY;
     if (healing || extracting) {
-        if (extracting && networkActive && !networkHost) sendNetworkPacket("EVAC 0");
-        healing = extracting = false;
+        healing = false;
+        if (extracting) cancelExtraction();
         setMessage(L"动作已取消");
     }
 }
@@ -336,10 +354,16 @@ void updatePlaying() {
             sendNetworkPacket("LEAVE");
             closeNetwork();
         }
-        screen = Screen::Menu;
+        if (networkRun)
+            restoreNetworkArchiveSession();
+        else {
+            resetRunProgress();
+            screen = Screen::Menu;
+        }
         return;
     }
     if (keyPressed('P')) {
+        pausedAt = now;
         screen = Screen::Paused;
         return;
     }
@@ -399,7 +423,8 @@ void updatePlaying() {
         return;
     }
 
-    if (extracting && now - extractStarted >= std::chrono::seconds(5)) {
+    if (extracting && !(networkActive && !networkHost) &&
+        now - extractStarted >= std::chrono::seconds(5)) {
         won = true;
         hasSavedRun = false;
         screen = Screen::Result;
@@ -412,7 +437,8 @@ void updatePlaying() {
         else {
             extracting = true;
             extractStarted = now;
-            if (networkActive && !networkHost) sendNetworkPacket("EVAC 1");
+            peerExtractConfirmed = false;
+            lastEvacSend = {};
             setMessage(L"撤离开始，保持位置 5 秒", 5200);
         }
     }

@@ -54,4 +54,26 @@ struct Enemy {
     bool awake = false;
     Clock::time_point nextAttack = Clock::now();
 };
+
+struct ArchiveSnapshot {
+    std::array<std::array<int, MapColumns>, MapRows> world{};
+    std::vector<Enemy> enemies;
+    int playerX = MapColumns / 2;
+    int playerY = MapRows / 2;
+    int health = 100;
+    int ammo = 30;
+    int medkits = 2;
+    int money = 200;
+    int armorTier = 0;
+    int armorDurability = 0;
+    int kills = 0;
+    int totalEnemies = 0;
+    int uiScalePercent = 120;
+    int windowWidth = DefaultWindowWidth;
+    int windowHeight = DefaultWindowHeight;
+    bool english = false;
+    bool hasSavedRun = false;
+    bool armorOn = false;
+    bool valid = false;
+};
 } // namespace mokthyn
