@@ -46,12 +46,12 @@ int battleHudRight() { return visibleDesignWidth() - 24; }
 
 int battleHudWidth() { return battleHudRight() - battleHudLeft(); }
 
-void resizeGameWindow(int width, int height) {
-    if (width == windowWidth && height == windowHeight) return;
+bool resizeGameWindow(int width, int height) {
+    if (width == windowWidth && height == windowHeight) return true;
     PIMAGE resizedBuffer = newimage(width, height);
     if (resizedBuffer == nullptr) {
         archiveStatus = L"无法分配新窗口画布";
-        return;
+        return false;
     }
 
     settarget(nullptr);
@@ -65,6 +65,7 @@ void resizeGameWindow(int width, int height) {
     ege_enable_aa(true, frameBuffer);
     delimage(previousBuffer);
     settarget(frameBuffer);
+    return true;
 }
 
 std::wstring localize(const std::wstring& value) {

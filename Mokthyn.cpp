@@ -149,37 +149,50 @@ int main() {
             drawHelp();
             break;
         case Screen::Settings:
-            if (keyPressed(VK_ESCAPE) || keyPressed(VK_RETURN)) {
+            {
+            const bool escapePressed = keyPressed(VK_ESCAPE);
+            const bool enterPressed = keyPressed(VK_RETURN);
+            const bool upPressed = keyPressed(VK_UP);
+            const bool downPressed = keyPressed(VK_DOWN);
+            const bool leftPressed = keyPressed(VK_LEFT);
+            const bool rightPressed = keyPressed(VK_RIGHT);
+            const bool resetPressed = keyPressed('0');
+            if (escapePressed || enterPressed) {
                 screen = Screen::Menu;
-            } else if (keyPressed(VK_UP)) {
+            } else if (upPressed) {
                 settingsSelection = (settingsSelection + 2) % 3;
-            } else if (keyPressed(VK_DOWN)) {
+            } else if (downPressed) {
                 settingsSelection = (settingsSelection + 1) % 3;
-            } else if (keyPressed(VK_LEFT) || keyPressed(VK_RIGHT)) {
-                const int direction = keyPressed(VK_RIGHT) ? 1 : -1;
+            } else if (leftPressed || rightPressed) {
+                const int direction = rightPressed ? 1 : -1;
+                bool settingApplied = true;
                 if (settingsSelection == 0) {
                     uiScalePercent = std::clamp(
                         uiScalePercent + direction * UiScaleStepPercent,
                         MinUiScalePercent, MaxUiScalePercent);
                 } else if (settingsSelection == 1) {
-                    resizeGameWindow(
+                    settingApplied = resizeGameWindow(
                         std::clamp(windowWidth + direction * WindowWidthStep,
                                    MinWindowWidth, MaxWindowWidth),
                         windowHeight);
                 } else {
-                    resizeGameWindow(
+                    settingApplied = resizeGameWindow(
                         windowWidth,
                         std::clamp(windowHeight + direction * WindowHeightStep,
                                    MinWindowHeight, MaxWindowHeight));
                 }
-                saveArchive();
-            } else if (keyPressed('0')) {
+                if (settingApplied) saveArchive();
+            } else if (resetPressed) {
+                const bool resizeSucceeded =
+                    resizeGameWindow(DefaultWindowWidth, DefaultWindowHeight);
                 uiScalePercent = 120;
-                resizeGameWindow(DefaultWindowWidth, DefaultWindowHeight);
+                const std::wstring resizeError = resizeSucceeded ? L"" : archiveStatus;
                 saveArchive();
+                if (!resizeSucceeded) archiveStatus = resizeError;
             }
             drawSettings();
             break;
+            }
         case Screen::Playing:
             updatePlaying();
             drawPlaying();
