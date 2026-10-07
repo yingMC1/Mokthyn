@@ -1,5 +1,9 @@
 ## Mokthyn
 
+### 下载网
+
+[点击这里](https://fancy-unit-740c.ying110189.workers.dev)
+
 ### 简介
 
 这是个逃离雅科夫模式的游戏，搜、打、撤功能。
@@ -11,6 +15,8 @@
 新版本使用了 Cmake + ege + vscode 界面更好看。
 
 ## 如何贡献文献
+
+打开[下载网](https://fancy-unit-740c.ying110189.workers.dev)，贡献文献功能上传 .h 文件。
 
 要求：
 - 要玩过 Mokthyn。
