@@ -363,9 +363,13 @@ void updatePlaying() {
         return;
     }
     if (keyPressed('P')) {
-        pausedAt = now;
-        screen = Screen::Paused;
-        return;
+        if (networkActive && !networkHost) {
+            setMessage(L"联机行动由主机控制暂停");
+        } else {
+            pausedAt = now;
+            screen = Screen::Paused;
+            return;
+        }
     }
     if (keyPressed('K')) {
         if (armorTier <= 0 || armorDurability <= 0)

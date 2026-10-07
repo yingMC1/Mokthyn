@@ -59,6 +59,7 @@ bool initializeNetwork() {
 }
 
 bool beginHostNetwork() {
+    saveArchive();
     if (!initializeNetwork()) return false;
     sockaddr_in local{};
     local.sin_family = AF_INET;
@@ -81,6 +82,7 @@ bool beginHostNetwork() {
 }
 
 bool beginJoinNetwork() {
+    saveArchive();
     if (!initializeNetwork()) return false;
     sockaddr_in local{};
     local.sin_family = AF_INET;
@@ -227,15 +229,19 @@ void processNetwork() {
                 const int reportedTier = std::clamp(tier, 0, 4);
                 const int reportedDurability =
                     std::clamp(durability, 0, ArmorDurability[reportedTier]);
-                if (!peerArmorInitialized || peerArmorTier != reportedTier) {
+                if (!peerArmorInitialized) {
                     peerArmorTier = reportedTier;
                     peerArmorDurability = reportedDurability;
                     peerArmorInitialized = true;
-                } else {
+                } else if (peerArmorTier == reportedTier) {
                     peerArmorDurability = std::min(peerArmorDurability, reportedDurability);
                 }
                 peerArmorOn =
                     armorEnabled != 0 && peerArmorTier > 0 && peerArmorDurability > 0;
+                if (peerExtracting && world[peerY][peerX] != ExitTile) {
+                    peerExtracting = false;
+                    peerExtractStarted = {};
+                }
             }
         } else if (command == "HEAL" && networkHost) {
             peerHealth = std::min(100, peerHealth + 20);
@@ -263,9 +269,12 @@ void processNetwork() {
         } else if (command == "EVAC" && networkHost) {
             int status;
             if (input >> status && (status == 0 || status == 1)) {
-                const bool requested = status == 1;
+                const bool requested =
+                    status == 1 && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
+                    peerY < MapRows - 1 && world[peerY][peerX] == ExitTile && peerHealth > 0;
                 if (requested && !peerExtracting) peerExtractStarted = now;
                 peerExtracting = requested;
+                if (!peerExtracting) peerExtractStarted = {};
             }
         } else if (command == "LEAVE" && networkHost) {
             peerConnected = false;
@@ -294,6 +303,7 @@ void processNetwork() {
             const bool awaitingStart =
                 screen == Screen::JoinLobby || screen == Screen::JoinIp;
             if (awaitingStart) startRun();
+            const int previousHealth = health;
             peerAddress = sender;
             peerConnected = true;
             if (hostX >= 0 && hostX < MapColumns && hostY >= 0 && hostY < MapRows) {
@@ -302,6 +312,7 @@ void processNetwork() {
             }
             peerHealth = std::clamp(hostHp, 0, 100);
             health = std::clamp(clientHp, 0, 100);
+            if (extracting && health < previousHealth) cancelExtraction();
             armorTier = std::clamp(clientArmorTier, 0, 4);
             armorDurability = std::clamp(clientArmorDurability, 0, ArmorDurability[armorTier]);
             armorOn = clientArmorOn != 0 && armorTier > 0 && armorDurability > 0;
@@ -380,7 +391,9 @@ void processNetwork() {
         lastEvacSend = now;
     }
     if (networkHost && peerExtracting && screen == Screen::Playing &&
-        now - peerExtractStarted >= std::chrono::seconds(5)) {
+        now - peerExtractStarted >= std::chrono::seconds(5) && peerX > 0 &&
+        peerX < MapColumns - 1 && peerY > 0 && peerY < MapRows - 1 &&
+        world[peerY][peerX] == ExitTile && peerHealth > 0) {
         won = true;
         screen = Screen::Result;
         peerExtracting = false;

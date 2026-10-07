@@ -198,10 +198,15 @@ void restoreNetworkArchiveSession() {
     armorOn = networkArchiveSnapshot.armorOn;
     healing = extracting = false;
     won = false;
+    const auto now = Clock::now();
+    for (Enemy& enemy : enemies) enemy.nextAttack = now;
+    lastMove = lastEnemyTurn = nextPlayerHit = now;
+    pausedAt = {};
+    networkPause = false;
     networkRun = false;
     networkArchiveSnapshot.valid = false;
     screen = Screen::Menu;
-    lastArchiveSave = Clock::now();
+    lastArchiveSave = now;
 }
 
 bool saveArchive() {

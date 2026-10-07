@@ -215,6 +215,7 @@ int main() {
                 const auto pausedFor = Clock::now() - pausedAt;
                 if (healing) healStarted += pausedFor;
                 if (extracting) extractStarted += pausedFor;
+                if (networkHost && peerExtracting) peerExtractStarted += pausedFor;
                 lastMove += pausedFor;
                 lastEnemyTurn += pausedFor;
                 nextPlayerHit += pausedFor;
