@@ -13,7 +13,14 @@
 #include <ws2tcpip.h>
 
 namespace mokthyn {
-int scaled(int value) { return value * WindowWidth / DesignWidth; }
+int scaledLength(int value) {
+    return value * WindowWidth * uiScalePercent / (DesignWidth * 100);
+}
+
+int scaled(int value) {
+    return WindowWidth / 2 +
+           (value - DesignWidth / 2) * WindowWidth * uiScalePercent / (DesignWidth * 100);
+}
 
 std::wstring localize(const std::wstring& value) {
     if (!english) return value;
@@ -34,6 +41,13 @@ std::wstring localize(const std::wstring& value) {
         {L"开始行动", L"Start a new run"}, {L"黑市商店", L"Black market"},
         {L"操作说明", L"Field manual"}, {L"创建联机主机", L"Host a co-op game"},
         {L"加入局域网游戏", L"Join a LAN game"}, {L"退出", L"Quit"},
+        {L"设置", L"Settings"}, {L"界面缩放", L"Interface scale"},
+        {L"左右方向键调整比例", L"Use LEFT / RIGHT to adjust"},
+        {L"按 0 恢复默认比例", L"Press 0 to restore the default"},
+        {L"按 ENTER / ESC 返回主菜单", L"Press ENTER / ESC to return"},
+        {L"当前比例", L"Current scale"},
+        {L"（窗口尺寸不变）", L"(window size unchanged)"},
+        {L"存档中的界面比例无效", L"Invalid interface scale in save file"},
         {L"弹药库存", L"Ammo reserve"}, {L"持有金币", L"Coins"},
         {L"高清战术视图   /   EGE GRAPHICS", L"TACTICAL VIEW   /   EGE GRAPHICS"},
         {L"继续存档", L"Resume saved run"}, {L"切换语言：L", L"Language: L"},
@@ -133,6 +147,8 @@ std::wstring localize(const std::wstring& value) {
          L"After restarting, press 6 to resume the last solo run or 1 to start a new run."},
         {L"按 L 在简体中文与 English 间切换；语言设置会随存档保存。",
          L"Press L to switch between Chinese and English; the setting is saved."},
+        {L"主菜单按 7 打开设置，可调整界面缩放比例。",
+         L"Press 7 on the main menu to adjust interface scaling."},
         {L"联机：主机按 4，队友按 5 并输入主机 IPv4；双方需在同一局域网。",
          L"Co-op: host presses 4; teammate presses 5 and enters the host IPv4. Same LAN required."},
         {L"联机使用 UDP 8888；若无法连接，请检查防火墙和路由器设置。",
@@ -202,14 +218,14 @@ void outlineRect(int left, int top, int right, int bottom, ege::color_t color) {
 
 void fillCircle(int x, int y, int radius, ege::color_t color) {
     setfillcolor(color);
-    fillcircle(scaled(x), scaled(y), std::max(1, scaled(radius)));
+    fillcircle(scaled(x), scaled(y), std::max(1, scaledLength(radius)));
 }
 
 void drawText(int x, int y, const std::wstring& value, int size, ege::color_t color) {
     const std::wstring displayed = localize(value);
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(TRANSPARENT, frameBuffer);
-    setfont(std::max(1, scaled(size)), 0, L"Microsoft YaHei UI");
+    setfont(std::max(1, scaledLength(size)), 0, L"Microsoft YaHei UI");
     settextcolor(color);
     outtextxy(scaled(x), scaled(y), displayed.c_str());
 }
@@ -353,9 +369,9 @@ void drawWeaponBackdrop() {
     line(scaled(960), scaled(470), scaled(1030), scaled(470));
 
     setfillcolor(EGERGB(24, 31, 38));
-    solidellipse(scaled(1090), scaled(455), scaled(26), scaled(16));
+    solidellipse(scaled(1090), scaled(455), scaledLength(26), scaledLength(16));
     setfillcolor(EGERGB(130, 216, 168));
-    solidellipse(scaled(1090), scaled(455), scaled(7), scaled(7));
+    solidellipse(scaled(1090), scaled(455), scaledLength(7), scaledLength(7));
 
     setlinecolor(EGERGB(94, 140, 154));
     setlinestyle(PS_DOT, 1);
@@ -387,12 +403,14 @@ void drawMenu() {
     drawText(205, 592, L"创建联机主机", 22, Text);
     drawText(155, 648, L"5", 23, Yellow);
     drawText(205, 644, L"加入局域网游戏", 22, Text);
-    drawText(155, 700, L"ESC", 17, Muted);
-    drawText(205, 696, L"退出", 20, Text);
     if (hasSavedRun) {
-        drawText(155, 748, L"6", 23, Cyan);
-        drawText(205, 744, L"继续存档", 20, Text);
+        drawText(155, 700, L"6", 23, Cyan);
+        drawText(205, 696, L"继续存档", 20, Text);
     }
+    drawText(155, hasSavedRun ? 748 : 700, L"7", 23, Cyan);
+    drawText(205, hasSavedRun ? 744 : 696, L"设置", 20, Text);
+    drawText(155, 800, L"ESC", 17, Muted);
+    drawText(205, 796, L"退出", 20, Text);
     drawText(1260, 92, L"切换语言：L", 17, Muted);
     if (!archiveStatus.empty()) drawText(920, 690, archiveStatus, 16, Yellow);
 
@@ -404,7 +422,7 @@ void drawMenu() {
     drawText(920, 594, armorTier > 0 ? L"等级 " + std::to_wstring(armorTier) : L"无", 28, Green);
     drawText(1140, 560, L"持有金币", 18, Muted);
     drawText(1140, 594, std::to_wstring(money), 28, Yellow);
-    drawText(155, 770, L"高清战术视图   /   EGE GRAPHICS", 17, Muted);
+    drawText(155, 822, L"高清战术视图   /   EGE GRAPHICS", 17, Muted);
 }
 
 void drawNetworkLobby() {
@@ -495,6 +513,35 @@ void drawHelp() {
     drawText(200, 710, DownloadUrl, 17, Cyan);
     drawText(200, 755, L"按 ← → 或 ↑ ↓ 翻页    按 D 打开下载页面    ENTER / ESC 返回", 17, Muted);
     drawText(1330, 140, std::to_wstring(helpPage + 1) + L" / 3", 20, Green);
+}
+
+void drawSettings() {
+    cleardevice();
+    fillRect(130, 90, 1470, 810, Panel);
+    drawText(190, 150, L"设置", 46, Text);
+    drawText(200, 270, L"界面缩放", 26, Muted);
+    drawText(200, 330, localize(L"当前比例") + L" " + std::to_wstring(uiScalePercent) + L"%",
+             38, Green);
+    drawText(200, 392, L"（窗口尺寸不变）", 19, Muted);
+
+    const int left = 200;
+    const int right = 1400;
+    fillRect(left, 500, right, 510, PanelLight);
+    const int marker = left + (right - left) * (uiScalePercent - MinUiScalePercent) /
+                                  (MaxUiScalePercent - MinUiScalePercent);
+    fillRect(left, 500, marker, 510, Green);
+    fillCircle(marker, 505, 13, Text);
+    for (int scale = MinUiScalePercent; scale <= MaxUiScalePercent;
+         scale += UiScaleStepPercent) {
+        const int x = left + (right - left) * (scale - MinUiScalePercent) /
+                                 (MaxUiScalePercent - MinUiScalePercent);
+        drawText(x - 24, 535, std::to_wstring(scale) + L"%", 18,
+                 scale == uiScalePercent ? Green : Muted);
+    }
+    drawText(200, 650, L"左右方向键调整比例", 20, Text);
+    drawText(200, 696, L"按 0 恢复默认比例", 18, Muted);
+    drawText(200, 748, L"按 ENTER / ESC 返回主菜单", 18, Muted);
+    if (!archiveStatus.empty()) drawText(850, 650, archiveStatus, 17, Yellow);
 }
 
 void drawResult() {

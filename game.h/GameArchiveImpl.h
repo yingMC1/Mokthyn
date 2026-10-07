@@ -61,7 +61,8 @@ bool loadArchive() {
     if (!(input >> signature >> version >> storedEnglish >> savedRun >> storedHealth >> storedAmmo >>
           storedMedkits >> storedMoney >> storedArmorTier >> storedArmorDurability >> storedArmorOn >>
           storedPlayerX >> storedPlayerY >> storedKills >> storedTotalEnemies) ||
-        signature != "MOKTHYN_SAVE" || version != 1 || !validArchiveValue(storedEnglish, 0, 1) ||
+        signature != "MOKTHYN_SAVE" || (version != 1 && version != 2) ||
+        !validArchiveValue(storedEnglish, 0, 1) ||
         !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, 100) ||
         !validArchiveValue(storedAmmo, 0, 100000) || !validArchiveValue(storedMedkits, 0, 10000) ||
         !validArchiveValue(storedMoney, 0, 100000000) ||
@@ -108,8 +109,17 @@ bool loadArchive() {
         enemy.awake = awake != 0;
         storedEnemies.push_back(enemy);
     }
+    int storedUiScalePercent = MinUiScalePercent;
+    if (version == 2 &&
+        (!(input >> storedUiScalePercent) ||
+         !validArchiveValue(storedUiScalePercent, MinUiScalePercent, MaxUiScalePercent) ||
+         (storedUiScalePercent - MinUiScalePercent) % UiScaleStepPercent != 0)) {
+        archiveStatus = L"存档中的界面比例无效";
+        return false;
+    }
 
     english = storedEnglish != 0;
+    uiScalePercent = storedUiScalePercent;
     hasSavedRun = savedRun != 0;
     health = storedHealth;
     ammo = storedAmmo;
@@ -144,7 +154,7 @@ bool saveArchive() {
     }
 
     std::ostringstream output;
-    output << "MOKTHYN_SAVE 1\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
+    output << "MOKTHYN_SAVE 2\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
            << health << ' ' << ammo << ' ' << medkits << ' ' << money << ' ' << armorTier << ' '
            << armorDurability << ' ' << (armorOn ? 1 : 0) << ' ' << playerX << ' ' << playerY
            << ' ' << kills << ' ' << totalEnemies << '\n';
@@ -156,6 +166,7 @@ bool saveArchive() {
     for (const Enemy& enemy : enemies)
         output << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
                << ' ' << (enemy.awake ? 1 : 0) << '\n';
+    output << uiScalePercent << '\n';
     const std::string contents = output.str();
 
     const std::wstring temporaryPath = path + L".tmp";

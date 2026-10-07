@@ -13,6 +13,9 @@ inline constexpr int WindowWidth = 1200;
 inline constexpr int WindowHeight = 675;
 inline constexpr int DesignWidth = 1600;
 inline constexpr int DesignHeight = 900;
+inline constexpr int MinUiScalePercent = 100;
+inline constexpr int MaxUiScalePercent = 130;
+inline constexpr int UiScaleStepPercent = 10;
 inline constexpr int MapColumns = 24;
 inline constexpr int MapRows = 18;
 inline constexpr int TileSize = 32;
@@ -38,7 +41,7 @@ inline const std::array<int, 5> ArmorDurability = {0, 50, 75, 100, 125};
 inline const std::array<int, 5> ArmorReduction = {0, 4, 7, 10, 13};
 
 enum Tile : int { Floor, Wall, AmmoPickup, ExitTile, MedkitPickup };
-enum class Screen { Menu, Shop, Help, Playing, Paused, Result, HostLobby, JoinIp, JoinLobby };
+enum class Screen { Menu, Shop, Help, Settings, Playing, Paused, Result, HostLobby, JoinIp, JoinLobby };
 
 struct Enemy {
     int x = 0;

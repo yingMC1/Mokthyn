@@ -57,6 +57,8 @@ int main() {
                 if (!beginHostNetwork()) setMessage(L"主机启动失败，检查端口 8888 是否被占用");
             } else if (keyPressed('5')) {
                 if (!beginJoinNetwork()) setMessage(L"网络初始化失败");
+            } else if (keyPressed('7')) {
+                screen = Screen::Settings;
             } else if (keyPressed(VK_ESCAPE)) {
                 saveArchive();
                 settarget(nullptr);
@@ -146,6 +148,25 @@ int main() {
                     setMessage(english ? L"Could not open download page" : L"下载页面无法打开");
             }
             drawHelp();
+            break;
+        case Screen::Settings:
+            if (keyPressed(VK_ESCAPE) || keyPressed(VK_RETURN)) {
+                screen = Screen::Menu;
+            } else if (keyPressed(VK_LEFT) || keyPressed(VK_DOWN)) {
+                if (uiScalePercent > MinUiScalePercent) {
+                    uiScalePercent -= UiScaleStepPercent;
+                    saveArchive();
+                }
+            } else if (keyPressed(VK_RIGHT) || keyPressed(VK_UP)) {
+                if (uiScalePercent < MaxUiScalePercent) {
+                    uiScalePercent += UiScaleStepPercent;
+                    saveArchive();
+                }
+            } else if (keyPressed('0') && uiScalePercent != MinUiScalePercent) {
+                uiScalePercent = MinUiScalePercent;
+                saveArchive();
+            }
+            drawSettings();
             break;
         case Screen::Playing:
             updatePlaying();

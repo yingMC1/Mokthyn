@@ -40,6 +40,7 @@ inline Clock::time_point lastArchiveSave{};
 inline std::wstring message;
 inline std::wstring archiveStatus;
 inline int shopSelection = 0;
+inline int uiScalePercent = MinUiScalePercent;
 inline PIMAGE frameBuffer = nullptr;
 
 inline SOCKET networkSocket = INVALID_SOCKET;

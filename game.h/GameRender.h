@@ -16,6 +16,7 @@ inline void drawMenu();
 inline void drawNetworkLobby();
 inline void drawShop();
 inline void drawHelp();
+inline void drawSettings();
 inline void drawResult();
 inline void drawPlaying();
 } // namespace mokthyn
