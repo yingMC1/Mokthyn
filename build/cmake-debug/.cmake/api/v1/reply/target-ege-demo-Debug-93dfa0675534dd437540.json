@@ -17,7 +17,6 @@
 			"target_link_options",
 			"target_link_directories",
 			"target_link_libraries",
-			"add_dependencies",
 			"target_compile_options",
 			"target_include_directories"
 		],
@@ -39,43 +38,37 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 135,
+				"line" : 139,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 141,
+				"line" : 145,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 47,
+				"line" : 51,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 136,
+				"line" : 140,
 				"parent" : 0
 			},
 			{
 				"command" : 4,
 				"file" : 0,
-				"line" : 44,
+				"line" : 138,
 				"parent" : 0
 			},
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 134,
-				"parent" : 0
-			},
-			{
-				"command" : 6,
-				"file" : 0,
-				"line" : 46,
+				"line" : 50,
 				"parent" : 0
 			}
 		]
@@ -94,14 +87,14 @@
 					"fragment" : "-g"
 				},
 				{
-					"backtrace" : 7,
+					"backtrace" : 6,
 					"fragment" : "-fstack-protector-strong"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 8,
+					"backtrace" : 7,
 					"path" : "D:/Mokthyn/ege/include"
 				}
 			],
@@ -110,13 +103,6 @@
 			[
 				0
 			]
-		}
-	],
-	"dependencies" : 
-	[
-		{
-			"backtrace" : 6,
-			"id" : "copy-runtime-assets::@6890427a1f51a3e7e1df"
 		}
 	],
 	"id" : "ege-demo::@6890427a1f51a3e7e1df",
@@ -156,6 +142,11 @@
 			{
 				"backtrace" : 4,
 				"fragment" : "-lws2_32",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "-lshell32",
 				"role" : "libraries"
 			},
 			{
@@ -217,6 +208,10 @@
 			"fragment" : "ws2_32"
 		},
 		{
+			"backtrace" : 4,
+			"fragment" : "shell32"
+		},
+		{
 			"backtrace" : 5,
 			"fragment" : "graphics"
 		},
@@ -255,13 +250,6 @@
 	],
 	"name" : "ege-demo",
 	"nameOnDisk" : "ege-demo.exe",
-	"orderDependencies" : 
-	[
-		{
-			"backtrace" : 6,
-			"id" : "copy-runtime-assets::@6890427a1f51a3e7e1df"
-		}
-	],
 	"paths" : 
 	{
 		"build" : ".",

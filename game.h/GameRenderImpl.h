@@ -17,9 +17,14 @@ int scaledLength(int value) {
     return value * WindowWidth * uiScalePercent / (DesignWidth * 100);
 }
 
-int scaled(int value) {
+int scaledX(int value) {
     return WindowWidth / 2 +
            (value - DesignWidth / 2) * WindowWidth * uiScalePercent / (DesignWidth * 100);
+}
+
+int scaledY(int value) {
+    return WindowHeight / 2 +
+           (value - DesignHeight / 2) * WindowHeight * uiScalePercent / (DesignHeight * 100);
 }
 
 std::wstring localize(const std::wstring& value) {
@@ -206,17 +211,17 @@ std::wstring localize(const std::wstring& value) {
 
 void fillRect(int left, int top, int right, int bottom, ege::color_t color) {
     setfillcolor(color);
-    bar(scaled(left), scaled(top), scaled(right), scaled(bottom));
+    bar(scaledX(left), scaledY(top), scaledX(right), scaledY(bottom));
 }
 
 void outlineRect(int left, int top, int right, int bottom, ege::color_t color) {
     setlinecolor(color);
-    rectangle(scaled(left), scaled(top), scaled(right), scaled(bottom));
+    rectangle(scaledX(left), scaledY(top), scaledX(right), scaledY(bottom));
 }
 
 void fillCircle(int x, int y, int radius, ege::color_t color) {
     setfillcolor(color);
-    fillcircle(scaled(x), scaled(y), std::max(1, scaledLength(radius)));
+    fillcircle(scaledX(x), scaledY(y), std::max(1, scaledLength(radius)));
 }
 
 void drawText(int x, int y, const std::wstring& value, int size, ege::color_t color) {
@@ -225,7 +230,7 @@ void drawText(int x, int y, const std::wstring& value, int size, ege::color_t co
     setfontbkcolor(TRANSPARENT, frameBuffer);
     setfont(std::max(1, scaledLength(size)), 0, L"Microsoft YaHei UI");
     settextcolor(color);
-    outtextxy(scaled(x), scaled(y), displayed.c_str());
+    outtextxy(scaledX(x), scaledY(y), displayed.c_str());
 }
 
 void drawBar(int x, int y, int width, int height, int value, int maximum, ege::color_t color) {
@@ -345,37 +350,37 @@ void drawWeaponBackdrop() {
 
     setlinecolor(EGERGB(120, 220, 170));
     setlinestyle(PS_SOLID, 2);
-    line(scaled(830), scaled(610), scaled(930), scaled(610));
-    line(scaled(930), scaled(610), scaled(990), scaled(570));
-    line(scaled(990), scaled(570), scaled(1055), scaled(570));
-    line(scaled(1055), scaled(570), scaled(1105), scaled(515));
-    line(scaled(1105), scaled(515), scaled(1120), scaled(470));
-    line(scaled(1120), scaled(470), scaled(1105), scaled(420));
-    line(scaled(1105), scaled(420), scaled(1048), scaled(405));
-    line(scaled(1048), scaled(405), scaled(990), scaled(455));
-    line(scaled(990), scaled(455), scaled(935), scaled(455));
-    line(scaled(935), scaled(455), scaled(880), scaled(515));
-    line(scaled(880), scaled(515), scaled(815), scaled(515));
-    line(scaled(815), scaled(515), scaled(760), scaled(570));
-    line(scaled(760), scaled(570), scaled(800), scaled(610));
-    line(scaled(800), scaled(610), scaled(830), scaled(610));
+    line(scaledX(830), scaledY(610), scaledX(930), scaledY(610));
+    line(scaledX(930), scaledY(610), scaledX(990), scaledY(570));
+    line(scaledX(990), scaledY(570), scaledX(1055), scaledY(570));
+    line(scaledX(1055), scaledY(570), scaledX(1105), scaledY(515));
+    line(scaledX(1105), scaledY(515), scaledX(1120), scaledY(470));
+    line(scaledX(1120), scaledY(470), scaledX(1105), scaledY(420));
+    line(scaledX(1105), scaledY(420), scaledX(1048), scaledY(405));
+    line(scaledX(1048), scaledY(405), scaledX(990), scaledY(455));
+    line(scaledX(990), scaledY(455), scaledX(935), scaledY(455));
+    line(scaledX(935), scaledY(455), scaledX(880), scaledY(515));
+    line(scaledX(880), scaledY(515), scaledX(815), scaledY(515));
+    line(scaledX(815), scaledY(515), scaledX(760), scaledY(570));
+    line(scaledX(760), scaledY(570), scaledX(800), scaledY(610));
+    line(scaledX(800), scaledY(610), scaledX(830), scaledY(610));
 
     setlinecolor(EGERGB(191, 211, 219));
-    line(scaled(850), scaled(570), scaled(1035), scaled(570));
-    line(scaled(900), scaled(535), scaled(1000), scaled(535));
-    line(scaled(930), scaled(500), scaled(1010), scaled(500));
-    line(scaled(960), scaled(470), scaled(1030), scaled(470));
+    line(scaledX(850), scaledY(570), scaledX(1035), scaledY(570));
+    line(scaledX(900), scaledY(535), scaledX(1000), scaledY(535));
+    line(scaledX(930), scaledY(500), scaledX(1010), scaledY(500));
+    line(scaledX(960), scaledY(470), scaledX(1030), scaledY(470));
 
     setfillcolor(EGERGB(24, 31, 38));
-    solidellipse(scaled(1090), scaled(455), scaledLength(26), scaledLength(16));
+    solidellipse(scaledX(1090), scaledY(455), scaledLength(26), scaledLength(16));
     setfillcolor(EGERGB(130, 216, 168));
-    solidellipse(scaled(1090), scaled(455), scaledLength(7), scaledLength(7));
+    solidellipse(scaledX(1090), scaledY(455), scaledLength(7), scaledLength(7));
 
     setlinecolor(EGERGB(94, 140, 154));
     setlinestyle(PS_DOT, 1);
     for (int i = 0; i < 5; ++i) {
-        line(scaled(800 + i * 52), scaled(220 + (i % 2) * 10), scaled(860 + i * 52),
-             scaled(220 + (i % 2) * 10));
+        line(scaledX(800 + i * 52), scaledY(220 + (i % 2) * 10),
+             scaledX(860 + i * 52), scaledY(220 + (i % 2) * 10));
     }
     setlinestyle(PS_SOLID, 1);
 }

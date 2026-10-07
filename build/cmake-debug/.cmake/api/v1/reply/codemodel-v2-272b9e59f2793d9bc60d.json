@@ -16,8 +16,7 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						0,
-						1
+						0
 					]
 				}
 			],
@@ -32,8 +31,7 @@
 					"name" : "ege-demo",
 					"targetIndexes" : 
 					[
-						0,
-						1
+						0
 					]
 				}
 			],
@@ -41,15 +39,8 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "copy-runtime-assets::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-copy-runtime-assets-Debug-ef0866540dcf0608a3db.json",
-					"name" : "copy-runtime-assets",
-					"projectIndex" : 0
-				},
-				{
-					"directoryIndex" : 0,
 					"id" : "ege-demo::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-ege-demo-Debug-9e26599873002000034d.json",
+					"jsonFile" : "target-ege-demo-Debug-93dfa0675534dd437540.json",
 					"name" : "ege-demo",
 					"projectIndex" : 0
 				}
