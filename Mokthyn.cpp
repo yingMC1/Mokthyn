@@ -16,11 +16,12 @@
 #include <ws2tcpip.h>
 int main() {
     using namespace mokthyn;
+    loadArchive();
     setinitmode(INIT_DEFAULT);
-    initgraph(WindowWidth, WindowHeight);
+    initgraph(windowWidth, windowHeight);
     ege_enable_aa(true);
     setbkmode(TRANSPARENT);
-    frameBuffer = newimage(WindowWidth, WindowHeight);
+    frameBuffer = newimage(windowWidth, windowHeight);
     if (frameBuffer == nullptr) {
         closegraph();
         return 1;
@@ -28,8 +29,6 @@ int main() {
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(Background, frameBuffer);
     ege_enable_aa(true, frameBuffer);
-    loadArchive();
-
     while (is_run()) {
         processNetwork();
         if ((screen == Screen::Playing || screen == Screen::Paused) &&
@@ -152,18 +151,31 @@ int main() {
         case Screen::Settings:
             if (keyPressed(VK_ESCAPE) || keyPressed(VK_RETURN)) {
                 screen = Screen::Menu;
-            } else if (keyPressed(VK_LEFT) || keyPressed(VK_DOWN)) {
-                if (uiScalePercent > MinUiScalePercent) {
-                    uiScalePercent -= UiScaleStepPercent;
-                    saveArchive();
+            } else if (keyPressed(VK_UP)) {
+                settingsSelection = (settingsSelection + 2) % 3;
+            } else if (keyPressed(VK_DOWN)) {
+                settingsSelection = (settingsSelection + 1) % 3;
+            } else if (keyPressed(VK_LEFT) || keyPressed(VK_RIGHT)) {
+                const int direction = keyPressed(VK_RIGHT) ? 1 : -1;
+                if (settingsSelection == 0) {
+                    uiScalePercent = std::clamp(
+                        uiScalePercent + direction * UiScaleStepPercent,
+                        MinUiScalePercent, MaxUiScalePercent);
+                } else if (settingsSelection == 1) {
+                    resizeGameWindow(
+                        std::clamp(windowWidth + direction * WindowWidthStep,
+                                   MinWindowWidth, MaxWindowWidth),
+                        windowHeight);
+                } else {
+                    resizeGameWindow(
+                        windowWidth,
+                        std::clamp(windowHeight + direction * WindowHeightStep,
+                                   MinWindowHeight, MaxWindowHeight));
                 }
-            } else if (keyPressed(VK_RIGHT) || keyPressed(VK_UP)) {
-                if (uiScalePercent < MaxUiScalePercent) {
-                    uiScalePercent += UiScaleStepPercent;
-                    saveArchive();
-                }
-            } else if (keyPressed('0') && uiScalePercent != MinUiScalePercent) {
-                uiScalePercent = MinUiScalePercent;
+                saveArchive();
+            } else if (keyPressed('0')) {
+                uiScalePercent = 120;
+                resizeGameWindow(DefaultWindowWidth, DefaultWindowHeight);
                 saveArchive();
             }
             drawSettings();

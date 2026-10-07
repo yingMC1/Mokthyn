@@ -9,8 +9,14 @@
 namespace mokthyn {
 using Clock = std::chrono::steady_clock;
 
-inline constexpr int WindowWidth = 1200;
-inline constexpr int WindowHeight = 675;
+inline constexpr int DefaultWindowWidth = 1200;
+inline constexpr int DefaultWindowHeight = 675;
+inline constexpr int MinWindowWidth = 960;
+inline constexpr int MaxWindowWidth = 1920;
+inline constexpr int WindowWidthStep = 120;
+inline constexpr int MinWindowHeight = 540;
+inline constexpr int MaxWindowHeight = 1080;
+inline constexpr int WindowHeightStep = 60;
 inline constexpr int DesignWidth = 1600;
 inline constexpr int DesignHeight = 900;
 inline constexpr int MinUiScalePercent = 100;
@@ -18,9 +24,6 @@ inline constexpr int MaxUiScalePercent = 130;
 inline constexpr int UiScaleStepPercent = 10;
 inline constexpr int MapColumns = 24;
 inline constexpr int MapRows = 18;
-inline constexpr int TileSize = 32;
-inline constexpr int MapLeft = 40;
-inline constexpr int MapTop = 62;
 inline constexpr int ViewRadius = 12;
 inline constexpr int EnemyHealth = 45;
 inline constexpr unsigned short NetworkPort = 8888;

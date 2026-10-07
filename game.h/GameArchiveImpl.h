@@ -61,7 +61,7 @@ bool loadArchive() {
     if (!(input >> signature >> version >> storedEnglish >> savedRun >> storedHealth >> storedAmmo >>
           storedMedkits >> storedMoney >> storedArmorTier >> storedArmorDurability >> storedArmorOn >>
           storedPlayerX >> storedPlayerY >> storedKills >> storedTotalEnemies) ||
-        signature != "MOKTHYN_SAVE" || (version != 1 && version != 2) ||
+        signature != "MOKTHYN_SAVE" || (version < 1 || version > 3) ||
         !validArchiveValue(storedEnglish, 0, 1) ||
         !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, 100) ||
         !validArchiveValue(storedAmmo, 0, 100000) || !validArchiveValue(storedMedkits, 0, 10000) ||
@@ -109,17 +109,30 @@ bool loadArchive() {
         enemy.awake = awake != 0;
         storedEnemies.push_back(enemy);
     }
-    int storedUiScalePercent = MinUiScalePercent;
-    if (version == 2 &&
+    int storedUiScalePercent = 120;
+    int storedWindowWidth = DefaultWindowWidth;
+    int storedWindowHeight = DefaultWindowHeight;
+    if (version >= 2 &&
         (!(input >> storedUiScalePercent) ||
          !validArchiveValue(storedUiScalePercent, MinUiScalePercent, MaxUiScalePercent) ||
          (storedUiScalePercent - MinUiScalePercent) % UiScaleStepPercent != 0)) {
         archiveStatus = L"存档中的界面比例无效";
         return false;
     }
+    if (version >= 3 &&
+        (!(input >> storedWindowWidth >> storedWindowHeight) ||
+         !validArchiveValue(storedWindowWidth, MinWindowWidth, MaxWindowWidth) ||
+         (storedWindowWidth - MinWindowWidth) % WindowWidthStep != 0 ||
+         !validArchiveValue(storedWindowHeight, MinWindowHeight, MaxWindowHeight) ||
+         (storedWindowHeight - MinWindowHeight) % WindowHeightStep != 0)) {
+        archiveStatus = L"存档中的窗口尺寸无效";
+        return false;
+    }
 
     english = storedEnglish != 0;
     uiScalePercent = storedUiScalePercent;
+    windowWidth = storedWindowWidth;
+    windowHeight = storedWindowHeight;
     hasSavedRun = savedRun != 0;
     health = storedHealth;
     ammo = storedAmmo;
@@ -154,7 +167,7 @@ bool saveArchive() {
     }
 
     std::ostringstream output;
-    output << "MOKTHYN_SAVE 2\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
+    output << "MOKTHYN_SAVE 3\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
            << health << ' ' << ammo << ' ' << medkits << ' ' << money << ' ' << armorTier << ' '
            << armorDurability << ' ' << (armorOn ? 1 : 0) << ' ' << playerX << ' ' << playerY
            << ' ' << kills << ' ' << totalEnemies << '\n';
@@ -167,6 +180,7 @@ bool saveArchive() {
         output << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
                << ' ' << (enemy.awake ? 1 : 0) << '\n';
     output << uiScalePercent << '\n';
+    output << windowWidth << ' ' << windowHeight << '\n';
     const std::string contents = output.str();
 
     const std::wstring temporaryPath = path + L".tmp";

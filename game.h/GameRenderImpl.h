@@ -14,17 +14,57 @@
 
 namespace mokthyn {
 int scaledLength(int value) {
-    return value * WindowWidth * uiScalePercent / (DesignWidth * 100);
+    const int scalePercent =
+        std::min(windowWidth * 100 / DesignWidth, windowHeight * 100 / DesignHeight);
+    return value * scalePercent * uiScalePercent / 10000;
 }
 
 int scaledX(int value) {
-    return WindowWidth / 2 +
-           (value - DesignWidth / 2) * WindowWidth * uiScalePercent / (DesignWidth * 100);
+    return value * windowWidth * uiScalePercent / (DesignWidth * 100);
 }
 
 int scaledY(int value) {
-    return WindowHeight / 2 +
-           (value - DesignHeight / 2) * WindowHeight * uiScalePercent / (DesignHeight * 100);
+    return value * windowHeight * uiScalePercent / (DesignHeight * 100);
+}
+
+int visibleDesignWidth() { return DesignWidth * 100 / uiScalePercent; }
+
+int visibleDesignHeight() { return DesignHeight * 100 / uiScalePercent; }
+
+int battleTileSize() {
+    return std::max(20, std::min((visibleDesignWidth() - 460) / MapColumns,
+                                 (visibleDesignHeight() - 140) / MapRows));
+}
+
+int battleMapLeft() { return 30; }
+
+int battleMapTop() { return 90; }
+
+int battleHudLeft() { return battleMapLeft() + MapColumns * battleTileSize() + 24; }
+
+int battleHudRight() { return visibleDesignWidth() - 24; }
+
+int battleHudWidth() { return battleHudRight() - battleHudLeft(); }
+
+void resizeGameWindow(int width, int height) {
+    if (width == windowWidth && height == windowHeight) return;
+    PIMAGE resizedBuffer = newimage(width, height);
+    if (resizedBuffer == nullptr) {
+        archiveStatus = L"无法分配新窗口画布";
+        return;
+    }
+
+    settarget(nullptr);
+    resizewindow(width, height);
+    PIMAGE previousBuffer = frameBuffer;
+    frameBuffer = resizedBuffer;
+    windowWidth = width;
+    windowHeight = height;
+    setbkmode(TRANSPARENT, frameBuffer);
+    setfontbkcolor(Background, frameBuffer);
+    ege_enable_aa(true, frameBuffer);
+    delimage(previousBuffer);
+    settarget(frameBuffer);
 }
 
 std::wstring localize(const std::wstring& value) {
@@ -46,12 +86,27 @@ std::wstring localize(const std::wstring& value) {
         {L"开始行动", L"Start a new run"}, {L"黑市商店", L"Black market"},
         {L"操作说明", L"Field manual"}, {L"创建联机主机", L"Host a co-op game"},
         {L"加入局域网游戏", L"Join a LAN game"}, {L"退出", L"Quit"},
+        {L"1  开始行动", L"1  Start a new run"},
+        {L"2  黑市商店", L"2  Black market"},
+        {L"3  操作说明", L"3  Field manual"},
+        {L"4  创建联机主机", L"4  Host a co-op game"},
+        {L"5  加入局域网游戏", L"5  Join a LAN game"},
+        {L"6  继续存档", L"6  Resume saved run"},
+        {L"7  设置", L"7  Settings"},
+        {L"ESC  退出", L"ESC  Quit"},
         {L"设置", L"Settings"}, {L"界面缩放", L"Interface scale"},
         {L"左右方向键调整比例", L"Use LEFT / RIGHT to adjust"},
         {L"按 0 恢复默认比例", L"Press 0 to restore the default"},
         {L"按 ENTER / ESC 返回主菜单", L"Press ENTER / ESC to return"},
         {L"当前比例", L"Current scale"},
         {L"（窗口尺寸不变）", L"(window size unchanged)"},
+        {L"窗口宽度", L"Window width"},
+        {L"窗口高度", L"Window height"},
+        {L"↑ ↓ 选择项目，← → 调整", L"UP / DOWN select; LEFT / RIGHT adjust"},
+        {L"按 0 恢复默认值", L"Press 0 to restore defaults"},
+        {L"窗口尺寸已更新", L"Window size updated"},
+        {L"无法分配新窗口画布", L"Could not allocate the resized window buffer"},
+        {L"存档中的窗口尺寸无效", L"Invalid window dimensions in save file"},
         {L"存档中的界面比例无效", L"Invalid interface scale in save file"},
         {L"弹药库存", L"Ammo reserve"}, {L"持有金币", L"Coins"},
         {L"高清战术视图   /   EGE GRAPHICS", L"TACTICAL VIEW   /   EGE GRAPHICS"},
@@ -241,39 +296,44 @@ void drawBar(int x, int y, int width, int height, int value, int maximum, ege::c
 
 void drawMap() {
     computeVisibility();
-    fillRect(MapLeft - 12, MapTop - 12, MapLeft + MapColumns * TileSize + 12,
-             MapTop + MapRows * TileSize + 12, EGERGB(9, 14, 18));
+    const int tileSize = battleTileSize();
+    const int mapLeft = battleMapLeft();
+    const int mapTop = battleMapTop();
+    fillRect(mapLeft - 4, mapTop - 4, mapLeft + MapColumns * tileSize + 4,
+             mapTop + MapRows * tileSize + 4, EGERGB(9, 14, 18));
 
     for (int y = 0; y < MapRows; ++y) {
         for (int x = 0; x < MapColumns; ++x) {
-            const int left = MapLeft + x * TileSize;
-            const int top = MapTop + y * TileSize;
+            const int left = mapLeft + x * tileSize;
+            const int top = mapTop + y * tileSize;
             if (!visible[y][x]) {
-                fillRect(left, top, left + TileSize - 1, top + TileSize - 1, EGERGB(16, 23, 28));
+                fillRect(left, top, left + tileSize - 1, top + tileSize - 1,
+                         EGERGB(16, 23, 28));
                 continue;
             }
 
             ege::color_t tileColor = EGERGB(34, 47, 51);
             if (world[y][x] == Wall) tileColor = EGERGB(67, 77, 75);
             if (world[y][x] == ExitTile) tileColor = EGERGB(34, 78, 63);
-            fillRect(left, top, left + TileSize - 1, top + TileSize - 1, tileColor);
-            outlineRect(left, top, left + TileSize - 1, top + TileSize - 1, EGERGB(24, 35, 39));
+            fillRect(left, top, left + tileSize - 1, top + tileSize - 1, tileColor);
+            outlineRect(left, top, left + tileSize - 1, top + tileSize - 1,
+                        EGERGB(24, 35, 39));
 
             if (world[y][x] == AmmoPickup) {
-                fillCircle(left + TileSize / 2, top + TileSize / 2, 7, Yellow);
-                drawText(left + 15, top + 8, L"+", 19, Background);
+                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize / 5, Yellow);
+                drawText(left + tileSize / 2 - 7, top + tileSize / 2 - 10, L"+", 19, Background);
             } else if (world[y][x] == MedkitPickup) {
-                fillCircle(left + TileSize / 2, top + TileSize / 2, 8, Cyan);
-                drawText(left + 14, top + 8, L"+", 20, Background);
+                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize / 5, Cyan);
+                drawText(left + tileSize / 2 - 7, top + tileSize / 2 - 10, L"+", 20, Background);
             } else if (world[y][x] == ExitTile) {
-                outlineRect(left + 8, top + 8, left + TileSize - 9, top + TileSize - 9, Green);
-                drawText(left + 12, top + 9, L"E", 19, Green);
+                outlineRect(left + 8, top + 8, left + tileSize - 9, top + tileSize - 9, Green);
+                drawText(left + tileSize / 2 - 6, top + tileSize / 2 - 10, L"E", 19, Green);
             }
 
             for (const Enemy& enemy : enemies) {
                 if (!enemy.alive || enemy.x != x || enemy.y != y) continue;
-                fillCircle(left + TileSize / 2, top + TileSize / 2, 11, Red);
-                fillCircle(left + TileSize / 2 - 3, top + TileSize / 2 - 3, 3,
+                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize * 3 / 10, Red);
+                fillCircle(left + tileSize / 2 - 3, top + tileSize / 2 - 3, tileSize / 12,
                            EGERGB(255, 174, 137));
                 break;
             }
@@ -282,150 +342,88 @@ void drawMap() {
 
     if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
         peerY < MapRows - 1 && visible[peerY][peerX]) {
-        const int peerCenterX = MapLeft + peerX * TileSize + TileSize / 2;
-        const int peerCenterY = MapTop + peerY * TileSize + TileSize / 2;
-        fillCircle(peerCenterX, peerCenterY, 15, EGERGB(37, 55, 76));
-        fillCircle(peerCenterX, peerCenterY, 9, Cyan);
+        const int peerCenterX = mapLeft + peerX * tileSize + tileSize / 2;
+        const int peerCenterY = mapTop + peerY * tileSize + tileSize / 2;
+        fillCircle(peerCenterX, peerCenterY, tileSize * 2 / 5, EGERGB(37, 55, 76));
+        fillCircle(peerCenterX, peerCenterY, tileSize / 4, Cyan);
     }
 
-    const int playerCenterX = MapLeft + playerX * TileSize + TileSize / 2;
-    const int playerCenterY = MapTop + playerY * TileSize + TileSize / 2;
-    fillCircle(playerCenterX, playerCenterY, 16, EGERGB(37, 70, 62));
-    fillCircle(playerCenterX, playerCenterY, 10, Green);
-    fillCircle(playerCenterX + 3, playerCenterY - 3, 3, Text);
+    const int playerCenterX = mapLeft + playerX * tileSize + tileSize / 2;
+    const int playerCenterY = mapTop + playerY * tileSize + tileSize / 2;
+    fillCircle(playerCenterX, playerCenterY, tileSize / 2, EGERGB(37, 70, 62));
+    fillCircle(playerCenterX, playerCenterY, tileSize / 3, Green);
+    fillCircle(playerCenterX + 3, playerCenterY - 3, tileSize / 10, Text);
 }
 
 void drawHud() {
-    const int x = 900;
-    const int leftPad = 24;
-    const int rightPad = 28;
-    const int panelRight = 1172;
-    fillRect(x, 104, panelRight, 806, Panel);
-    fillRect(x, 104, x + 168, 806, Green);
-    drawText(x + 24, 132, L"无限枪洲", 35, Text);
-    drawText(x + 25, 184, L"FIELD OPERATION  /  01", 15, Muted);
+    const int x = battleHudLeft();
+    const int right = battleHudRight();
+    const int width = battleHudWidth();
+    const int padding = 20;
+    const int valueX = x + std::max(120, width - 150);
+    fillRect(x, 74, right, visibleDesignHeight() - 22, Panel);
+    fillRect(x, 74, x + std::min(12, width / 10), visibleDesignHeight() - 22, Green);
 
-    drawText(x + leftPad, 232, L"生命", 18, Muted);
-    drawText(x + 220, 228, std::to_wstring(health) + L" / 100", 21,
+    drawText(x + padding, 94, L"无限枪洲", 31, Text);
+    drawText(x + padding, 139, L"FIELD OPERATION  /  01", 14, Muted);
+    drawText(x + padding, 183, L"生命", 17, Muted);
+    drawText(valueX, 181, std::to_wstring(health) + L" / 100", 18,
              health > 60 ? Green : (health > 30 ? Yellow : Red));
-    drawBar(x + leftPad, 263, 232, 13, health, 100, health > 30 ? Green : Red);
+    drawBar(x + padding, 211, width - padding * 2, 12, health, 100, health > 30 ? Green : Red);
 
-    drawText(x + leftPad, 309, L"弹药", 18, Muted);
-    drawText(x + leftPad, 343, std::to_wstring(ammo), 42, Yellow);
-    drawText(x + 126, 362, L"发", 17, Muted);
-    drawText(x + 240, 309, L"医疗包", 18, Muted);
-    drawText(x + 240, 343, std::to_wstring(medkits), 42, Cyan);
+    drawText(x + padding, 245, L"弹药", 17, Muted);
+    drawText(x + padding, 270, std::to_wstring(ammo), 34, Yellow);
+    drawText(x + 105, 287, L"发", 16, Muted);
+    drawText(x + std::max(180, width / 2), 245, L"医疗包", 17, Muted);
+    drawText(x + std::max(180, width / 2), 270, std::to_wstring(medkits), 34, Cyan);
 
-    fillRect(x + leftPad, 413, panelRight - rightPad, 414, EGERGB(52, 65, 68));
-    drawText(x + leftPad, 438, L"任务进度", 18, Muted);
-    drawText(x + leftPad, 472,
-             std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies) + L"  目标", 25, Text);
-    drawBar(x + leftPad, 516, 232, 8, kills, totalEnemies, Green);
+    fillRect(x + padding, 324, right - padding, 325, EGERGB(52, 65, 68));
+    drawText(x + padding, 344, L"任务进度", 17, Muted);
+    drawText(x + padding, 373,
+             std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies) + L"  目标", 21,
+             Text);
+    drawBar(x + padding, 410, width - padding * 2, 8, kills, totalEnemies, Green);
 
-    drawText(x + leftPad, 558, L"护甲", 18, Muted);
-    drawText(x + 100, 555, armorOn ? L"等级 " + std::to_wstring(armorTier) : L"未装备", 18,
+    drawText(x + padding, 444, L"护甲", 17, Muted);
+    drawText(x + 100, 442, armorOn ? L"等级 " + std::to_wstring(armorTier) : L"未装备", 17,
              armorOn ? Cyan : Muted);
     if (armorOn)
-        drawBar(x + leftPad, 588, 232, 8, armorDurability, ArmorDurability[armorTier], Cyan);
-    drawText(x + leftPad, 626, L"金币", 18, Muted);
-    drawText(x + 100, 622, std::to_wstring(money), 24, Yellow);
+        drawBar(x + padding, 470, width - padding * 2, 8, armorDurability,
+                ArmorDurability[armorTier], Cyan);
+    drawText(x + padding, 496, L"金币", 17, Muted);
+    drawText(x + 100, 494, std::to_wstring(money), 20, Yellow);
     if (networkActive && peerConnected)
-        drawText(x + 200, 626, L"队友 " + std::to_wstring(peerHealth) + L" HP", 17,
+        drawText(x + std::max(200, width / 2), 494,
+                 L"队友 " + std::to_wstring(peerHealth) + L" HP", 16,
                  peerHealth > 30 ? Cyan : Red);
 
-    fillRect(x + leftPad, 668, panelRight - rightPad, 669, EGERGB(52, 65, 68));
-    drawText(x + leftPad, 691, L"WASD 移动    方向键射击", 16, Text);
-    drawText(x + leftPad, 724, L"E 拾取   H 治疗   K 护甲", 16, Muted);
-    drawText(x + leftPad, 757, L"Q 撤离   P 暂停   ESC 菜单", 16, Muted);
-
-    if (Clock::now() < messageUntil) {
-        fillRect(x + leftPad, 824, panelRight - rightPad, 872, PanelLight);
-        drawText(x + leftPad + 18, 837, message, 19, Yellow);
-    }
-}
-
-void drawWeaponBackdrop() {
-    fillRect(760, 110, 1175, 780, EGERGB(12, 17, 22));
-    fillRect(760, 110, 775, 780, EGERGB(42, 54, 60));
-
-    setlinecolor(EGERGB(120, 220, 170));
-    setlinestyle(PS_SOLID, 2);
-    line(scaledX(830), scaledY(610), scaledX(930), scaledY(610));
-    line(scaledX(930), scaledY(610), scaledX(990), scaledY(570));
-    line(scaledX(990), scaledY(570), scaledX(1055), scaledY(570));
-    line(scaledX(1055), scaledY(570), scaledX(1105), scaledY(515));
-    line(scaledX(1105), scaledY(515), scaledX(1120), scaledY(470));
-    line(scaledX(1120), scaledY(470), scaledX(1105), scaledY(420));
-    line(scaledX(1105), scaledY(420), scaledX(1048), scaledY(405));
-    line(scaledX(1048), scaledY(405), scaledX(990), scaledY(455));
-    line(scaledX(990), scaledY(455), scaledX(935), scaledY(455));
-    line(scaledX(935), scaledY(455), scaledX(880), scaledY(515));
-    line(scaledX(880), scaledY(515), scaledX(815), scaledY(515));
-    line(scaledX(815), scaledY(515), scaledX(760), scaledY(570));
-    line(scaledX(760), scaledY(570), scaledX(800), scaledY(610));
-    line(scaledX(800), scaledY(610), scaledX(830), scaledY(610));
-
-    setlinecolor(EGERGB(191, 211, 219));
-    line(scaledX(850), scaledY(570), scaledX(1035), scaledY(570));
-    line(scaledX(900), scaledY(535), scaledX(1000), scaledY(535));
-    line(scaledX(930), scaledY(500), scaledX(1010), scaledY(500));
-    line(scaledX(960), scaledY(470), scaledX(1030), scaledY(470));
-
-    setfillcolor(EGERGB(24, 31, 38));
-    solidellipse(scaledX(1090), scaledY(455), scaledLength(26), scaledLength(16));
-    setfillcolor(EGERGB(130, 216, 168));
-    solidellipse(scaledX(1090), scaledY(455), scaledLength(7), scaledLength(7));
-
-    setlinecolor(EGERGB(94, 140, 154));
-    setlinestyle(PS_DOT, 1);
-    for (int i = 0; i < 5; ++i) {
-        line(scaledX(800 + i * 52), scaledY(220 + (i % 2) * 10),
-             scaledX(860 + i * 52), scaledY(220 + (i % 2) * 10));
-    }
-    setlinestyle(PS_SOLID, 1);
+    fillRect(x + padding, 532, right - padding, 533, EGERGB(52, 65, 68));
+    drawText(x + padding, 550, L"WASD 移动    方向键射击", 15, Text);
+    drawText(x + padding, 578, L"E 拾取   H 治疗   K 护甲", 15, Muted);
+    drawText(x + padding, 606, L"Q 撤离   P 暂停   ESC 菜单", 15, Muted);
+    if (Clock::now() < messageUntil)
+        drawText(x + padding, 642, message, 16, Yellow);
 }
 
 void drawMenu() {
     cleardevice();
-    fillRect(80, 78, 1520, 822, Panel);
-    fillRect(80, 78, 90, 822, Green);
-    drawWeaponBackdrop();
+    setfillcolor(Background);
+    bar(0, 0, windowWidth, windowHeight);
 
-    drawText(150, 158, L"无限枪洲", 66, Text);
-    drawText(155, 246, L"TACTICAL EXTRACTION", 20, Green);
-    drawText(155, 333, L"深入失控区域，清除目标并带着物资撤离。", 25, Muted);
-    fillRect(155, 405, 1442, 406, EGERGB(52, 65, 68));
+    drawText(500, 210, L"无限枪洲", 58, Text);
+    drawText(1190, 225, L"切换语言：L", 16, Muted);
 
-    drawText(155, 440, L"1", 23, Green);
-    drawText(205, 436, L"开始行动", 22, Text);
-    drawText(155, 492, L"2", 23, Yellow);
-    drawText(205, 488, L"黑市商店", 22, Text);
-    drawText(155, 544, L"3", 23, Cyan);
-    drawText(205, 540, L"操作说明", 22, Text);
-    drawText(155, 596, L"4", 23, Green);
-    drawText(205, 592, L"创建联机主机", 22, Text);
-    drawText(155, 648, L"5", 23, Yellow);
-    drawText(205, 644, L"加入局域网游戏", 22, Text);
+    drawText(500, 330, L"1  开始行动", 23, Green);
+    drawText(500, 385, L"2  黑市商店", 23, Yellow);
+    drawText(500, 440, L"3  操作说明", 23, Cyan);
+    drawText(500, 495, L"4  创建联机主机", 23, Text);
+    drawText(500, 550, L"5  加入局域网游戏", 23, Text);
     if (hasSavedRun) {
-        drawText(155, 700, L"6", 23, Cyan);
-        drawText(205, 696, L"继续存档", 20, Text);
+        drawText(850, 330, L"6  继续存档", 23, Cyan);
     }
-    drawText(155, hasSavedRun ? 748 : 700, L"7", 23, Cyan);
-    drawText(205, hasSavedRun ? 744 : 696, L"设置", 20, Text);
-    drawText(155, 800, L"ESC", 17, Muted);
-    drawText(205, 796, L"退出", 20, Text);
-    drawText(1260, 92, L"切换语言：L", 17, Muted);
-    if (!archiveStatus.empty()) drawText(920, 690, archiveStatus, 16, Yellow);
-
-    drawText(920, 455, L"弹药库存", 18, Muted);
-    drawText(920, 489, std::to_wstring(ammo), 34, Yellow);
-    drawText(1140, 455, L"医疗包", 18, Muted);
-    drawText(1140, 489, std::to_wstring(medkits), 34, Cyan);
-    drawText(920, 560, L"护甲", 18, Muted);
-    drawText(920, 594, armorTier > 0 ? L"等级 " + std::to_wstring(armorTier) : L"无", 28, Green);
-    drawText(1140, 560, L"持有金币", 18, Muted);
-    drawText(1140, 594, std::to_wstring(money), 28, Yellow);
-    drawText(155, 822, L"高清战术视图   /   EGE GRAPHICS", 17, Muted);
+    drawText(850, 385, L"7  设置", 23, Cyan);
+    drawText(850, 440, L"ESC  退出", 23, Muted);
+    if (!archiveStatus.empty()) drawText(500, 650, archiveStatus, 16, Yellow);
 }
 
 void drawNetworkLobby() {
@@ -485,7 +483,7 @@ void drawShop() {
 
 void drawHelp() {
     cleardevice();
-    fillRect(130, 90, 1470, 810, Panel);
+    fillRect(0, 0, visibleDesignWidth(), visibleDesignHeight(), Panel);
     const std::array<std::array<std::wstring, 8>, 3> pages = {{
         {{L"行动简报 · 操作与战斗", L"W A S D        在地图中移动",
           L"方向键          朝对应方向射击；子弹遇墙会停止",
@@ -509,42 +507,41 @@ void drawHelp() {
           L"联机使用 UDP 8888；若无法连接，请检查防火墙和路由器设置。",
           L"下载：Mokthyn - Download"}}
     }};
-    drawText(190, 140, pages[helpPage][0], 37, Text);
+    drawText(150, 110, pages[helpPage][0], 46, Text);
     for (int i = 1; i < 8; ++i)
-        drawText(200, 205 + (i - 1) * 62, pages[helpPage][i], 19, i == 7 ? Green : Text);
-    drawText(200, 676, L"下载地址：Mokthyn - Download", 17, Cyan);
-    drawText(200, 710, DownloadUrl, 17, Cyan);
-    drawText(200, 755, L"按 ← → 或 ↑ ↓ 翻页    按 D 打开下载页面    ENTER / ESC 返回", 17, Muted);
-    drawText(1330, 140, std::to_wstring(helpPage + 1) + L" / 3", 20, Green);
+        drawText(160, 180 + (i - 1) * 54, pages[helpPage][i], 26, i == 7 ? Green : Text);
+    drawText(160, 580, L"下载地址：Mokthyn - Download", 19, Cyan);
+    drawText(160, 612, DownloadUrl, 19, Cyan);
+    drawText(160, 660, L"按 ← → 或 ↑ ↓ 翻页    按 D 打开下载页面    ENTER / ESC 返回", 19, Muted);
+    drawText(visibleDesignWidth() - 110, 115, std::to_wstring(helpPage + 1) + L" / 3", 22,
+             Green);
 }
 
 void drawSettings() {
     cleardevice();
-    fillRect(130, 90, 1470, 810, Panel);
-    drawText(190, 150, L"设置", 46, Text);
-    drawText(200, 270, L"界面缩放", 26, Muted);
-    drawText(200, 330, localize(L"当前比例") + L" " + std::to_wstring(uiScalePercent) + L"%",
-             38, Green);
-    drawText(200, 392, L"（窗口尺寸不变）", 19, Muted);
+    setfillcolor(Background);
+    bar(0, 0, windowWidth, windowHeight);
+    fillRect(80, 80, visibleDesignWidth() - 80, visibleDesignHeight() - 80, Panel);
+    drawText(130, 115, L"设置", 42, Text);
 
-    const int left = 200;
-    const int right = 1400;
-    fillRect(left, 500, right, 510, PanelLight);
-    const int marker = left + (right - left) * (uiScalePercent - MinUiScalePercent) /
-                                  (MaxUiScalePercent - MinUiScalePercent);
-    fillRect(left, 500, marker, 510, Green);
-    fillCircle(marker, 505, 13, Text);
-    for (int scale = MinUiScalePercent; scale <= MaxUiScalePercent;
-         scale += UiScaleStepPercent) {
-        const int x = left + (right - left) * (scale - MinUiScalePercent) /
-                                 (MaxUiScalePercent - MinUiScalePercent);
-        drawText(x - 24, 535, std::to_wstring(scale) + L"%", 18,
-                 scale == uiScalePercent ? Green : Muted);
+    const std::array<std::wstring, 3> labels = {
+        L"界面缩放", L"窗口宽度", L"窗口高度"};
+    const std::array<std::wstring, 3> values = {
+        std::to_wstring(uiScalePercent) + L"%",
+        std::to_wstring(windowWidth) + L" px",
+        std::to_wstring(windowHeight) + L" px"};
+    for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
+        const int y = 230 + i * 100;
+        const bool selected = settingsSelection == i;
+        if (selected) fillRect(130, y - 15, visibleDesignWidth() - 130, y + 55, PanelLight);
+        drawText(160, y, labels[i], 25, selected ? Green : Text);
+        drawText(650, y, values[i], 27, selected ? Cyan : Muted);
+        drawText(visibleDesignWidth() - 220, y, L"←   →", 20, Muted);
     }
-    drawText(200, 650, L"左右方向键调整比例", 20, Text);
-    drawText(200, 696, L"按 0 恢复默认比例", 18, Muted);
-    drawText(200, 748, L"按 ENTER / ESC 返回主菜单", 18, Muted);
-    if (!archiveStatus.empty()) drawText(850, 650, archiveStatus, 17, Yellow);
+    drawText(160, 500, L"↑ ↓ 选择项目，← → 调整", 20, Text);
+    drawText(160, 550, L"按 0 恢复默认值", 18, Muted);
+    drawText(160, 600, L"按 ENTER / ESC 返回主菜单", 18, Muted);
+    if (!archiveStatus.empty()) drawText(160, 650, archiveStatus, 16, Yellow);
 }
 
 void drawResult() {
@@ -562,6 +559,8 @@ void drawResult() {
 
 void drawPlaying() {
     cleardevice();
+    setfillcolor(Background);
+    bar(0, 0, windowWidth, windowHeight);
     drawText(64, 51, L"OPERATIONS / EXTRACTION ZONE", 16, Muted);
     drawMap();
     drawHud();
@@ -570,13 +569,15 @@ void drawPlaying() {
             std::max(0, 3 - static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
                                                  Clock::now() - healStarted)
                                                  .count()));
-        drawText(MapLeft + 12, 836, L"治疗中  " + std::to_wstring(seconds) + L" 秒", 18, Cyan);
+        drawText(battleMapLeft() + 12, visibleDesignHeight() - 42,
+                 L"治疗中  " + std::to_wstring(seconds) + L" 秒", 18, Cyan);
     } else if (extracting) {
         const int seconds =
             std::max(0, 5 - static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
                                                  Clock::now() - extractStarted)
                                                  .count()));
-        drawText(MapLeft + 12, 836, L"撤离中  " + std::to_wstring(seconds) + L" 秒", 18, Green);
+            drawText(battleMapLeft() + 12, visibleDesignHeight() - 42,
+                     L"撤离中  " + std::to_wstring(seconds) + L" 秒", 18, Green);
     }
 }
 
