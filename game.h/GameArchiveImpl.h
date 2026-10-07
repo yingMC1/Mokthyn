@@ -30,8 +30,8 @@ bool loadArchive() {
     HANDLE file = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
     if (file == INVALID_HANDLE_VALUE) {
-        if (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND)
-            return true;
+        const DWORD win32Error = GetLastError();
+        if (win32Error == ERROR_FILE_NOT_FOUND || win32Error == ERROR_PATH_NOT_FOUND) return true;
         archiveStatus = L"读取存档失败";
         return false;
     }
@@ -69,8 +69,8 @@ bool loadArchive() {
         !validArchiveValue(storedArmorTier, 0, 4) ||
         !validArchiveValue(storedArmorDurability, 0, 125) ||
         !validArchiveValue(storedArmorOn, 0, 1) ||
-        !validArchiveValue(storedPlayerX, 1, MapColumns - 2) ||
-        !validArchiveValue(storedPlayerY, 1, MapRows - 2) ||
+        !validArchiveValue(storedPlayerX, 0, MapColumns - 1) ||
+        !validArchiveValue(storedPlayerY, 0, MapRows - 1) ||
         !validArchiveValue(storedKills, 0, 100000) ||
         !validArchiveValue(storedTotalEnemies, 0, 100000)) {
         archiveStatus = L"存档格式无效，已使用默认数据";
@@ -88,7 +88,7 @@ bool loadArchive() {
     }
 
     int enemyCount = 0;
-    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, 9)) {
+    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, 30)) {
         archiveStatus = L"存档敌人数据无效，已使用默认数据";
         return false;
     }
@@ -98,8 +98,8 @@ bool loadArchive() {
         Enemy enemy;
         int alive = 0, awake = 0;
         if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake) ||
-            !validArchiveValue(enemy.x, 1, MapColumns - 2) ||
-            !validArchiveValue(enemy.y, 1, MapRows - 2) ||
+            !validArchiveValue(enemy.x, 0, MapColumns - 1) ||
+            !validArchiveValue(enemy.y, 0, MapRows - 1) ||
             !validArchiveValue(enemy.hp, 0, EnemyHealth) || !validArchiveValue(alive, 0, 1) ||
             !validArchiveValue(awake, 0, 1)) {
             archiveStatus = L"存档敌人数据无效，已使用默认数据";
@@ -153,6 +153,10 @@ bool loadArchive() {
 }
 
 bool saveArchive() {
+    if (networkActive) {
+        archiveStatus.clear();
+        return true;
+    }
     lastArchiveSave = Clock::now();
     const std::wstring path = archivePath();
     if (path.empty()) {
@@ -166,19 +170,33 @@ bool saveArchive() {
         return false;
     }
 
+    const int safePlayerX = std::clamp(playerX, 1, MapColumns - 2);
+    const int safePlayerY = std::clamp(playerY, 1, MapRows - 2);
+    const int safeArmorTier = std::clamp(armorTier, 0, 4);
+    const int safeArmorDurability = std::clamp(armorDurability, 0, ArmorDurability[safeArmorTier]);
+    const int safeEnemyCount = std::clamp(static_cast<int>(enemies.size()), 0, 9);
     std::ostringstream output;
     output << "MOKTHYN_SAVE 3\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
-           << health << ' ' << ammo << ' ' << medkits << ' ' << money << ' ' << armorTier << ' '
-           << armorDurability << ' ' << (armorOn ? 1 : 0) << ' ' << playerX << ' ' << playerY
-           << ' ' << kills << ' ' << totalEnemies << '\n';
+           << std::clamp(health, 0, 100) << ' ' << std::clamp(ammo, 0, 100000) << ' '
+           << std::clamp(medkits, 0, 10000) << ' ' << std::clamp(money, 0, 100000000) << ' '
+           << safeArmorTier << ' ' << safeArmorDurability << ' ' << (armorOn ? 1 : 0) << ' '
+           << safePlayerX << ' ' << safePlayerY << ' ' << std::clamp(kills, 0, 100000) << ' '
+           << std::clamp(totalEnemies, 0, 100000) << '\n';
     for (const auto& row : world) {
-        for (int tile : row) output << tile << ' ';
+        for (int tile : row) output << std::clamp(tile, Floor, MedkitPickup) << ' ';
         output << '\n';
     }
-    output << enemies.size() << '\n';
-    for (const Enemy& enemy : enemies)
-        output << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
-               << ' ' << (enemy.awake ? 1 : 0) << '\n';
+    output << safeEnemyCount << '\n';
+    int writtenEnemies = 0;
+    for (const Enemy& enemy : enemies) {
+        if (writtenEnemies >= safeEnemyCount) break;
+        const int safeX = std::clamp(enemy.x, 1, MapColumns - 2);
+        const int safeY = std::clamp(enemy.y, 1, MapRows - 2);
+        const int safeHp = std::clamp(enemy.hp, 0, EnemyHealth);
+        output << safeX << ' ' << safeY << ' ' << safeHp << ' ' << (enemy.alive ? 1 : 0) << ' '
+               << (enemy.awake ? 1 : 0) << '\n';
+        ++writtenEnemies;
+    }
     output << uiScalePercent << '\n';
     output << windowWidth << ' ' << windowHeight << '\n';
     const std::string contents = output.str();

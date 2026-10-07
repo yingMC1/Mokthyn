@@ -41,6 +41,7 @@ int main() {
                 english = !english;
                 saveArchive();
             } else if (keyPressed('6') && hasSavedRun) {
+                resetRunProgress();
                 screen = Screen::Playing;
                 lastMove = lastEnemyTurn = nextPlayerHit = Clock::now();
                 setMessage(english ? L"Saved run resumed" : L"已继续存档行动");

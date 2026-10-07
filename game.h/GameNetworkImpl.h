@@ -25,6 +25,8 @@ void closeNetwork() {
     networkHost = false;
     peerConnected = false;
     peerX = peerY = -1;
+    healing = false;
+    extracting = false;
     peerExtracting = false;
     peerArmorTier = peerArmorDurability = 0;
     peerArmorOn = false;
@@ -137,7 +139,8 @@ void sendNetworkState() {
 void processNetwork() {
     if (!networkActive || networkSocket == INVALID_SOCKET) return;
     const auto now = Clock::now();
-    if (!networkHost && !peerConnected &&
+    if (!networkHost && !peerConnected && peerAddress.sin_addr.s_addr != 0 &&
+        peerAddress.sin_port != 0 &&
         now - lastConnectAttempt >= std::chrono::milliseconds(500)) {
         sendto(networkSocket, "CONNECT", 7, 0, reinterpret_cast<const sockaddr*>(&peerAddress),
                sizeof(peerAddress));
@@ -159,7 +162,7 @@ void processNetwork() {
         const bool fromPeer = sender.sin_addr.s_addr == peerAddress.sin_addr.s_addr &&
                               sender.sin_port == peerAddress.sin_port;
 
-        if (networkHost && !peerConnected && data == "CONNECT") {
+        if (networkHost && data == "CONNECT") {
             peerAddress = sender;
             peerConnected = true;
             peerX = peerY = -1;
@@ -192,7 +195,12 @@ void processNetwork() {
                 peerX = x;
                 peerY = y;
                 peerArmorTier = std::clamp(tier, 0, 4);
-                peerArmorDurability = std::clamp(durability, 0, ArmorDurability[peerArmorTier]);
+                const int reportedDurability = std::clamp(durability, 0, ArmorDurability[peerArmorTier]);
+                if (peerArmorDurability == 0) {
+                    peerArmorDurability = reportedDurability;
+                } else {
+                    peerArmorDurability = std::min(peerArmorDurability, reportedDurability);
+                }
                 peerArmorOn = armorEnabled != 0 && peerArmorTier > 0 && peerArmorDurability > 0;
             }
         } else if (command == "HEAL" && networkHost) {
@@ -246,6 +254,8 @@ void processNetwork() {
                   result >> enemyCount) ||
                 enemyCount < 0 || enemyCount > 30)
                 continue;
+            peerAddress = sender;
+            peerConnected = true;
             if (hostX >= 0 && hostX < MapColumns && hostY >= 0 && hostY < MapRows) {
                 peerX = hostX;
                 peerY = hostY;
@@ -258,7 +268,12 @@ void processNetwork() {
             kills = std::max(0, syncedKills);
             totalEnemies = std::max(0, syncedTotal);
             money = std::max(0, syncedMoney);
-            extracting = hostEvacuating != 0 || peerEvacuating != 0;
+            peerExtracting = hostEvacuating != 0;
+            if (screen == Screen::JoinLobby || screen == Screen::JoinIp) {
+                screen = Screen::Playing;
+                lastMove = lastEnemyTurn = nextPlayerHit = now;
+                setMessage(L"联机对局已开始");
+            }
             std::vector<Enemy> syncedEnemies;
             syncedEnemies.reserve(enemyCount);
             for (int i = 0; i < enemyCount; ++i) {

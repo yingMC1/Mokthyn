@@ -22,6 +22,16 @@ void setMessage(const std::wstring& text, int milliseconds) {
     messageUntil = Clock::now() + std::chrono::milliseconds(milliseconds);
 }
 
+void resetRunProgress() {
+    healing = false;
+    extracting = false;
+    won = false;
+    healStarted = {};
+    extractStarted = {};
+    peerExtracting = false;
+    peerExtractStarted = {};
+}
+
 bool lineOfSight(int fromX, int fromY, int toX, int toY) {
     int dx = std::abs(toX - fromX);
     int dy = std::abs(toY - fromY);
@@ -121,7 +131,7 @@ void startRun() {
     health = 100;
     hasSavedRun = !networkActive;
     armorOn = armorTier > 0 && armorDurability > 0;
-    healing = extracting = false;
+    resetRunProgress();
     lastMove = lastEnemyTurn = Clock::now();
     nextPlayerHit = Clock::now();
     screen = Screen::Playing;
@@ -206,8 +216,7 @@ void updateEnemies(Clock::time_point now) {
         if (enemy.awake && distance > 1) {
             const int dx = (targetX > enemy.x) - (targetX < enemy.x);
             const int dy = (targetY > enemy.y) - (targetY < enemy.y);
-            const std::array<std::array<int, 2>, 4> directions = {
-                {{dx, dy}, {dx, 0}, {0, dy}, {0, 0}}};
+            const std::array<std::array<int, 2>, 4> directions = {{{dx, 0}, {0, dy}, {dx, dy}, {0, 0}}};
             for (const auto& direction : directions) {
                 const int nextX = enemy.x + direction[0];
                 const int nextY = enemy.y + direction[1];
