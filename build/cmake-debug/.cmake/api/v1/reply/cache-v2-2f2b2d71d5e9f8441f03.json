@@ -39,7 +39,7 @@
 			[
 				{
 					"name" : "HELPSTRING",
-					"value" : "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..."
+					"value" : "Build configuration"
 				}
 			],
 			"type" : "STRING",
@@ -91,7 +91,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "4"
+			"value" : "3"
 		},
 		{
 			"name" : "CMAKE_COLOR_MAKEFILE",
@@ -155,11 +155,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
+					"value" : "CXX compiler"
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
+			"type" : "STRING",
+			"value" : "D:/mingw64/bin/g++.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -175,7 +175,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-gcc-ar.exe"
+			"value" : "D:/mingw64/bin/gcc-ar.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -191,7 +191,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "D:/mingw64/bin/x86_64-w64-mingw32-gcc-ranlib.exe"
+			"value" : "D:/mingw64/bin/gcc-ranlib.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -823,10 +823,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "Full path to the compiler used for language <LANG>. Set by CMake during compiler detection on the first configure; users may override on the command line to select a specific toolchain."
+					"value" : "RC compiler"
 				}
 			],
-			"type" : "UNINITIALIZED",
+			"type" : "FILEPATH",
 			"value" : "D:/mingw64/bin/windres.exe"
 		},
 		{
@@ -1156,18 +1156,6 @@
 			],
 			"type" : "FILEPATH",
 			"value" : "D:/mingw64/bin/strip.exe"
-		},
-		{
-			"name" : "CMAKE_SYSTEM_NAME",
-			"properties" : 
-			[
-				{
-					"name" : "HELPSTRING",
-					"value" : "Name of the operating system being targeted (e.g. Linux, Darwin, Windows). Defaults to CMAKE_HOST_SYSTEM_NAME; set explicitly when first configuring a build tree to enable cross-compiling."
-				}
-			],
-			"type" : "UNINITIALIZED",
-			"value" : "Windows"
 		},
 		{
 			"name" : "CMAKE_TAPI",
