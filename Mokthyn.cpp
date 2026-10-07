@@ -1,4 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
+#include "game.h/GameArchive.h"
+#include "game.h/GameArchiveImpl.h"
 #include "game.h/GameLogic.h"
 #include "game.h/GameLogicImpl.h"
 #include "game.h/GameNetwork.h"
@@ -8,6 +10,7 @@
 #include "game.h/GameState.h"
 #include "game.h/GameTypes.h"
 #include <graphics.h>
+#include <shellapi.h>
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -25,23 +28,37 @@ int main() {
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(Background, frameBuffer);
     ege_enable_aa(true, frameBuffer);
+    loadArchive();
 
     while (is_run()) {
         processNetwork();
+        if ((screen == Screen::Playing || screen == Screen::Paused) &&
+            Clock::now() - lastArchiveSave >= std::chrono::seconds(2) && !saveArchive())
+            setMessage(archiveStatus, 4000);
         settarget(frameBuffer);
         switch (screen) {
         case Screen::Menu:
-            if (keyPressed('1') || keyPressed(VK_RETURN))
+            if (keyPressed('L')) {
+                english = !english;
+                saveArchive();
+            } else if (keyPressed('6') && hasSavedRun) {
+                screen = Screen::Playing;
+                lastMove = lastEnemyTurn = nextPlayerHit = Clock::now();
+                setMessage(english ? L"Saved run resumed" : L"已继续存档行动");
+            } else if (keyPressed('1') || keyPressed(VK_RETURN))
                 startRun();
             else if (keyPressed('2'))
                 screen = Screen::Shop;
-            else if (keyPressed('3'))
+            else if (keyPressed('3')) {
+                helpInputReady = false;
                 screen = Screen::Help;
+            }
             else if (keyPressed('4')) {
                 if (!beginHostNetwork()) setMessage(L"主机启动失败，检查端口 8888 是否被占用");
             } else if (keyPressed('5')) {
                 if (!beginJoinNetwork()) setMessage(L"网络初始化失败");
             } else if (keyPressed(VK_ESCAPE)) {
+                saveArchive();
                 settarget(nullptr);
                 closeNetwork();
                 delimage(frameBuffer);
@@ -114,9 +131,19 @@ int main() {
             drawShop();
             break;
         case Screen::Help:
-            if (kbhit()) {
-                getch();
+            if (!helpInputReady) {
+                if (!keystate('3')) helpInputReady = true;
+            } else if (keyPressed(VK_ESCAPE) || keyPressed(VK_RETURN)) {
                 screen = Screen::Menu;
+            } else if (keyPressed(VK_RIGHT) || keyPressed(VK_DOWN)) {
+                helpPage = (helpPage + 1) % 3;
+            } else if (keyPressed(VK_LEFT) || keyPressed(VK_UP)) {
+                helpPage = (helpPage + 2) % 3;
+            } else if (keyPressed('D')) {
+                const auto result = reinterpret_cast<INT_PTR>(
+                    ShellExecuteW(nullptr, L"open", DownloadUrl, nullptr, nullptr, SW_SHOWNORMAL));
+                if (result <= 32)
+                    setMessage(english ? L"Could not open download page" : L"下载页面无法打开");
             }
             drawHelp();
             break;
@@ -131,8 +158,10 @@ int main() {
             drawText(594, 435, L"按 P 继续  /  ESC 返回菜单", 20, Muted);
             if (keyPressed('P'))
                 screen = Screen::Playing;
-            else if (keyPressed(VK_ESCAPE))
+            else if (keyPressed(VK_ESCAPE)) {
+                saveArchive();
                 screen = Screen::Menu;
+            }
             break;
         case Screen::Result:
             drawResult();
@@ -142,6 +171,7 @@ int main() {
                     closeNetwork();
                 }
                 screen = Screen::Menu;
+                saveArchive();
             }
             break;
         }
@@ -150,6 +180,7 @@ int main() {
         delay_fps(60);
     }
     settarget(nullptr);
+    saveArchive();
     delimage(frameBuffer);
     closegraph();
     return 0;

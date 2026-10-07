@@ -32,9 +32,9 @@ set(CMAKE_MAKEFILE_DEPENDS
   "C:/Program Files/CMake/share/cmake-4.4/Modules/Platform/Windows.cmake"
   "C:/Program Files/CMake/share/cmake-4.4/Modules/Platform/WindowsPaths.cmake"
   "D:/Mokthyn/CMakeLists.txt"
-  "CMakeFiles/4.4.3/CMakeCXXCompiler.cmake"
-  "CMakeFiles/4.4.3/CMakeRCCompiler.cmake"
-  "CMakeFiles/4.4.3/CMakeSystem.cmake"
+  "CMakeFiles/4.4.4/CMakeCXXCompiler.cmake"
+  "CMakeFiles/4.4.4/CMakeRCCompiler.cmake"
+  "CMakeFiles/4.4.4/CMakeSystem.cmake"
   "CMakeFiles/VerifyGlobs.cmake"
   "CMakeFiles/cmake.verify_globs"
   )
@@ -53,5 +53,4 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/ege-demo.dir/DependInfo.cmake"
-  "CMakeFiles/copy-runtime-assets.dir/DependInfo.cmake"
   )

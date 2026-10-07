@@ -63,12 +63,10 @@ CMAKE_BINARY_DIR = D:\Mokthyn\build\cmake-release
 
 # The main recursive "all" target.
 all: CMakeFiles/ege-demo.dir/all
-all: CMakeFiles/copy-runtime-assets.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: CMakeFiles/ege-demo.dir/codegen
-codegen: CMakeFiles/copy-runtime-assets.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -77,14 +75,13 @@ preinstall:
 
 # The main recursive "clean" target.
 clean: CMakeFiles/ege-demo.dir/clean
-clean: CMakeFiles/copy-runtime-assets.dir/clean
 .PHONY : clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/ege-demo.dir
 
 # All Build rule for target.
-CMakeFiles/ege-demo.dir/all: CMakeFiles/copy-runtime-assets.dir/all
+CMakeFiles/ege-demo.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ege-demo.dir\build.make CMakeFiles/ege-demo.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ege-demo.dir\build.make CMakeFiles/ege-demo.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=D:\Mokthyn\build\cmake-release\CMakeFiles --progress-num=1,2 "Built target ege-demo"
@@ -102,7 +99,7 @@ ege-demo: CMakeFiles/ege-demo.dir/rule
 .PHONY : ege-demo
 
 # codegen rule for target.
-CMakeFiles/ege-demo.dir/codegen: CMakeFiles/copy-runtime-assets.dir/all
+CMakeFiles/ege-demo.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ege-demo.dir\build.make CMakeFiles/ege-demo.dir/codegen
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=D:\Mokthyn\build\cmake-release\CMakeFiles --progress-num=1,2 "Finished codegen for target ege-demo"
 .PHONY : CMakeFiles/ege-demo.dir/codegen
@@ -111,38 +108,6 @@ CMakeFiles/ege-demo.dir/codegen: CMakeFiles/copy-runtime-assets.dir/all
 CMakeFiles/ege-demo.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ege-demo.dir\build.make CMakeFiles/ege-demo.dir/clean
 .PHONY : CMakeFiles/ege-demo.dir/clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/copy-runtime-assets.dir
-
-# All Build rule for target.
-CMakeFiles/copy-runtime-assets.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\copy-runtime-assets.dir\build.make CMakeFiles/copy-runtime-assets.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\copy-runtime-assets.dir\build.make CMakeFiles/copy-runtime-assets.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=D:\Mokthyn\build\cmake-release\CMakeFiles --progress-num= "Built target copy-runtime-assets"
-.PHONY : CMakeFiles/copy-runtime-assets.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/copy-runtime-assets.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start D:\Mokthyn\build\cmake-release\CMakeFiles 0
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 CMakeFiles/copy-runtime-assets.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start D:\Mokthyn\build\cmake-release\CMakeFiles 0
-.PHONY : CMakeFiles/copy-runtime-assets.dir/rule
-
-# Convenience name for target.
-copy-runtime-assets: CMakeFiles/copy-runtime-assets.dir/rule
-.PHONY : copy-runtime-assets
-
-# codegen rule for target.
-CMakeFiles/copy-runtime-assets.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\copy-runtime-assets.dir\build.make CMakeFiles/copy-runtime-assets.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=D:\Mokthyn\build\cmake-release\CMakeFiles --progress-num= "Finished codegen for target copy-runtime-assets"
-.PHONY : CMakeFiles/copy-runtime-assets.dir/codegen
-
-# clean rule for target.
-CMakeFiles/copy-runtime-assets.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\copy-runtime-assets.dir\build.make CMakeFiles/copy-runtime-assets.dir/clean
-.PHONY : CMakeFiles/copy-runtime-assets.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

@@ -1,4 +1,5 @@
 #pragma once
+#include "GameArchive.h"
 #include "GameLogic.h"
 #include "GameNetwork.h"
 #include "GameRender.h"
@@ -118,12 +119,14 @@ void startRun() {
         placePickup(MedkitPickup, 5);
     kills = 0;
     health = 100;
+    hasSavedRun = !networkActive;
     armorOn = armorTier > 0 && armorDurability > 0;
     healing = extracting = false;
     lastMove = lastEnemyTurn = Clock::now();
     nextPlayerHit = Clock::now();
     screen = Screen::Playing;
     setMessage(L"清除区域内的敌人，然后前往撤离点");
+    saveArchive();
     if (networkActive && networkHost && peerConnected) {
         sendNetworkPacket("START");
         sendNetworkState();
@@ -312,6 +315,7 @@ void buySelectedItem() {
     } else {
         setMessage(L"金币不足");
     }
+    saveArchive();
 }
 
 bool keyPressed(int key) { return keypress(key) > 0; }
@@ -380,13 +384,17 @@ void updatePlaying() {
     if (health <= 0) {
         health = 0;
         won = false;
+        hasSavedRun = false;
         screen = Screen::Result;
+        saveArchive();
         return;
     }
 
     if (extracting && now - extractStarted >= std::chrono::seconds(5)) {
         won = true;
+        hasSavedRun = false;
         screen = Screen::Result;
+        saveArchive();
         return;
     }
     if (keyPressed('Q')) {

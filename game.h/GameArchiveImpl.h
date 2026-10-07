@@ -1,0 +1,183 @@
+#pragma once
+
+#include "GameArchive.h"
+#include "GameState.h"
+#include <windows.h>
+#include <algorithm>
+#include <sstream>
+#include <string>
+#include <utility>
+
+namespace mokthyn {
+namespace {
+std::wstring archivePath() {
+    wchar_t appData[MAX_PATH]{};
+    const DWORD length = GetEnvironmentVariableW(L"APPDATA", appData, MAX_PATH);
+    if (length == 0 || length >= MAX_PATH) return {};
+    return std::wstring(appData) + L"\\mokthyn\\save.dat";
+}
+
+bool validArchiveValue(int value, int low, int high) { return value >= low && value <= high; }
+} // namespace
+
+bool loadArchive() {
+    const std::wstring path = archivePath();
+    if (path.empty()) {
+        archiveStatus = L"无法读取 APPDATA 环境变量，存档功能不可用";
+        return false;
+    }
+
+    HANDLE file = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+        if (GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_PATH_NOT_FOUND)
+            return true;
+        archiveStatus = L"读取存档失败";
+        return false;
+    }
+
+    const DWORD size = GetFileSize(file, nullptr);
+    if (size == INVALID_FILE_SIZE || size > 65536) {
+        CloseHandle(file);
+        archiveStatus = L"存档文件大小无效，已使用默认数据";
+        return false;
+    }
+    std::string contents(size, '\0');
+    DWORD bytesRead = 0;
+    const bool readOk = size == 0 || (ReadFile(file, &contents[0], size, &bytesRead, nullptr) &&
+                                      bytesRead == size);
+    CloseHandle(file);
+    if (!readOk) {
+        archiveStatus = L"读取存档失败";
+        return false;
+    }
+
+    std::istringstream input(contents);
+    std::string signature;
+    int version = 0;
+    int storedEnglish = 0, savedRun = 0, storedHealth = 0, storedAmmo = 0, storedMedkits = 0;
+    int storedMoney = 0, storedArmorTier = 0, storedArmorDurability = 0, storedArmorOn = 0;
+    int storedPlayerX = 0, storedPlayerY = 0, storedKills = 0, storedTotalEnemies = 0;
+    if (!(input >> signature >> version >> storedEnglish >> savedRun >> storedHealth >> storedAmmo >>
+          storedMedkits >> storedMoney >> storedArmorTier >> storedArmorDurability >> storedArmorOn >>
+          storedPlayerX >> storedPlayerY >> storedKills >> storedTotalEnemies) ||
+        signature != "MOKTHYN_SAVE" || version != 1 || !validArchiveValue(storedEnglish, 0, 1) ||
+        !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, 100) ||
+        !validArchiveValue(storedAmmo, 0, 100000) || !validArchiveValue(storedMedkits, 0, 10000) ||
+        !validArchiveValue(storedMoney, 0, 100000000) ||
+        !validArchiveValue(storedArmorTier, 0, 4) ||
+        !validArchiveValue(storedArmorDurability, 0, 125) ||
+        !validArchiveValue(storedArmorOn, 0, 1) ||
+        !validArchiveValue(storedPlayerX, 1, MapColumns - 2) ||
+        !validArchiveValue(storedPlayerY, 1, MapRows - 2) ||
+        !validArchiveValue(storedKills, 0, 100000) ||
+        !validArchiveValue(storedTotalEnemies, 0, 100000)) {
+        archiveStatus = L"存档格式无效，已使用默认数据";
+        return false;
+    }
+
+    std::array<std::array<int, MapColumns>, MapRows> storedWorld{};
+    for (auto& row : storedWorld) {
+        for (int& tile : row) {
+            if (!(input >> tile) || !validArchiveValue(tile, Floor, MedkitPickup)) {
+                archiveStatus = L"存档地图数据无效，已使用默认数据";
+                return false;
+            }
+        }
+    }
+
+    int enemyCount = 0;
+    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, 9)) {
+        archiveStatus = L"存档敌人数据无效，已使用默认数据";
+        return false;
+    }
+    std::vector<Enemy> storedEnemies;
+    storedEnemies.reserve(static_cast<size_t>(enemyCount));
+    for (int i = 0; i < enemyCount; ++i) {
+        Enemy enemy;
+        int alive = 0, awake = 0;
+        if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake) ||
+            !validArchiveValue(enemy.x, 1, MapColumns - 2) ||
+            !validArchiveValue(enemy.y, 1, MapRows - 2) ||
+            !validArchiveValue(enemy.hp, 0, EnemyHealth) || !validArchiveValue(alive, 0, 1) ||
+            !validArchiveValue(awake, 0, 1)) {
+            archiveStatus = L"存档敌人数据无效，已使用默认数据";
+            return false;
+        }
+        enemy.alive = alive != 0;
+        enemy.awake = awake != 0;
+        storedEnemies.push_back(enemy);
+    }
+
+    english = storedEnglish != 0;
+    hasSavedRun = savedRun != 0;
+    health = storedHealth;
+    ammo = storedAmmo;
+    medkits = storedMedkits;
+    money = storedMoney;
+    armorTier = storedArmorTier;
+    armorDurability = storedArmorDurability;
+    armorOn = storedArmorOn != 0 && armorTier > 0 && armorDurability > 0;
+    playerX = storedPlayerX;
+    playerY = storedPlayerY;
+    kills = storedKills;
+    totalEnemies = storedTotalEnemies;
+    world = storedWorld;
+    enemies = std::move(storedEnemies);
+    healing = extracting = false;
+    if (hasSavedRun) screen = Screen::Menu;
+    return true;
+}
+
+bool saveArchive() {
+    lastArchiveSave = Clock::now();
+    const std::wstring path = archivePath();
+    if (path.empty()) {
+        archiveStatus = L"无法读取 APPDATA 环境变量，存档功能不可用";
+        return false;
+    }
+    const size_t separator = path.find_last_of(L'\\');
+    const std::wstring directory = path.substr(0, separator);
+    if (!CreateDirectoryW(directory.c_str(), nullptr) && GetLastError() != ERROR_ALREADY_EXISTS) {
+        archiveStatus = L"无法创建存档目录";
+        return false;
+    }
+
+    std::ostringstream output;
+    output << "MOKTHYN_SAVE 1\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
+           << health << ' ' << ammo << ' ' << medkits << ' ' << money << ' ' << armorTier << ' '
+           << armorDurability << ' ' << (armorOn ? 1 : 0) << ' ' << playerX << ' ' << playerY
+           << ' ' << kills << ' ' << totalEnemies << '\n';
+    for (const auto& row : world) {
+        for (int tile : row) output << tile << ' ';
+        output << '\n';
+    }
+    output << enemies.size() << '\n';
+    for (const Enemy& enemy : enemies)
+        output << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
+               << ' ' << (enemy.awake ? 1 : 0) << '\n';
+    const std::string contents = output.str();
+
+    const std::wstring temporaryPath = path + L".tmp";
+    HANDLE file = CreateFileW(temporaryPath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE) {
+        archiveStatus = L"无法写入存档文件";
+        return false;
+    }
+    DWORD bytesWritten = 0;
+    const bool writeOk = WriteFile(file, contents.data(), static_cast<DWORD>(contents.size()),
+                                   &bytesWritten, nullptr) &&
+                         bytesWritten == contents.size() && FlushFileBuffers(file);
+    CloseHandle(file);
+    if (!writeOk ||
+        !MoveFileExW(temporaryPath.c_str(), path.c_str(),
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+        DeleteFileW(temporaryPath.c_str());
+        archiveStatus = L"保存存档失败";
+        return false;
+    }
+    archiveStatus.clear();
+    return true;
+}
+} // namespace mokthyn

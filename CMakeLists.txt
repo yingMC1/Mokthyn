@@ -35,16 +35,20 @@ set_target_properties(${MY_TARGET_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY_RELEASE "${MY_OUTPUT_ROOT}/Release"
 )
 
-add_custom_target(copy-runtime-assets ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_CURRENT_SOURCE_DIR}/image"
-        "${MY_OUTPUT_ROOT}/$<CONFIG>/image"
-    VERBATIM
-)
-add_dependencies(${MY_TARGET_NAME} copy-runtime-assets)
+if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/image")
+    add_custom_target(copy-runtime-assets ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/image"
+            "${MY_OUTPUT_ROOT}/$<CONFIG>/image"
+        VERBATIM
+    )
+    add_dependencies(${MY_TARGET_NAME} copy-runtime-assets)
+else()
+    message(STATUS "Runtime asset directory not found; skipping asset copy")
+endif()
 
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
-target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32)
+target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32 shell32)
 
 # 设置静态库搜索路径
 if(MSVC)

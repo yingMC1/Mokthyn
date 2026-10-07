@@ -1,6 +1,7 @@
 CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
- D:\Mokthyn\game.h/GameLogic.h D:\Mokthyn\game.h/GameState.h \
- D:\Mokthyn\game.h/GameTypes.h D:/mingw64/include/c++/16.1.0/array \
+ D:\Mokthyn\game.h/GameArchive.h D:\Mokthyn\game.h/GameArchiveImpl.h \
+ D:\Mokthyn\game.h/GameState.h D:\Mokthyn\game.h/GameTypes.h \
+ D:/mingw64/include/c++/16.1.0/array \
  D:/mingw64/include/c++/16.1.0/compare \
  D:/mingw64/include/c++/16.1.0/bits/version.h \
  D:/mingw64/include/c++/16.1.0/x86_64-w64-mingw32/bits/c++config.h \
@@ -441,13 +442,23 @@ CMakeFiles/ege-demo.dir/Mokthyn.cpp.obj: D:\Mokthyn\Mokthyn.cpp \
  D:/mingw64/x86_64-w64-mingw32/include/ws2def.h \
  D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_wsa_errnos.h \
  D:/mingw64/x86_64-w64-mingw32/include/qos.h \
- D:\Mokthyn\game.h/GameLogicImpl.h D:\Mokthyn\game.h/GameNetwork.h \
- D:\Mokthyn\game.h/GameRender.h D:/mingw64/include/c++/16.1.0/algorithm \
+ D:/mingw64/include/c++/16.1.0/algorithm \
  D:/mingw64/include/c++/16.1.0/bits/ranges_algo.h \
  D:/mingw64/include/c++/16.1.0/pstl/glue_algorithm_defs.h \
+ D:/mingw64/include/c++/16.1.0/utility \
+ D:/mingw64/include/c++/16.1.0/bits/stl_relops.h \
+ D:/mingw64/include/c++/16.1.0/bits/intcmp.h \
+ D:\Mokthyn\game.h/GameLogic.h D:\Mokthyn\game.h/GameLogicImpl.h \
+ D:\Mokthyn\game.h/GameNetwork.h D:\Mokthyn\game.h/GameRender.h \
  D:/mingw64/x86_64-w64-mingw32/include/ws2tcpip.h \
  D:/mingw64/x86_64-w64-mingw32/include/ws2ipdef.h \
  D:/mingw64/x86_64-w64-mingw32/include/in6addr.h \
  D:/mingw64/x86_64-w64-mingw32/include/psdk_inc/_ip_mreq1.h \
  D:/mingw64/x86_64-w64-mingw32/include/mstcpip.h \
- D:\Mokthyn\game.h/GameNetworkImpl.h D:\Mokthyn\game.h/GameRenderImpl.h
+ D:\Mokthyn\game.h/GameNetworkImpl.h D:\Mokthyn\game.h/GameRenderImpl.h \
+ D:/mingw64/include/c++/16.1.0/unordered_map \
+ D:/mingw64/include/c++/16.1.0/bits/unordered_map.h \
+ D:/mingw64/include/c++/16.1.0/bits/hashtable.h \
+ D:/mingw64/include/c++/16.1.0/bits/hashtable_policy.h \
+ D:/mingw64/include/c++/16.1.0/bits/node_handle.h \
+ D:/mingw64/x86_64-w64-mingw32/include/shellapi.h

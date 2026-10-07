@@ -21,6 +21,7 @@ inline constexpr int MapTop = 62;
 inline constexpr int ViewRadius = 12;
 inline constexpr int EnemyHealth = 45;
 inline constexpr unsigned short NetworkPort = 8888;
+inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
 inline const ege::color_t Background = EGERGB(12, 18, 24);
 inline const ege::color_t Panel = EGERGB(21, 30, 37);
