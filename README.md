@@ -1,6 +1,4 @@
-# Mokthyn-public
-
-[Mokthyn](https://github.com/yingMC1/Mokthyn) 的公开仓库（[Mokthyn](https://github.com/yingMC1/Mokthyn)是私自仓库）。
+# Mokthyn
 
 ### 下载网
 
