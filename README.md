@@ -4,7 +4,6 @@
 
 1. [Mokthyn - Download](https://mokthyn-3xya338.maozi.io/)。
 2. [点击这里](https://fancy-unit-740c.ying110189.workers.dev)（更新慢）。
-3. [点击这里](http://mokthyn.dpdns.org/)（更新慢）
 
 ### 新手手册
 
