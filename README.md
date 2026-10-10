@@ -1,44 +1,44 @@
 # Mokthyn
 
-### 下载网
+## 📥 下载
 
 1. [主下载站](https://mokthyn-3xya338.maozi.io/)（推荐，更新及时）
 2. [备用下载站 1](https://fancy-unit-740c.ying110189.workers.dev)（更新较慢）
 
-### 新手手册
+## 📖 简介
+
+Mokthyn（莫克廷）是一个「逃离雅科夫模式」的游戏，核心玩法为「搜、打、撤」。
+
+基于 C++ 与 EGE (Easy Graphics Engine) 图形库开发，使用 CMake + VSCode 构建，界面较前代项目有显著提升。
+
+### 📕新手手册
 
 请查看[新手手册](./新手手册.md)。游戏内主菜单按 `3` 可打开分
 页操作说明；在手册页按 `D` 可打开下载页，按方向键翻页。
 游戏会将语言、界面缩放比例、窗口尺寸和单人行动进度保存在 `%APPDATA%\mokthyn\save.dat`。
 主菜单按 `7` 打开设置；默认界面比例为 120%。使用上下方向键选择比例、窗口宽度或高度，再用左右方向键调整；按 `0` 恢复默认设置。
 
-### 简介
+## 📜 项目历史
 
-这是个逃离雅科夫模式的游戏，搜、打、撤功能。
+本项目由 [Infinite-Shooter](https://github.com/yingMC1/Infinite-Shooter) 迁移而来，在新仓库 [Mokthyn](https://github.com/yingMC1/Mokthyn) 中继续开发。
 
-### 来源
+## 🤝 如何贡献头文件
 
-[Infinite-Shooter](https://github.com/yingMC1/Infinite-Shooter) 迁移至了的 [Mokthyn](https://github.com/yingMC1/Mokthyn) 新仓库了。
+如果你希望为 Mokthyn 贡献自定义功能：
 
-新版本使用了 Cmake + ege + vscode 界面更好看。
+1. 上传 `.h` 文件前，请先确认该功能尚未存在（可通过 Issue 询问）。
+2. 打开[下载站](https://mokthyn-3xya338.maozi.io/)，使用贡献功能上传 `.h` 文件。
 
-## 如何贡献文献
+**要求：**
+- 体验过 Mokthyn 游戏
+- 编写的 `.h` 文件功能不得与 `game.h` 重复
+- 建议先通过 [GitHub Issues](https://github.com/yingMC1/Mokthyn-public/issues) 或 Discussions 与开发者交流
 
-上传 .h 前最好问一下我有么有这个功能。
+## 👥 开发者
 
-打开下载网，贡献文献功能上传 .h 文件。
+- **yingMC1** — [洛谷账号](https://www.luogu.com.cn/user/1488732)
+- **yingMC-1** — yingMC1 的备用账号（VSCode 中绑定此账号提交代码）
 
-要求：
-- 要玩过 Mokthyn。
-- 和我交流过（yingMC：Ying110189@outlook.com）。
+## 💬 联系与反馈
 
-写一个 .h（功能能和 game.h 不能相同）。
-
-## 开发者
-
-- yingMC1，（[luogu账号](https://www.luogu.com.cn/user/1488732)）。
-- yingMC-1（yingMC1的小号，应为 vscode 上绑的是yingMC-1来传代码）。
-
-## 后言
-
-Infinite-Shooter 感觉~~橡皮画质~~。
+欢迎通过 [GitHub Issues](https://github.com/yingMC1/Mokthyn-public/issues) 提交 Bug 报告、功能建议或参与讨论。
