@@ -4,8 +4,6 @@
 
 [工作室](https://mokthyn.rf.gd/)
 
-Mokthyn-public 是 [Mokthyn](https://github.com/yingMC1/Mokthyn) 的公开仓库（Mokthyn 本体为私有仓库）。
-
 ## 📥 下载
 
 1. [主下载站](https://mokthyn.rf.gd/Mokthyn.html)（推荐，更新及时）
