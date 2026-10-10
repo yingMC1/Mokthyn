@@ -1,4 +1,4 @@
-[# Mokthyn-public
+# Mokthyn
 
 ## yingMC工作室
 
