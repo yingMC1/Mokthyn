@@ -2,8 +2,8 @@
 
 ### 下载网
 
-1. [Mokthyn - Download](https://mokthyn-3xya338.maozi.io/)。
-2. [点击这里](https://fancy-unit-740c.ying110189.workers.dev)（更新慢）。
+1. [主下载站](https://mokthyn-3xya338.maozi.io/)（推荐，更新及时）
+2. [备用下载站 1](https://fancy-unit-740c.ying110189.workers.dev)（更新较慢）
 
 ### 新手手册
 
