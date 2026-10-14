@@ -316,6 +316,7 @@ void collectPickup() {
         const int found = randomInt(8, 16);
         ammo += found;
         tile = Floor;
+        if (networkActive && networkHost) ++networkMapRevision;
         if (networkActive && !networkHost)
             sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
                                       std::to_string(pickupY) + " " +
@@ -326,6 +327,7 @@ void collectPickup() {
         const int pickupY = playerY;
         ++medkits;
         tile = Floor;
+        if (networkActive && networkHost) ++networkMapRevision;
         if (networkActive && !networkHost)
             sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
                                       std::to_string(pickupY) + " " +

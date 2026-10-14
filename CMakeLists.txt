@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.25)
 
 if(CMAKE_HOST_UNIX)
     set(CMAKE_SYSTEM_NAME Windows)
@@ -48,7 +48,8 @@ else()
 endif()
 
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
-target_compile_features(${MY_TARGET_NAME} PRIVATE cxx_std_17)
+target_compile_features(${MY_TARGET_NAME} PRIVATE cxx_std_26)
+set_target_properties(${MY_TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32 shell32 crypt32)
 
 # 设置静态库搜索路径
