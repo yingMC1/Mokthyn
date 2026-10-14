@@ -303,7 +303,12 @@ void processNetwork() {
                   clientArmorTier >> clientArmorDurability >> clientArmorOn >> syncedKills >>
                   syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
                   finished >> result >> enemyCount) ||
-                enemyCount < 0 || enemyCount > 30)
+                  enemyCount < 0 || enemyCount > 30 ||
+                  (hostEvacuating != 0 && hostEvacuating != 1) ||
+                  (peerEvacuating != 0 && peerEvacuating != 1) ||
+                  (hostPaused != 0 && hostPaused != 1) ||
+                  (finished != 0 && finished != 1) ||
+                  (result != 0 && result != 1))
                 continue;
             beginNetworkArchiveSession();
             const bool awaitingStart =
@@ -322,9 +327,9 @@ void processNetwork() {
             armorTier = std::clamp(clientArmorTier, 0, 4);
             armorDurability = std::clamp(clientArmorDurability, 0, ArmorDurability[armorTier]);
             armorOn = clientArmorOn != 0 && armorTier > 0 && armorDurability > 0;
-            kills = std::max(0, syncedKills);
-            totalEnemies = std::max(0, syncedTotal);
-            money = std::max(0, syncedMoney);
+            kills = std::clamp(syncedKills, 0, 100000);
+            totalEnemies = std::clamp(syncedTotal, 0, 100000);
+            money = std::clamp(syncedMoney, 0, 100000000);
             peerExtracting = hostEvacuating != 0;
             if (extracting && peerEvacuating != 0) {
                 peerExtractConfirmed = true;

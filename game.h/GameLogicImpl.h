@@ -137,6 +137,7 @@ void startRun() {
                 world[y][x] = Floor;
     for (int x = playerX; x <= bossX; ++x) world[playerY][x] = Floor;
     for (int y = playerY; y <= bossY; ++y) world[y][bossX] = Floor;
+    world[MapRows - 2][MapColumns - 2] = ExitTile;
     for (int i = 0; i < 16; ++i) {
         for (int attempt = 0; attempt < 400; ++attempt) {
             const int x = randomInt(1, MapColumns - 2);

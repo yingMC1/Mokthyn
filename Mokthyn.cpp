@@ -140,17 +140,24 @@ int main() {
         case Screen::Help:
             if (!helpInputReady) {
                 if (!keystate('3')) helpInputReady = true;
-            } else if (keyPressed(VK_ESCAPE) || keyPressed(VK_RETURN)) {
-                screen = Screen::Menu;
-            } else if (keyPressed(VK_RIGHT) || keyPressed(VK_DOWN)) {
-                helpPage = (helpPage + 1) % 3;
-            } else if (keyPressed(VK_LEFT) || keyPressed(VK_UP)) {
-                helpPage = (helpPage + 2) % 3;
-            } else if (keyPressed('D')) {
-                const auto result = reinterpret_cast<INT_PTR>(
-                    ShellExecuteW(nullptr, L"open", DownloadUrl, nullptr, nullptr, SW_SHOWNORMAL));
-                if (result <= 32)
-                    setMessage(english ? L"Could not open download page" : L"下载页面无法打开");
+            } else {
+                const bool escapePressed = keyPressed(VK_ESCAPE);
+                const bool enterPressed = keyPressed(VK_RETURN);
+                const bool nextPagePressed = keyPressed(VK_RIGHT) || keyPressed(VK_DOWN);
+                const bool previousPagePressed = keyPressed(VK_LEFT) || keyPressed(VK_UP);
+                const bool downloadPressed = keyPressed('D');
+                if (escapePressed || enterPressed) {
+                    screen = Screen::Menu;
+                } else if (nextPagePressed) {
+                    helpPage = (helpPage + 1) % 3;
+                } else if (previousPagePressed) {
+                    helpPage = (helpPage + 2) % 3;
+                } else if (downloadPressed) {
+                    const auto result = reinterpret_cast<INT_PTR>(ShellExecuteW(
+                        nullptr, L"open", DownloadUrl, nullptr, nullptr, SW_SHOWNORMAL));
+                    if (result <= 32)
+                        setMessage(english ? L"Could not open download page" : L"下载页面无法打开");
+                }
             }
             drawHelp();
             break;
