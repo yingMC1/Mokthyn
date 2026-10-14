@@ -91,11 +91,10 @@ int main() {
                 } else if (character == 8 && !hostIpInput.empty()) {
                     hostIpInput.pop_back();
                 } else if (character == 13 && !hostIpInput.empty()) {
-                    const std::string addressText(hostIpInput.begin(), hostIpInput.end());
                     peerAddress = {};
                     peerAddress.sin_family = AF_INET;
                     peerAddress.sin_port = htons(NetworkPort);
-                    if (inet_pton(AF_INET, addressText.c_str(), &peerAddress.sin_addr) == 1) {
+                    if (inet_pton(AF_INET, hostIpInput.c_str(), &peerAddress.sin_addr) == 1) {
                         networkStatus = L"正在连接主机...";
                         screen = Screen::JoinLobby;
                         lastConnectAttempt = Clock::time_point{};
@@ -156,7 +155,7 @@ int main() {
                     const auto result = reinterpret_cast<INT_PTR>(ShellExecuteW(
                         nullptr, L"open", DownloadUrl, nullptr, nullptr, SW_SHOWNORMAL));
                     if (result <= 32)
-                        setMessage(english ? L"Could not open download page" : L"下载页面无法打开");
+                        setMessage(L"下载页面无法打开");
                 }
             }
             drawHelp();
@@ -227,6 +226,7 @@ int main() {
                 lastEnemyTurn += pausedFor;
                 nextPlayerHit += pausedFor;
                 nextPeerHit += pausedFor;
+                if (peerHealing) peerHealStarted += pausedFor;
                 pausedAt = {};
                 screen = Screen::Playing;
             } else if (keyPressed(VK_ESCAPE)) {

@@ -16,8 +16,8 @@ if(CMAKE_HOST_UNIX)
     set(PKG_CONFIG_EXECUTABLE ${TOOLCHAIN_PREFIX}-pkg-config)
 endif()
 
-set(MY_PROJECT_NAME ege-demo)
-set(MY_TARGET_NAME ege-demo)
+set(MY_PROJECT_NAME Mokthyn)
+set(MY_TARGET_NAME Mokthyn)
 set(MY_OUTPUT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/build")
 
 project(${MY_PROJECT_NAME} LANGUAGES CXX)
@@ -48,13 +48,11 @@ else()
 endif()
 
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
+target_compile_features(${MY_TARGET_NAME} PRIVATE cxx_std_17)
 target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32 shell32 crypt32)
 
 # 设置静态库搜索路径
 if(MSVC)
-    # 设置 MSVC 编译选项, 当版本大于 vs2019 时, 使用 c++17 标准.
-    set(CPP_COMPILE_OPTIONS "/std:c++17")
-
     if(MSVC_VERSION GREATER_EQUAL 1950)
         # vs2026 以上, 静态库是兼容的.
         if(CMAKE_CL_64)
@@ -84,8 +82,6 @@ if(MSVC)
             set(osLibDir "vs2017/x86")
         endif()
 
-        # 设置 MSVC 编译选项, 当版本为 vs2017 时, 使用 c++14 标准.
-        set(CPP_COMPILE_OPTIONS "/std:c++14")
     elseif(MSVC_VERSION GREATER_EQUAL 1900)
         # vs2015
         if(CMAKE_CL_64)
@@ -94,8 +90,6 @@ if(MSVC)
             set(osLibDir "vs2015")
         endif()
 
-        # 设置 MSVC 编译选项, 当版本为 vs2015 时, 使用 c++14 标准.
-        set(CPP_COMPILE_OPTIONS "/std:c++14")
     elseif(MSVC_VERSION GREATER_EQUAL 1600)
         if(MSVC_VERSION GREATER_EQUAL 1700)
             message(WARNING "You are using vs2012/vs2013, which is not tested, please use vs2010, vs2015 or later version of MSVC compiler.")
@@ -118,7 +112,6 @@ if(MSVC)
         /D__STDC_LIMIT_MACROS
         /D_USE_MATH_DEFINES
         /Zc:__cplusplus
-        ${CPP_COMPILE_OPTIONS}
         "$<$<CONFIG:DEBUG>:/DDEBUG>"
         "$<$<CONFIG:RELEASE>:/DNDEBUG>"
         "$<$<CONFIG:RELWITHDEBINFO>:/DNDEBUG>"

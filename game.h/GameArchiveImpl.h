@@ -28,6 +28,49 @@ bool readArchiveInt(std::istream& input, int& value) {
     return result.ec == std::errc{} && result.ptr == token.data() + token.size();
 }
 
+void restoreLegacyArchiveSettings(const std::string& contents, int version) {
+    std::istringstream archive(contents);
+    std::vector<std::string> fields;
+    std::string field;
+    while (archive >> field) fields.push_back(std::move(field));
+    const auto readValue = [&fields](size_t index, int& value) {
+        if (index >= fields.size()) return false;
+        const std::string& token = fields[index];
+        const auto result = std::from_chars(token.data(), token.data() + token.size(), value);
+        return result.ec == std::errc{} && result.ptr == token.data() + token.size();
+    };
+
+    int value = 0;
+    if (readValue(2, value) && validArchiveValue(value, 0, 1)) english = value != 0;
+    if (version < 2) return;
+
+    constexpr size_t fixedHeaderFieldCount = 13;
+    const size_t legacyMapFieldCount =
+        version >= 4 ? static_cast<size_t>(MapColumns * MapRows) : 24 * 18;
+    const size_t enemyCountIndex = 2 + fixedHeaderFieldCount + legacyMapFieldCount;
+    int enemyCount = 0;
+    if (!readValue(enemyCountIndex, enemyCount) || !validArchiveValue(enemyCount, 0, 30))
+        return;
+    const size_t enemyFieldCount = version >= 4 ? 6 : 5;
+    const size_t settingsIndex = enemyCountIndex + 1 +
+                                 static_cast<size_t>(enemyCount) * enemyFieldCount;
+    if (readValue(settingsIndex, value) &&
+        validArchiveValue(value, MinUiScalePercent, MaxUiScalePercent) &&
+        (value - MinUiScalePercent) % UiScaleStepPercent == 0)
+        uiScalePercent = value;
+    if (version < 3) return;
+    int storedWidth = 0;
+    int storedHeight = 0;
+    if (readValue(settingsIndex + 1, storedWidth) &&
+        validArchiveValue(storedWidth, MinWindowWidth, MaxWindowWidth) &&
+        (storedWidth - MinWindowWidth) % WindowWidthStep == 0)
+        windowWidth = storedWidth;
+    if (readValue(settingsIndex + 2, storedHeight) &&
+        validArchiveValue(storedHeight, MinWindowHeight, MaxWindowHeight) &&
+        (storedHeight - MinWindowHeight) % WindowHeightStep == 0)
+        windowHeight = storedHeight;
+}
+
 bool loadVersion5Archive(std::istream& input) {
     std::string marker;
     int storedEnglish = english ? 1 : 0;
@@ -39,20 +82,29 @@ bool loadVersion5Archive(std::istream& input) {
         return false;
     }
 
+    bool validSettings = true;
     int value = 0;
     if (readArchiveInt(input, value) && validArchiveValue(value, 0, 1))
         storedEnglish = value;
+    else
+        validSettings = false;
     if (readArchiveInt(input, value) &&
         validArchiveValue(value, MinUiScalePercent, MaxUiScalePercent) &&
         (value - MinUiScalePercent) % UiScaleStepPercent == 0)
         storedUiScalePercent = value;
+    else
+        validSettings = false;
     if (readArchiveInt(input, value) && validArchiveValue(value, MinWindowWidth, MaxWindowWidth) &&
         (value - MinWindowWidth) % WindowWidthStep == 0)
         storedWindowWidth = value;
+    else
+        validSettings = false;
     if (readArchiveInt(input, value) &&
         validArchiveValue(value, MinWindowHeight, MaxWindowHeight) &&
         (value - MinWindowHeight) % WindowHeightStep == 0)
         storedWindowHeight = value;
+    else
+        validSettings = false;
 
     english = storedEnglish != 0;
     uiScalePercent = storedUiScalePercent;
@@ -147,6 +199,8 @@ bool loadVersion5Archive(std::istream& input) {
     enemies = std::move(storedEnemies);
     healing = extracting = false;
     if (hasSavedRun) screen = Screen::Menu;
+    if (!validSettings)
+        archiveStatus = L"存档显示设置有损坏，已保留未损坏的设置";
     return true;
 }
 
@@ -237,11 +291,12 @@ bool loadArchive() {
         return false;
     }
     if (version == 5) return loadVersion5Archive(input);
+    restoreLegacyArchiveSettings(contents, version);
 
     int storedEnglish = 0, savedRun = 0, storedHealth = 0, storedAmmo = 0, storedMedkits = 0;
     int storedMoney = 0, storedArmorTier = 0, storedArmorDurability = 0, storedArmorOn = 0;
     int storedPlayerX = 0, storedPlayerY = 0, storedKills = 0, storedTotalEnemies = 0;
-    if (!(input >> signature >> version >> storedEnglish >> savedRun >> storedHealth >> storedAmmo >>
+    if (!(input >> storedEnglish >> savedRun >> storedHealth >> storedAmmo >>
           storedMedkits >> storedMoney >> storedArmorTier >> storedArmorDurability >> storedArmorOn >>
           storedPlayerX >> storedPlayerY >> storedKills >> storedTotalEnemies) ||
         !validArchiveValue(storedEnglish, 0, 1) ||
@@ -458,8 +513,6 @@ bool saveArchive() {
                << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << '\n';
         ++writtenEnemies;
     }
-    output << uiScalePercent << '\n';
-    output << windowWidth << ' ' << windowHeight << '\n';
     std::string contents;
     if (!protectArchive(output.str(), contents)) {
         archiveStatus = L"存档加密失败";

@@ -112,6 +112,9 @@ std::wstring localize(const std::wstring& value) {
         {L"存档解密失败，文件可能已损坏或由其他 Windows 用户创建",
          L"Could not decrypt save; it may be damaged or belong to another Windows user"},
         {L"存档加密失败", L"Could not encrypt save file"},
+        {L"网络消息确认超时", L"Network message acknowledgement timed out"},
+        {L"可靠网络消息队列已满", L"Reliable network message queue is full"},
+        {L"命中确认中", L"Hit sent; awaiting confirmation"},
         {L"弹药库存", L"Ammo reserve"}, {L"持有金币", L"Coins"},
         {L"高清战术视图   /   EGE GRAPHICS", L"TACTICAL VIEW   /   EGE GRAPHICS"},
         {L"继续存档", L"Resume saved run"}, {L"切换语言：L", L"Language: L"},
@@ -122,21 +125,37 @@ std::wstring localize(const std::wstring& value) {
         {L"存档敌人数据无效，已使用默认数据", L"Invalid saved enemy data; using default data"},
         {L"存档文件大小无效，已使用默认数据", L"Invalid save size; using default data"},
         {L"读取存档失败", L"Could not read save file"},
+        {L"存档设置区块无效", L"Invalid save settings block"},
+        {L"存档显示设置有损坏，已保留未损坏的设置",
+         L"Some display settings were damaged; valid settings were preserved"},
+        {L"存档行动区块无效，已保留显示设置",
+         L"Invalid run data; display settings were preserved"},
+        {L"存档行动数据无效，已保留显示设置",
+         L"Invalid run data; display settings were preserved"},
+        {L"存档地图区块无效，已保留显示设置",
+         L"Invalid map block; display settings were preserved"},
+        {L"存档地图数据无效，已保留显示设置",
+         L"Invalid map data; display settings were preserved"},
+        {L"存档敌人区块无效，已保留显示设置",
+         L"Invalid enemy block; display settings were preserved"},
+        {L"存档敌人数据无效，已保留显示设置",
+         L"Invalid enemy data; display settings were preserved"},
+        {L"存档已读取，但自动加密迁移失败，下次启动将重试",
+         L"Save loaded, but encryption migration failed; it will be retried next launch"},
         {L"保存存档失败", L"Could not save game"},
         {L"无法创建存档目录", L"Could not create save directory"},
         {L"无法写入存档文件", L"Could not write save file"},
         {L"无法读取 APPDATA 环境变量，存档功能不可用",
          L"APPDATA is unavailable; saving is disabled"},
-        {L"主机启动失败，检查端口 8888 是否被占用", L"Could not host; check whether UDP port 8888 is in use"},
+        {L"主机启动失败，检查 UDP 端口是否被占用",
+         L"Could not host; check whether the UDP port is in use"},
         {L"网络初始化失败", L"Network initialization failed"},
         {L"下载页面无法打开", L"Could not open download page"},
-        {L"创建联机主机", L"Host a co-op game"},
-        {L"加入局域网游戏", L"Join a LAN game"}, {L"等待主机开始", L"Waiting for host"},
+        {L"下载地址：Mokthyn - Download", L"Download: Mokthyn - Download"},
+        {L"等待主机开始", L"Waiting for host"},
         {L"主机 IPv4 地址", L"Host IPv4 address"},
         {L"将此地址发给同一局域网内的队友。", L"Share this address with a teammate on the same LAN."},
         {L"按 ENTER 开始合作行动", L"Press ENTER to start the co-op run"},
-        {L"等待队友连接 · UDP 端口 8888", L"Waiting for teammate · UDP port 8888"},
-        {L"等待玩家连接 · UDP 8888", L"Waiting for players · UDP 8888"},
         {L"输入主机的局域网 IPv4 地址", L"Enter the host's LAN IPv4 address"},
         {L"请使用 ipconfig 查看本机 IP", L"Run ipconfig to find this computer's IP"},
         {L"网络接收错误", L"Network receive error"},
@@ -174,10 +193,8 @@ std::wstring localize(const std::wstring& value) {
         {L"W A S D        在地图中移动", L"W A S D        Move around the map"},
         {L"方向键          朝对应方向射击；子弹遇墙会停止",
          L"Arrow keys      Shoot that way; bullets stop at walls"},
-        {L"方向键          朝对应方向射击，子弹可穿过空地",
-         L"Arrow keys      Shoot in that direction; shots travel through open ground"},
         {L"E               拾取脚下的弹药或医疗包", L"E               Pick up ammo or a medkit underfoot"},
-        {L"H               消耗医疗包，等待 3 秒恢复 20 点生命",
+        {L"H               消耗医疗包；安全等待 3 秒恢复 20 点生命",
          L"H               Use a medkit; stay safe for 3 seconds to restore 20 health"},
         {L"K               穿上或脱下已购买的护甲", L"K               Equip or unequip purchased armor"},
         {L"Q               到达撤离点后即可开始撤离",
@@ -186,14 +203,13 @@ std::wstring localize(const std::wstring& value) {
         {L"敌人靠近或进入视线后会苏醒并追击你。",
          L"Enemies wake up and pursue you when nearby or in sight."},
         {L"视野以外的地图区域会变暗。", L"Areas outside your line of sight are darkened."},
-        {L"按任意数字键返回", L"Press ESC or ENTER to return"},
         {L"按 ← → 或 ↑ ↓ 翻页", L"Use ← → or ↑ ↓ to change pages"},
         {L"按 D 打开下载页面", L"Press D to open the download page"},
         {L"击败右下区域的 Boss，再前往地图右下角的绿色撤离点。",
          L"Defeat the area boss, then reach the green extraction point in the bottom-right."},
         {L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
          L"Press Q at the extraction point. Hold for 5 seconds without moving or taking damage."},
-        {L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后进入狂暴阶段。",
+        {L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后会进入狂暴阶段。",
          L"Regular enemies reward 10 coins; the boss rewards 100 and enrages below half health."},
         {L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
          L"Arrow keys fire (1 round each); hold WASD to keep moving."},
@@ -205,26 +221,20 @@ std::wstring localize(const std::wstring& value) {
          L"Your run fails at zero health; extracted supplies are kept."},
         {L"主菜单按 2 打开黑市：1–4 购买护甲，5 补弹，6 购买医疗包。",
          L"Press 2 for the market: 1–4 buy armor, 5 buys ammo, and 6 buys a medkit."},
-        {L"行动进度每 2 秒自动保存到 %APPDATA%\\mokthyn\\save.dat。",
-         L"Run progress autosaves every 2 seconds to %APPDATA%\\mokthyn\\save.dat."},
+        {L"商店购买会立即保存；行动进度会自动存入 %APPDATA%\\mokthyn\\save.dat。",
+         L"Shop purchases save immediately; run progress autosaves to %APPDATA%\\mokthyn\\save.dat."},
         {L"重新启动游戏后，主菜单按 6 继续最近的单人行动；按 1 开始新行动。",
          L"After restarting, press 6 to resume the last solo run or 1 to start a new run."},
         {L"按 L 切换语言；主菜单按 7 调整并保存界面缩放比例。",
          L"Press L to switch language; press 7 on the main menu to adjust and save interface scale."},
         {L"联机：主机按 4，队友按 5 并输入主机 IPv4；双方需在同一局域网。",
          L"Co-op: host presses 4; teammate presses 5 and enters the host IPv4. Same LAN required."},
-        {L"联机使用 UDP 8888；若无法连接，请检查防火墙和路由器设置。",
-         L"Co-op uses UDP 8888; check firewall and router settings if connections fail."},
-        {L"下载地址：Mokthyn - Download", L"Download: Mokthyn - Download"},
         {L"按 ← → 或 ↑ ↓ 翻页    按 D 打开下载页面    ENTER / ESC 返回",
          L"← → or ↑ ↓ pages    D opens download    ENTER / ESC returns"},
         {L"撤离成功", L"Extraction Successful"}, {L"行动结束", L"Run Over"},
         {L"本次击杀", L"Kills this run"}, {L"剩余弹药", L"Ammo remaining"},
         {L"按 ENTER 返回主菜单", L"Press ENTER to return to the main menu"},
         {L"已暂停", L"Paused"}, {L"按 P 继续  /  ESC 返回菜单", L"P resume  /  ESC menu"},
-        {L"按 P 继续  /  ESC 返回菜单", L"P resume  /  ESC menu"},
-        {L"下载地址：Mokthyn - Download", L"Download: Mokthyn - Download"},
-        {L"清除区域内的敌人，然后前往撤离点", L"Clear the area, then reach the extraction point"},
         {L"清除敌人并击败区域 Boss，然后前往撤离点",
          L"Clear the enemies and defeat the area boss, then extract"},
         {L"击败区域 Boss 后才能撤离", L"Defeat the area boss before extracting"},
@@ -233,10 +243,9 @@ std::wstring localize(const std::wstring& value) {
         {L"Boss 已击败", L"Boss defeated"},
         {L"区域 Boss 已击败  +100 金币", L"Area boss defeated  +100 coins"},
         {L"弹药不足，寻找弹药箱", L"Out of ammo; find an ammo cache"},
-        {L"目标消灭  +10 金币", L"Target eliminated  +10 coins"},
         {L"命中目标", L"Target hit"}, {L"未命中", L"Miss"},
         {L"护甲已损坏", L"Armor broken"}, {L"受到攻击，动作已中断", L"Hit taken; action interrupted"},
-        {L"受到攻击", L"Under attack"}, {L"拾取弹药  +", L"Ammo picked up  +"},
+        {L"受到攻击", L"Under attack"},
         {L"拾取医疗包  +1", L"Medkit picked up  +1"},
         {L"这里没有可拾取的物资", L"No supplies to pick up here"},
         {L"动作已取消", L"Action cancelled"}, {L"金币不足", L"Not enough coins"},
@@ -245,16 +254,28 @@ std::wstring localize(const std::wstring& value) {
         {L"护甲已穿上", L"Armor equipped"}, {L"护甲已脱下", L"Armor unequipped"},
         {L"治疗中，请保持安全", L"Healing; stay safe"},
         {L"现在无法治疗", L"Cannot heal right now"},
-        {L"治療完成  +20 生命", L"Healing complete  +20 health"},
         {L"治疗完成  +20 生命", L"Healing complete  +20 health"},
         {L"前往地图上的撤离点", L"Reach the extraction point on the map"},
         {L"撤离开始，保持位置 5 秒", L"Extraction started; hold position for 5 seconds"},
         {L"治疗中  ", L"Healing  "}, {L"撤离中  ", L"Extracting  "},
-        {L"目标消灭", L"Target eliminated"}
+        {L"下载：Mokthyn - Download", L"Download: Mokthyn - Download"}
     };
     const auto found = translations.find(value);
     if (found != translations.end()) return found->second;
-    if (value.rfind(L"拾取弹药  +", 0) == 0) return L"Ammo picked up  +" + value.substr(7);
+    const std::wstring ammoPrefix = L"拾取弹药  +";
+    if (value.rfind(ammoPrefix, 0) == 0)
+        return L"Ammo picked up  +" + value.substr(ammoPrefix.size());
+    const std::wstring networkWaitPrefix = L"等待玩家连接 · UDP ";
+    if (value.rfind(networkWaitPrefix, 0) == 0)
+        return L"Waiting for players · UDP " + value.substr(networkWaitPrefix.size());
+    const std::wstring networkHelpPrefix = L"联机使用 UDP ";
+    if (value.rfind(networkHelpPrefix, 0) == 0) {
+        const size_t separator = value.find(L"；", networkHelpPrefix.size());
+        if (separator != std::wstring::npos)
+            return L"Co-op uses UDP " +
+                   value.substr(networkHelpPrefix.size(), separator - networkHelpPrefix.size()) +
+                   L"; check firewall and router settings if connections fail.";
+    }
     if (value.rfind(L"等级 ", 0) == 0) return L"Tier " + value.substr(3);
     if (value.rfind(L"队友 ", 0) == 0) return L"Ally " + value.substr(3);
     if (value.rfind(L"治疗中  ", 0) == 0) {
@@ -294,7 +315,14 @@ void drawText(int x, int y, const std::wstring& value, int size, ege::color_t co
     const std::wstring displayed = localize(value);
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(TRANSPARENT, frameBuffer);
-    setfont(std::max(1, scaledLength(size)), 0, L"Microsoft YaHei UI");
+    static PIMAGE fontTarget = nullptr;
+    static int fontHeight = 0;
+    const int requestedFontHeight = std::max(1, scaledLength(size));
+    if (fontTarget != frameBuffer || fontHeight != requestedFontHeight) {
+        setfont(requestedFontHeight, 0, L"Microsoft YaHei UI", frameBuffer);
+        fontTarget = frameBuffer;
+        fontHeight = requestedFontHeight;
+    }
     settextcolor(color);
     outtextxy(scaledX(x), scaledY(y), displayed.c_str());
 }
@@ -472,11 +500,13 @@ void drawNetworkLobby() {
     drawText(225, 250, networkStatus, 22, Green);
     if (screen == Screen::HostLobby) {
         drawText(225, 330, L"主机 IPv4 地址", 18, Muted);
-        static const std::wstring localIp = getLocalIPv4();
+        const std::wstring localIp = getLocalIPv4();
         drawText(225, 372, localIp, 34, Cyan);
         drawText(225, 470, L"将此地址发给同一局域网内的队友。", 20, Text);
         drawText(225, 520,
-                 peerConnected ? L"按 ENTER 开始合作行动" : L"等待队友连接 · UDP 端口 8888", 20,
+                 peerConnected ? L"按 ENTER 开始合作行动"
+                               : L"等待玩家连接 · UDP " + std::to_wstring(NetworkPort),
+                 20,
                  Yellow);
     } else if (screen == Screen::JoinIp) {
         fillRect(220, 355, 1120, 425, PanelLight);
@@ -515,6 +545,7 @@ void drawShop() {
     }
     drawText(155, 720, L"↑ / ↓ 选择     ENTER 购买     0 返回", 18, Muted);
     drawText(155, 766, L"护甲升级会替换当前护甲。", 17, Muted);
+    if (Clock::now() < messageUntil) drawText(155, 812, message, 18, Yellow);
 }
 
 void drawHelp() {
@@ -528,7 +559,7 @@ void drawHelp() {
           L"K               穿上或脱下已购买的护甲",
           L"敌人靠近或进入视线后会苏醒并追击你。",
           L"视野以外的地图区域会变暗。"}},
-        {{L"行动简报 · 目标与物资", L"清除地图中的敌人，随后前往右下角的绿色撤离点。",
+        {{L"行动简报 · 目标与物资", L"击败右下区域的 Boss，再前往地图右下角的绿色撤离点。",
           L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
           L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后会进入狂暴阶段。",
           L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
@@ -540,7 +571,8 @@ void drawHelp() {
           L"重新启动游戏后，主菜单按 6 继续最近的单人行动；按 1 开始新行动。",
           L"按 L 切换语言；主菜单按 7 调整并保存界面缩放比例。",
           L"联机：主机按 4，队友按 5 并输入主机 IPv4；双方需在同一局域网。",
-          L"联机使用 UDP 8888；若无法连接，请检查防火墙和路由器设置。",
+          L"联机使用 UDP " + std::to_wstring(NetworkPort) +
+              L"；若无法连接，请检查防火墙和路由器设置。",
           L"下载：Mokthyn - Download"}}
     }};
     drawText(150, 110, pages[helpPage][0], 46, Text);

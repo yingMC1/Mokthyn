@@ -151,6 +151,7 @@ void startRun() {
         }
     }
     enemies.push_back({bossX, bossY, BossHealth, true, false, true, Clock::now()});
+    if (networkActive && networkHost) ++networkMapRevision;
     totalEnemies = static_cast<int>(enemies.size());
     for (int i = 0; i < 7; ++i)
         placePickup(AmmoPickup, 4);
@@ -288,9 +289,13 @@ void updateEnemies(Clock::time_point now) {
                 nextPeerHit = now + std::chrono::milliseconds(850);
             else
                 nextPlayerHit = now + std::chrono::milliseconds(850);
-            if (targetPeer && peerExtracting) {
-                peerExtracting = false;
-                peerExtractStarted = {};
+            if (targetPeer) {
+                peerHealing = false;
+                peerHealStarted = {};
+                if (peerExtracting) {
+                    peerExtracting = false;
+                    peerExtractStarted = {};
+                }
             }
             if (!targetPeer && (healing || extracting)) {
                 healing = false;
@@ -340,6 +345,8 @@ void movePlayer(int dx, int dy) {
     playerX = nextX;
     playerY = nextY;
     if (healing || extracting) {
+        if (healing && networkActive && !networkHost)
+            sendReliableNetworkPacket("HEAL_CANCEL");
         healing = false;
         if (extracting) cancelExtraction();
         setMessage(L"动作已取消");
@@ -410,10 +417,15 @@ void updatePlaying() {
     if (keyPressed('E')) collectPickup();
     if (keyPressed('H')) {
         if (medkits > 0 && health < 100 && !healing && !extracting) {
-            --medkits;
-            healing = true;
-            healStarted = now;
-            setMessage(L"治疗中，请保持安全");
+            if (!networkActive || networkHost ||
+                sendReliableNetworkPacket("HEAL_START")) {
+                --medkits;
+                healing = true;
+                healStarted = now;
+                setMessage(L"治疗中，请保持安全");
+            } else {
+                setMessage(L"治疗请求发送失败");
+            }
         } else
             setMessage(L"现在无法治疗");
     }
@@ -442,9 +454,15 @@ void updatePlaying() {
     updateEnemies(now);
     if (healing && now - healStarted >= std::chrono::seconds(3)) {
         healing = false;
-        health = std::min(100, health + 20);
-        if (networkActive && !networkHost) sendReliableNetworkPacket("HEAL");
-        setMessage(L"治疗完成  +20 生命");
+        if (networkActive && !networkHost) {
+            if (sendReliableNetworkPacket("HEAL_DONE"))
+                setMessage(L"治疗完成，等待主机确认");
+            else
+                setMessage(L"治疗确认发送失败");
+        } else {
+            health = std::min(100, health + 20);
+            setMessage(L"治疗完成  +20 生命");
+        }
     }
     if (health <= 0) {
         health = 0;
@@ -471,6 +489,9 @@ void updatePlaying() {
                  }))
             setMessage(L"击败区域 Boss 后才能撤离");
         else {
+            if (healing && networkActive && !networkHost)
+                sendReliableNetworkPacket("HEAL_CANCEL");
+            healing = false;
             extracting = true;
             extractStarted = now;
             peerExtractConfirmed = false;

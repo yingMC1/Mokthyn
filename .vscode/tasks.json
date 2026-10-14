@@ -103,14 +103,14 @@
       "args": [
         "-l",
         "-c",
-        "if command -v wine64 >/dev/null 2>&1; then wine64 ./ege-demo.exe; else wine ./ege-demo.exe; fi"
+        "if command -v wine64 >/dev/null 2>&1; then wine64 ./Mokthyn.exe; else wine ./Mokthyn.exe; fi"
       ],
       "options": { "cwd": "${workspaceFolder}/build/Debug" },
       "dependsOn": ["Build Project (Debug)"],
       "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
-        "args": ["-NoProfile", "-Command", ".\\ege-demo.exe"],
+        "args": ["-NoProfile", "-Command", ".\\Mokthyn.exe"],
         "options": { "cwd": "${workspaceFolder}/build/Debug" }
       }
     },
@@ -121,14 +121,14 @@
       "args": [
         "-l",
         "-c",
-        "if command -v wine64 >/dev/null 2>&1; then wine64 ./ege-demo.exe; else wine ./ege-demo.exe; fi"
+        "if command -v wine64 >/dev/null 2>&1; then wine64 ./Mokthyn.exe; else wine ./Mokthyn.exe; fi"
       ],
       "options": { "cwd": "${workspaceFolder}/build/Release" },
       "dependsOn": ["Build Project (Release)"],
       "problemMatcher": "$gcc",
       "windows": {
         "command": "powershell",
-        "args": ["-NoProfile", "-Command", ".\\ege-demo.exe"],
+        "args": ["-NoProfile", "-Command", ".\\Mokthyn.exe"],
         "options": { "cwd": "${workspaceFolder}/build/Release" }
       }
     },
