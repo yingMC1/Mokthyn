@@ -39,6 +39,11 @@ void closeNetwork() {
     lastNetworkReceive = {};
     lastConnectAttempt = {};
     lastEvacSend = {};
+    pendingReliablePackets.clear();
+    receivedReliablePacketIds.clear();
+    receivedReliablePacketOrder.clear();
+    networkMapRevision = 0;
+    peerMapRevision = 0;
 }
 
 bool initializeNetwork() {
@@ -47,6 +52,13 @@ bool initializeNetwork() {
     networkStarted = true;
     networkSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (networkSocket == INVALID_SOCKET) {
+        closeNetwork();
+        return false;
+    }
+    BOOL reuseAddress = TRUE;
+    if (setsockopt(networkSocket, SOL_SOCKET, SO_REUSEADDR,
+                   reinterpret_cast<const char*>(&reuseAddress),
+                   sizeof(reuseAddress)) == SOCKET_ERROR) {
         closeNetwork();
         return false;
     }
@@ -63,7 +75,7 @@ bool beginHostNetwork() {
     if (!initializeNetwork()) return false;
     sockaddr_in local{};
     local.sin_family = AF_INET;
-    local.sin_port = htons(8888);
+    local.sin_port = htons(NetworkPort);
     local.sin_addr.s_addr = htonl(INADDR_ANY);
     if (bind(networkSocket, reinterpret_cast<sockaddr*>(&local), sizeof(local)) == SOCKET_ERROR) {
         closeNetwork();
@@ -74,9 +86,11 @@ bool beginHostNetwork() {
     peerConnected = false;
     peerAddress = {};
     peerArmorInitialized = false;
+    networkMapRevision = 1;
+    peerMapRevision = 0;
     lastNetworkSend = {};
     lastNetworkReceive = {};
-    networkStatus = L"等待玩家连接 · UDP 8888";
+    networkStatus = L"等待玩家连接 · UDP " + std::to_wstring(NetworkPort);
     screen = Screen::HostLobby;
     return true;
 }
@@ -111,6 +125,21 @@ bool sendNetworkPacket(const std::string& packet) {
                   sizeof(peerAddress)) != SOCKET_ERROR;
 }
 
+bool sendReliableNetworkPacket(const std::string& packet) {
+    if (networkHost || !networkActive || !peerConnected || networkSocket == INVALID_SOCKET)
+        return false;
+    if (pendingReliablePackets.size() >= 64) {
+        networkStatus = L"可靠网络消息队列已满";
+        return false;
+    }
+    const unsigned int packetId = nextReliablePacketId++;
+    const std::string framed = "REL " + std::to_string(packetId) + " " + packet;
+    if (!sendNetworkPacket(framed)) return false;
+    pendingReliablePackets.emplace(
+        packetId, PendingReliablePacket{framed, Clock::now(), 1});
+    return true;
+}
+
 std::wstring getLocalIPv4() {
     char hostName[256]{};
     if (gethostname(hostName, sizeof(hostName)) == SOCKET_ERROR)
@@ -138,20 +167,23 @@ std::wstring getLocalIPv4() {
 void sendNetworkState() {
     if (!networkActive || !networkHost || !peerConnected || networkSocket == INVALID_SOCKET) return;
     std::ostringstream packet;
+    const bool includeMap = peerMapRevision != networkMapRevision;
     packet << "STATE " << playerX << ' ' << playerY << ' ' << health << ' ' << peerX << ' ' << peerY
            << ' ' << peerHealth << ' ' << peerArmorTier << ' ' << peerArmorDurability << ' '
            << (peerArmorOn ? 1 : 0) << ' ' << kills << ' ' << totalEnemies << ' ' << money << ' '
            << (extracting ? 1 : 0) << ' ' << (peerExtracting ? 1 : 0) << ' '
            << (screen == Screen::Paused ? 1 : 0) << ' '
-           << (screen == Screen::Result ? 1 : 0) << ' ' << (won ? 1 : 0) << ' ' << enemies.size()
-           << ' ';
+           << (screen == Screen::Result ? 1 : 0) << ' ' << (won ? 1 : 0) << ' '
+           << networkMapRevision << ' ' << (includeMap ? 1 : 0) << ' ' << enemies.size() << ' ';
     for (const Enemy& enemy : enemies)
         packet << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
                << ' ' << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << ' ';
-    packet << "MAP ";
-    for (const auto& row : world)
-        for (int tile : row)
-            packet << tile << ' ';
+    if (includeMap) {
+        packet << "MAP ";
+        for (const auto& row : world)
+            for (int tile : row)
+                packet << tile << ' ';
+    }
     sendNetworkPacket(packet.str());
     lastNetworkSend = Clock::now();
 }
@@ -170,12 +202,14 @@ void processNetwork() {
 
     char buffer[8192];
     sockaddr_in sender{};
-    int senderLength = sizeof(sender);
-    for (;;) {
+    for (int packetsProcessed = 0; packetsProcessed < 32; ++packetsProcessed) {
+        int senderLength = sizeof(sender);
         const int received = recvfrom(networkSocket, buffer, sizeof(buffer) - 1, 0,
                                       reinterpret_cast<sockaddr*>(&sender), &senderLength);
         if (received == SOCKET_ERROR) {
-            if (WSAGetLastError() != WSAEWOULDBLOCK) networkStatus = L"网络接收错误";
+            const int socketError = WSAGetLastError();
+            if (socketError == WSAECONNRESET) continue;
+            if (socketError != WSAEWOULDBLOCK) networkStatus = L"网络接收错误";
             break;
         }
         if (received >= static_cast<int>(sizeof(buffer) - 1)) continue;
@@ -219,6 +253,25 @@ void processNetwork() {
         std::istringstream input(data);
         std::string command;
         input >> command;
+
+        if (command == "RACK" && !networkHost) {
+            unsigned int packetId = 0;
+            if (input >> packetId) pendingReliablePackets.erase(packetId);
+        } else if (command == "REL" && networkHost) {
+            unsigned int packetId = 0;
+            std::string payload;
+            if (!(input >> packetId >> payload)) continue;
+            const std::string ack = "RACK " + std::to_string(packetId);
+            sendto(networkSocket, ack.c_str(), static_cast<int>(ack.size()), 0,
+                   reinterpret_cast<const sockaddr*>(&peerAddress), sizeof(peerAddress));
+            if (!receivedReliablePacketIds.insert(packetId).second) continue;
+            receivedReliablePacketOrder.push_back(packetId);
+            if (receivedReliablePacketOrder.size() > 256) {
+                receivedReliablePacketIds.erase(receivedReliablePacketOrder.front());
+                receivedReliablePacketOrder.pop_front();
+            }
+            command = std::move(payload);
+        }
 
         if (command == "POS" && networkHost) {
             int x, y, tier, durability, armorEnabled;
@@ -267,8 +320,14 @@ void processNetwork() {
         } else if (command == "PICKUP" && networkHost) {
             int x, y, type;
             if (input >> x >> y >> type && x >= 0 && x < MapColumns && y >= 0 && y < MapRows &&
-                (type == AmmoPickup || type == MedkitPickup) && world[y][x] == type)
+                (type == AmmoPickup || type == MedkitPickup) && world[y][x] == type) {
                 world[y][x] = Floor;
+                ++networkMapRevision;
+            }
+        } else if (command == "MAP_ACK" && networkHost) {
+            unsigned int revision = 0;
+            if (input >> revision && revision == networkMapRevision)
+                peerMapRevision = revision;
         } else if (command == "EVAC" && networkHost) {
             int status;
             if (input >> status && (status == 0 || status == 1)) {
@@ -297,13 +356,15 @@ void processNetwork() {
             int hostX, hostY, hostHp, clientX, clientY, clientHp;
             int clientArmorTier, clientArmorDurability, clientArmorOn;
             int syncedKills, syncedTotal, syncedMoney, hostEvacuating, peerEvacuating,
-                hostPaused, finished, result;
+                hostPaused, finished, result, mapIncluded;
+            unsigned int mapRevision;
             int enemyCount;
             if (!(input >> hostX >> hostY >> hostHp >> clientX >> clientY >> clientHp >>
                   clientArmorTier >> clientArmorDurability >> clientArmorOn >> syncedKills >>
                   syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
-                  finished >> result >> enemyCount) ||
+                  finished >> result >> mapRevision >> mapIncluded >> enemyCount) ||
                   enemyCount < 0 || enemyCount > 30 ||
+                  (mapIncluded != 0 && mapIncluded != 1) ||
                   (hostEvacuating != 0 && hostEvacuating != 1) ||
                   (peerEvacuating != 0 && peerEvacuating != 1) ||
                   (hostPaused != 0 && hostPaused != 1) ||
@@ -348,6 +409,7 @@ void processNetwork() {
                 lastMove += pausedFor;
                 lastEnemyTurn += pausedFor;
                 nextPlayerHit += pausedFor;
+                nextPeerHit += pausedFor;
                 pausedAt = {};
                 if (screen == Screen::Paused) screen = Screen::Playing;
             }
@@ -368,13 +430,20 @@ void processNetwork() {
                     syncedEnemies.push_back(
                         {enemy.x, enemy.y, enemy.hp, alive != 0, awake != 0, boss != 0, now});
             }
-            std::string mapMarker;
-            input >> mapMarker;
-            if (mapMarker == "MAP") {
+            if (mapIncluded != 0) {
+                std::string mapMarker;
+                if (!(input >> mapMarker) || mapMarker != "MAP") continue;
+                bool validMap = true;
                 for (auto& row : world)
                     for (int& tile : row) {
-                        if (!(input >> tile) || tile < Floor || tile > MedkitPickup) tile = Floor;
+                        if (!(input >> tile) || tile < Floor || tile > MedkitPickup)
+                            validMap = false;
                     }
+                if (!validMap) continue;
+                peerMapRevision = mapRevision;
+                sendNetworkPacket("MAP_ACK " + std::to_string(mapRevision));
+            }
+            {
                 enemies = std::move(syncedEnemies);
                 totalEnemies = std::max(totalEnemies, static_cast<int>(enemies.size()));
             }
@@ -382,6 +451,19 @@ void processNetwork() {
                 won = result != 0;
                 screen = Screen::Result;
             }
+        }
+    }
+
+    for (auto& pending : pendingReliablePackets) {
+        auto& packet = pending.second;
+        if (now - packet.lastSent < std::chrono::milliseconds(250)) continue;
+        if (packet.attempts >= 20) {
+            networkStatus = L"网络消息确认超时";
+            continue;
+        }
+        if (sendNetworkPacket(packet.payload)) {
+            packet.lastSent = now;
+            ++packet.attempts;
         }
     }
 

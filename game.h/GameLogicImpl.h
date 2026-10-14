@@ -161,7 +161,7 @@ void startRun() {
     armorOn = armorTier > 0 && armorDurability > 0;
     resetRunProgress();
     lastMove = lastEnemyTurn = Clock::now();
-    nextPlayerHit = Clock::now();
+    nextPlayerHit = nextPeerHit = Clock::now();
     screen = Screen::Playing;
     setMessage(L"清除敌人并击败区域 Boss，然后前往撤离点");
     saveArchive();
@@ -187,12 +187,14 @@ void shoot(int dx, int dy) {
         if (found != enemies.end()) {
             const int targetX = found->x;
             const int targetY = found->y;
+            if (networkActive && !networkHost) {
+                sendReliableNetworkPacket("HIT " + std::to_string(targetX) + " " +
+                                          std::to_string(targetY) + " 15");
+                setMessage(L"命中确认中");
+                return;
+            }
             found->hp -= 15;
             found->awake = true;
-            if (networkActive && !networkHost) {
-                sendNetworkPacket("HIT " + std::to_string(targetX) + " " + std::to_string(targetY) +
-                                  " 15");
-            }
             if (found->hp <= 0) {
                 found->alive = false;
                 ++kills;
@@ -241,7 +243,9 @@ void updateEnemies(Clock::time_point now) {
         if (!enemy.awake && distance <= 6 && lineOfSight(enemy.x, enemy.y, targetX, targetY))
             enemy.awake = true;
 
-        if (enemy.awake && distance > 1) {
+        const bool bossEnraged = enemy.boss && enemy.hp <= BossHealth / 2;
+        const int attackRange = enemy.boss ? (bossEnraged ? 6 : 5) : 1;
+        if (enemy.awake && distance > attackRange) {
             const int dx = (targetX > enemy.x) - (targetX < enemy.x);
             const int dy = (targetY > enemy.y) - (targetY < enemy.y);
             const std::array<std::array<int, 2>, 3> directions = {{{dx, 0}, {0, dy}, {0, 0}}};
@@ -258,12 +262,11 @@ void updateEnemies(Clock::time_point now) {
         }
 
         const int currentDistance = std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
-        const bool bossEnraged = enemy.boss && enemy.hp <= BossHealth / 2;
-        const int attackRange = enemy.boss ? (bossEnraged ? 6 : 5) : 1;
         const bool bossCanSeeTarget =
             !enemy.boss || lineOfSight(enemy.x, enemy.y, targetX, targetY);
         if (currentDistance <= attackRange && bossCanSeeTarget &&
-            now >= enemy.nextAttack && now >= nextPlayerHit) {
+            now >= enemy.nextAttack &&
+            now >= (targetPeer ? nextPeerHit : nextPlayerHit)) {
             if (targetPeer) {
                 int damage = enemy.boss ? (bossEnraged ? 20 : 15) : 9;
                 if (peerArmorOn && peerArmorDurability > 0) {
@@ -281,7 +284,10 @@ void updateEnemies(Clock::time_point now) {
             }
             enemy.nextAttack =
                 now + std::chrono::milliseconds(enemy.boss ? (bossEnraged ? 1000 : 1500) : 1800);
-            nextPlayerHit = now + std::chrono::milliseconds(850);
+            if (targetPeer)
+                nextPeerHit = now + std::chrono::milliseconds(850);
+            else
+                nextPlayerHit = now + std::chrono::milliseconds(850);
             if (targetPeer && peerExtracting) {
                 peerExtracting = false;
                 peerExtractStarted = {};
@@ -306,8 +312,9 @@ void collectPickup() {
         ammo += found;
         tile = Floor;
         if (networkActive && !networkHost)
-            sendNetworkPacket("PICKUP " + std::to_string(pickupX) + " " + std::to_string(pickupY) +
-                              " " + std::to_string(AmmoPickup));
+            sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
+                                      std::to_string(pickupY) + " " +
+                                      std::to_string(AmmoPickup));
         setMessage(L"拾取弹药  +" + std::to_wstring(found));
     } else if (tile == MedkitPickup) {
         const int pickupX = playerX;
@@ -315,8 +322,9 @@ void collectPickup() {
         ++medkits;
         tile = Floor;
         if (networkActive && !networkHost)
-            sendNetworkPacket("PICKUP " + std::to_string(pickupX) + " " + std::to_string(pickupY) +
-                              " " + std::to_string(MedkitPickup));
+            sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
+                                      std::to_string(pickupY) + " " +
+                                      std::to_string(MedkitPickup));
         setMessage(L"拾取医疗包  +1");
     } else {
         setMessage(L"这里没有可拾取的物资");
@@ -435,8 +443,8 @@ void updatePlaying() {
     if (healing && now - healStarted >= std::chrono::seconds(3)) {
         healing = false;
         health = std::min(100, health + 20);
-        if (networkActive && !networkHost) sendNetworkPacket("HEAL");
-        setMessage(L"治療完成  +20 生命");
+        if (networkActive && !networkHost) sendReliableNetworkPacket("HEAL");
+        setMessage(L"治疗完成  +20 生命");
     }
     if (health <= 0) {
         health = 0;

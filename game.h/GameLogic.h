@@ -3,7 +3,6 @@
 #include "GameState.h"
 
 namespace mokthyn {
-inline int scaled(int value);
 inline int randomInt(int low, int high);
 inline void setMessage(const std::wstring& text, int milliseconds = 1800);
 inline void resetRunProgress();

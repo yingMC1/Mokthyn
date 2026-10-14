@@ -1,6 +1,9 @@
 #pragma once
 
 #include "GameTypes.h"
+#include <deque>
+#include <unordered_map>
+#include <unordered_set>
 #include <random>
 #include <winsock2.h>
 
@@ -41,6 +44,7 @@ inline Clock::time_point pausedAt{};
 inline Clock::time_point lastMove{};
 inline Clock::time_point lastEnemyTurn{};
 inline Clock::time_point nextPlayerHit{};
+inline Clock::time_point nextPeerHit{};
 inline Clock::time_point messageUntil{};
 inline Clock::time_point lastArchiveSave{};
 inline std::wstring message;
@@ -72,4 +76,15 @@ inline Clock::time_point lastConnectAttempt{};
 inline Clock::time_point lastEvacSend{};
 inline Clock::time_point peerExtractStarted{};
 inline bool peerExtracting = false;
+inline unsigned int nextReliablePacketId = 1;
+struct PendingReliablePacket {
+    std::string payload;
+    Clock::time_point lastSent{};
+    unsigned int attempts = 0;
+};
+inline std::unordered_map<unsigned int, PendingReliablePacket> pendingReliablePackets;
+inline std::unordered_set<unsigned int> receivedReliablePacketIds;
+inline std::deque<unsigned int> receivedReliablePacketOrder;
+inline unsigned int networkMapRevision = 0;
+inline unsigned int peerMapRevision = 0;
 } // namespace mokthyn

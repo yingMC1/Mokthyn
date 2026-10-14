@@ -46,8 +46,8 @@ int main() {
             } else if (keyPressed('6') && hasSavedRun) {
                 resetRunProgress();
                 screen = Screen::Playing;
-                lastMove = lastEnemyTurn = nextPlayerHit = Clock::now();
-                setMessage(english ? L"Saved run resumed" : L"已继续存档行动");
+                lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = Clock::now();
+                setMessage(L"已继续存档行动");
             } else if (newRunKeyPressed || enterPressed) {
                 startRun();
             } else if (keyPressed('2'))
@@ -57,7 +57,7 @@ int main() {
                 screen = Screen::Help;
             }
             else if (keyPressed('4')) {
-                if (!beginHostNetwork()) setMessage(L"主机启动失败，检查端口 8888 是否被占用");
+                if (!beginHostNetwork()) setMessage(L"主机启动失败，检查 UDP 端口是否被占用");
             } else if (keyPressed('5')) {
                 if (!beginJoinNetwork()) setMessage(L"网络初始化失败");
             } else if (keyPressed('7')) {
@@ -94,7 +94,7 @@ int main() {
                     const std::string addressText(hostIpInput.begin(), hostIpInput.end());
                     peerAddress = {};
                     peerAddress.sin_family = AF_INET;
-                    peerAddress.sin_port = htons(8888);
+                    peerAddress.sin_port = htons(NetworkPort);
                     if (inet_pton(AF_INET, addressText.c_str(), &peerAddress.sin_addr) == 1) {
                         networkStatus = L"正在连接主机...";
                         screen = Screen::JoinLobby;
@@ -226,6 +226,7 @@ int main() {
                 lastMove += pausedFor;
                 lastEnemyTurn += pausedFor;
                 nextPlayerHit += pausedFor;
+                nextPeerHit += pausedFor;
                 pausedAt = {};
                 screen = Screen::Playing;
             } else if (keyPressed(VK_ESCAPE)) {
