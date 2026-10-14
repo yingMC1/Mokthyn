@@ -1,3 +1,0 @@
-D:/Mokthyn/build/cmake-release/CMakeFiles/ege-demo.dir
-D:/Mokthyn/build/cmake-release/CMakeFiles/edit_cache.dir
-D:/Mokthyn/build/cmake-release/CMakeFiles/rebuild_cache.dir
