@@ -147,7 +147,7 @@ void sendNetworkState() {
            << ' ';
     for (const Enemy& enemy : enemies)
         packet << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
-               << ' ' << (enemy.awake ? 1 : 0) << ' ';
+               << ' ' << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << ' ';
     packet << "MAP ";
     for (const auto& row : world)
         for (int tile : row)
@@ -235,6 +235,9 @@ void processNetwork() {
                     peerArmorInitialized = true;
                 } else if (peerArmorTier == reportedTier) {
                     peerArmorDurability = std::min(peerArmorDurability, reportedDurability);
+                } else {
+                    peerArmorTier = reportedTier;
+                    peerArmorDurability = reportedDurability;
                 }
                 peerArmorOn =
                     armorEnabled != 0 && peerArmorTier > 0 && peerArmorDurability > 0;
@@ -256,7 +259,7 @@ void processNetwork() {
                     if (enemy.hp <= 0) {
                         enemy.alive = false;
                         ++kills;
-                        money += 10;
+                        money += enemy.boss ? 100 : 10;
                     }
                     break;
                 }
@@ -271,7 +274,10 @@ void processNetwork() {
             if (input >> status && (status == 0 || status == 1)) {
                 const bool requested =
                     status == 1 && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
-                    peerY < MapRows - 1 && world[peerY][peerX] == ExitTile && peerHealth > 0;
+                    peerY < MapRows - 1 && world[peerY][peerX] == ExitTile && peerHealth > 0 &&
+                    std::none_of(enemies.begin(), enemies.end(), [](const Enemy& enemy) {
+                        return enemy.boss && enemy.alive;
+                    });
                 if (requested && !peerExtracting) peerExtractStarted = now;
                 peerExtracting = requested;
                 if (!peerExtracting) peerExtractStarted = {};
@@ -347,13 +353,15 @@ void processNetwork() {
             syncedEnemies.reserve(enemyCount);
             for (int i = 0; i < enemyCount; ++i) {
                 Enemy enemy;
-                int alive, awake;
-                if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake)) break;
+                int alive, awake, boss;
+                if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake >> boss)) break;
                 if (enemy.x > 0 && enemy.x < MapColumns - 1 && enemy.y > 0 &&
-                    enemy.y < MapRows - 1 && enemy.hp >= 0 && enemy.hp <= EnemyHealth &&
-                    (alive == 0 || alive == 1) && (awake == 0 || awake == 1))
+                    enemy.y < MapRows - 1 && enemy.hp >= 0 &&
+                    enemy.hp <= (boss != 0 ? BossHealth : EnemyHealth) &&
+                    (alive == 0 || alive == 1) && (awake == 0 || awake == 1) &&
+                    (boss == 0 || boss == 1))
                     syncedEnemies.push_back(
-                        {enemy.x, enemy.y, enemy.hp, alive != 0, awake != 0, now});
+                        {enemy.x, enemy.y, enemy.hp, alive != 0, awake != 0, boss != 0, now});
             }
             std::string mapMarker;
             input >> mapMarker;

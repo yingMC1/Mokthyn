@@ -3,6 +3,7 @@
 #include "GameArchive.h"
 #include "GameState.h"
 #include <windows.h>
+#include <dpapi.h>
 #include <algorithm>
 #include <sstream>
 #include <string>
@@ -18,6 +19,38 @@ std::wstring archivePath() {
 }
 
 bool validArchiveValue(int value, int low, int high) { return value >= low && value <= high; }
+
+constexpr char EncryptedArchiveHeader[] = "MOKTHYN_DPAPI\n";
+
+bool protectArchive(const std::string& plainText, std::string& encrypted) {
+    DATA_BLOB input{};
+    input.pbData = reinterpret_cast<BYTE*>(const_cast<char*>(plainText.data()));
+    input.cbData = static_cast<DWORD>(plainText.size());
+    DATA_BLOB output{};
+    if (!CryptProtectData(&input, L"Mokthyn save", nullptr, nullptr, nullptr,
+                          CRYPTPROTECT_UI_FORBIDDEN, &output))
+        return false;
+    encrypted.assign(EncryptedArchiveHeader, sizeof(EncryptedArchiveHeader) - 1);
+    encrypted.append(reinterpret_cast<const char*>(output.pbData), output.cbData);
+    LocalFree(output.pbData);
+    return true;
+}
+
+bool unprotectArchive(const std::string& encrypted, std::string& plainText) {
+    const size_t headerSize = sizeof(EncryptedArchiveHeader) - 1;
+    if (encrypted.size() <= headerSize) return false;
+    DATA_BLOB input{};
+    input.pbData = reinterpret_cast<BYTE*>(
+        const_cast<char*>(encrypted.data() + headerSize));
+    input.cbData = static_cast<DWORD>(encrypted.size() - headerSize);
+    DATA_BLOB output{};
+    if (!CryptUnprotectData(&input, nullptr, nullptr, nullptr, nullptr,
+                            CRYPTPROTECT_UI_FORBIDDEN, &output))
+        return false;
+    plainText.assign(reinterpret_cast<const char*>(output.pbData), output.cbData);
+    LocalFree(output.pbData);
+    return true;
+}
 } // namespace
 
 bool loadArchive() {
@@ -52,6 +85,19 @@ bool loadArchive() {
         return false;
     }
 
+    bool encryptedArchive = false;
+    const size_t headerSize = sizeof(EncryptedArchiveHeader) - 1;
+    if (contents.size() >= headerSize &&
+        contents.compare(0, headerSize, EncryptedArchiveHeader, headerSize) == 0) {
+        std::string plainText;
+        if (!unprotectArchive(contents, plainText)) {
+            archiveStatus = L"存档解密失败，文件可能已损坏或由其他 Windows 用户创建";
+            return false;
+        }
+        contents = std::move(plainText);
+        encryptedArchive = true;
+    }
+
     std::istringstream input(contents);
     std::string signature;
     int version = 0;
@@ -61,16 +107,17 @@ bool loadArchive() {
     if (!(input >> signature >> version >> storedEnglish >> savedRun >> storedHealth >> storedAmmo >>
           storedMedkits >> storedMoney >> storedArmorTier >> storedArmorDurability >> storedArmorOn >>
           storedPlayerX >> storedPlayerY >> storedKills >> storedTotalEnemies) ||
-        signature != "MOKTHYN_SAVE" || (version < 1 || version > 3) ||
+        signature != "MOKTHYN_SAVE" || (version < 1 || version > 4) ||
         !validArchiveValue(storedEnglish, 0, 1) ||
         !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, 100) ||
         !validArchiveValue(storedAmmo, 0, 100000) || !validArchiveValue(storedMedkits, 0, 10000) ||
         !validArchiveValue(storedMoney, 0, 100000000) ||
         !validArchiveValue(storedArmorTier, 0, 4) ||
         !validArchiveValue(storedArmorDurability, 0, 125) ||
+        storedArmorDurability > ArmorDurability[storedArmorTier] ||
         !validArchiveValue(storedArmorOn, 0, 1) ||
-        !validArchiveValue(storedPlayerX, 1, MapColumns - 2) ||
-        !validArchiveValue(storedPlayerY, 1, MapRows - 2) ||
+        !validArchiveValue(storedPlayerX, 1, version >= 4 ? MapColumns - 2 : 22) ||
+        !validArchiveValue(storedPlayerY, 1, version >= 4 ? MapRows - 2 : 16) ||
         !validArchiveValue(storedKills, 0, 100000) ||
         !validArchiveValue(storedTotalEnemies, 0, 100000)) {
         archiveStatus = L"存档格式无效，已使用默认数据";
@@ -78,12 +125,23 @@ bool loadArchive() {
     }
 
     std::array<std::array<int, MapColumns>, MapRows> storedWorld{};
-    for (auto& row : storedWorld) {
-        for (int& tile : row) {
+    for (auto& row : storedWorld) row.fill(Floor);
+    for (int x = 0; x < MapColumns; ++x)
+        storedWorld[0][x] = storedWorld[MapRows - 1][x] = Wall;
+    for (int y = 0; y < MapRows; ++y)
+        storedWorld[y][0] = storedWorld[y][MapColumns - 1] = Wall;
+    const int archiveColumns = version >= 4 ? MapColumns : 24;
+    const int archiveRows = version >= 4 ? MapRows : 18;
+    const int mapOffsetX = version >= 4 ? 0 : (MapColumns - archiveColumns) / 2;
+    const int mapOffsetY = version >= 4 ? 0 : (MapRows - archiveRows) / 2;
+    for (int y = 0; y < archiveRows; ++y) {
+        for (int x = 0; x < archiveColumns; ++x) {
+            int tile = Floor;
             if (!(input >> tile) || !validArchiveValue(tile, Floor, MedkitPickup)) {
                 archiveStatus = L"存档地图数据无效，已使用默认数据";
                 return false;
             }
+            storedWorld[y + mapOffsetY][x + mapOffsetX] = tile;
         }
     }
 
@@ -97,16 +155,22 @@ bool loadArchive() {
     for (int i = 0; i < enemyCount; ++i) {
         Enemy enemy;
         int alive = 0, awake = 0;
+        int boss = 0;
         if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake) ||
-            !validArchiveValue(enemy.x, 1, MapColumns - 2) ||
-            !validArchiveValue(enemy.y, 1, MapRows - 2) ||
-            !validArchiveValue(enemy.hp, 0, EnemyHealth) || !validArchiveValue(alive, 0, 1) ||
-            !validArchiveValue(awake, 0, 1)) {
+            (version >= 4 && !(input >> boss)) ||
+            !validArchiveValue(enemy.x, 1, version >= 4 ? MapColumns - 2 : 22) ||
+            !validArchiveValue(enemy.y, 1, version >= 4 ? MapRows - 2 : 16) ||
+            !validArchiveValue(enemy.hp, 0, boss != 0 ? BossHealth : EnemyHealth) ||
+            !validArchiveValue(alive, 0, 1) ||
+            !validArchiveValue(awake, 0, 1) || !validArchiveValue(boss, 0, 1)) {
             archiveStatus = L"存档敌人数据无效，已使用默认数据";
             return false;
         }
         enemy.alive = alive != 0;
         enemy.awake = awake != 0;
+        enemy.boss = boss != 0;
+        enemy.x += mapOffsetX;
+        enemy.y += mapOffsetY;
         storedEnemies.push_back(enemy);
     }
     int storedUiScalePercent = 120;
@@ -141,14 +205,15 @@ bool loadArchive() {
     armorTier = storedArmorTier;
     armorDurability = storedArmorDurability;
     armorOn = storedArmorOn != 0 && armorTier > 0 && armorDurability > 0;
-    playerX = storedPlayerX;
-    playerY = storedPlayerY;
+    playerX = storedPlayerX + mapOffsetX;
+    playerY = storedPlayerY + mapOffsetY;
     kills = storedKills;
     totalEnemies = storedTotalEnemies;
     world = storedWorld;
     enemies = std::move(storedEnemies);
     healing = extracting = false;
     if (hasSavedRun) screen = Screen::Menu;
+    if (!encryptedArchive && !saveArchive()) return false;
     return true;
 }
 
@@ -231,9 +296,9 @@ bool saveArchive() {
     const int safePlayerY = std::clamp(playerY, 1, MapRows - 2);
     const int safeArmorTier = std::clamp(armorTier, 0, 4);
     const int safeArmorDurability = std::clamp(armorDurability, 0, ArmorDurability[safeArmorTier]);
-    const int safeEnemyCount = std::clamp(static_cast<int>(enemies.size()), 0, 9);
+    const int safeEnemyCount = std::clamp(static_cast<int>(enemies.size()), 0, 30);
     std::ostringstream output;
-    output << "MOKTHYN_SAVE 3\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
+    output << "MOKTHYN_SAVE 4\n" << (english ? 1 : 0) << ' ' << (hasSavedRun ? 1 : 0) << ' '
            << std::clamp(health, 0, 100) << ' ' << std::clamp(ammo, 0, 100000) << ' '
            << std::clamp(medkits, 0, 10000) << ' ' << std::clamp(money, 0, 100000000) << ' '
            << safeArmorTier << ' ' << safeArmorDurability << ' ' << (armorOn ? 1 : 0) << ' '
@@ -249,14 +314,18 @@ bool saveArchive() {
         if (writtenEnemies >= safeEnemyCount) break;
         const int safeX = std::clamp(enemy.x, 1, MapColumns - 2);
         const int safeY = std::clamp(enemy.y, 1, MapRows - 2);
-        const int safeHp = std::clamp(enemy.hp, 0, EnemyHealth);
+        const int safeHp = std::clamp(enemy.hp, 0, enemy.boss ? BossHealth : EnemyHealth);
         output << safeX << ' ' << safeY << ' ' << safeHp << ' ' << (enemy.alive ? 1 : 0) << ' '
-               << (enemy.awake ? 1 : 0) << '\n';
+               << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << '\n';
         ++writtenEnemies;
     }
     output << uiScalePercent << '\n';
     output << windowWidth << ' ' << windowHeight << '\n';
-    const std::string contents = output.str();
+    std::string contents;
+    if (!protectArchive(output.str(), contents)) {
+        archiveStatus = L"存档加密失败";
+        return false;
+    }
 
     const std::wstring temporaryPath = path + L".tmp";
     HANDLE file = CreateFileW(temporaryPath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,

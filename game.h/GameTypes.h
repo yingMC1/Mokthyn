@@ -22,10 +22,11 @@ inline constexpr int DesignHeight = 900;
 inline constexpr int MinUiScalePercent = 100;
 inline constexpr int MaxUiScalePercent = 130;
 inline constexpr int UiScaleStepPercent = 10;
-inline constexpr int MapColumns = 24;
-inline constexpr int MapRows = 18;
-inline constexpr int ViewRadius = 12;
+inline constexpr int MapColumns = 36;
+inline constexpr int MapRows = 24;
+inline constexpr int ViewRadius = 18;
 inline constexpr int EnemyHealth = 45;
+inline constexpr int BossHealth = 300;
 inline constexpr unsigned short NetworkPort = 8888;
 inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
@@ -52,6 +53,7 @@ struct Enemy {
     int hp = EnemyHealth;
     bool alive = true;
     bool awake = false;
+    bool boss = false;
     Clock::time_point nextAttack = Clock::now();
 };
 

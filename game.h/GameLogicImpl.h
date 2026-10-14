@@ -129,17 +129,27 @@ void startRun() {
             if (x > 0 && y > 0 && x < MapColumns - 1 && y < MapRows - 1) world[y][x] = Floor;
 
     enemies.clear();
-    for (int i = 0; i < 9; ++i) {
+    const int bossX = MapColumns - 3;
+    const int bossY = MapRows - 3;
+    for (int y = bossY - 1; y <= bossY + 1; ++y)
+        for (int x = bossX - 1; x <= bossX + 1; ++x)
+            if (x > 0 && y > 0 && x < MapColumns - 1 && y < MapRows - 1)
+                world[y][x] = Floor;
+    for (int x = playerX; x <= bossX; ++x) world[playerY][x] = Floor;
+    for (int y = playerY; y <= bossY; ++y) world[y][bossX] = Floor;
+    for (int i = 0; i < 16; ++i) {
         for (int attempt = 0; attempt < 400; ++attempt) {
             const int x = randomInt(1, MapColumns - 2);
             const int y = randomInt(1, MapRows - 2);
             if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
-                std::abs(x - playerX) + std::abs(y - playerY) >= 8) {
-                enemies.push_back({x, y, EnemyHealth, true, false, Clock::now()});
+                std::abs(x - playerX) + std::abs(y - playerY) >= 8 &&
+                std::abs(x - bossX) + std::abs(y - bossY) >= 3) {
+                enemies.push_back({x, y, EnemyHealth, true, false, false, Clock::now()});
                 break;
             }
         }
     }
+    enemies.push_back({bossX, bossY, BossHealth, true, false, true, Clock::now()});
     totalEnemies = static_cast<int>(enemies.size());
     for (int i = 0; i < 7; ++i)
         placePickup(AmmoPickup, 4);
@@ -152,7 +162,7 @@ void startRun() {
     lastMove = lastEnemyTurn = Clock::now();
     nextPlayerHit = Clock::now();
     screen = Screen::Playing;
-    setMessage(L"清除区域内的敌人，然后前往撤离点");
+    setMessage(L"清除敌人并击败区域 Boss，然后前往撤离点");
     saveArchive();
     if (networkActive && networkHost && peerConnected) {
         sendNetworkPacket("START");
@@ -185,8 +195,8 @@ void shoot(int dx, int dy) {
             if (found->hp <= 0) {
                 found->alive = false;
                 ++kills;
-                money += 10;
-                setMessage(L"目标消灭  +10 金币");
+                money += found->boss ? 100 : 10;
+                setMessage(found->boss ? L"区域 Boss 已击败  +100 金币" : L"目标消灭  +10 金币");
             } else {
                 setMessage(L"命中目标");
             }
@@ -247,9 +257,13 @@ void updateEnemies(Clock::time_point now) {
         }
 
         const int currentDistance = std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
-        if (currentDistance <= 1 && now >= enemy.nextAttack && now >= nextPlayerHit) {
+        const int attackRange = enemy.boss ? 5 : 1;
+        const bool bossCanSeeTarget =
+            !enemy.boss || lineOfSight(enemy.x, enemy.y, targetX, targetY);
+        if (currentDistance <= attackRange && bossCanSeeTarget &&
+            now >= enemy.nextAttack && now >= nextPlayerHit) {
             if (targetPeer) {
-                int damage = 9;
+                int damage = enemy.boss ? 15 : 9;
                 if (peerArmorOn && peerArmorDurability > 0) {
                     damage = std::max(1, damage - ArmorReduction[peerArmorTier]);
                     peerArmorDurability = std::max(0, peerArmorDurability - 4);
@@ -261,12 +275,15 @@ void updateEnemies(Clock::time_point now) {
                     screen = Screen::Result;
                 }
             } else {
-                health -= takeDamage(9);
+                health -= takeDamage(enemy.boss ? 15 : 9);
             }
-            enemy.nextAttack = now + std::chrono::milliseconds(1800);
+            enemy.nextAttack = now + std::chrono::milliseconds(enemy.boss ? 1500 : 1800);
             nextPlayerHit = now + std::chrono::milliseconds(850);
-            if (targetPeer && peerExtracting) peerExtracting = false;
-            if (healing || extracting) {
+            if (targetPeer && peerExtracting) {
+                peerExtracting = false;
+                peerExtractStarted = {};
+            }
+            if (!targetPeer && (healing || extracting)) {
                 healing = false;
                 if (extracting) cancelExtraction();
                 setMessage(L"受到攻击，动作已中断");
@@ -438,6 +455,10 @@ void updatePlaying() {
     if (keyPressed('Q')) {
         if (world[playerY][playerX] != ExitTile)
             setMessage(L"前往地图上的撤离点");
+        else if (std::any_of(enemies.begin(), enemies.end(), [](const Enemy& enemy) {
+                     return enemy.boss && enemy.alive;
+                 }))
+            setMessage(L"击败区域 Boss 后才能撤离");
         else {
             extracting = true;
             extractStarted = now;

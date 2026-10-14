@@ -48,7 +48,7 @@ else()
 endif()
 
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
-target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32 shell32)
+target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32 shell32 crypt32)
 
 # 设置静态库搜索路径
 if(MSVC)

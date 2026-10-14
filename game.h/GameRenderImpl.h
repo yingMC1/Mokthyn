@@ -109,6 +109,9 @@ std::wstring localize(const std::wstring& value) {
         {L"无法分配新窗口画布", L"Could not allocate the resized window buffer"},
         {L"存档中的窗口尺寸无效", L"Invalid window dimensions in save file"},
         {L"存档中的界面比例无效", L"Invalid interface scale in save file"},
+        {L"存档解密失败，文件可能已损坏或由其他 Windows 用户创建",
+         L"Could not decrypt save; it may be damaged or belong to another Windows user"},
+        {L"存档加密失败", L"Could not encrypt save file"},
         {L"弹药库存", L"Ammo reserve"}, {L"持有金币", L"Coins"},
         {L"高清战术视图   /   EGE GRAPHICS", L"TACTICAL VIEW   /   EGE GRAPHICS"},
         {L"继续存档", L"Resume saved run"}, {L"切换语言：L", L"Language: L"},
@@ -186,12 +189,12 @@ std::wstring localize(const std::wstring& value) {
         {L"按任意数字键返回", L"Press ESC or ENTER to return"},
         {L"按 ← → 或 ↑ ↓ 翻页", L"Use ← → or ↑ ↓ to change pages"},
         {L"按 D 打开下载页面", L"Press D to open the download page"},
-        {L"清除地图中的敌人，随后前往右下角的绿色撤离点。",
-         L"Clear the enemies, then reach the green extraction point in the bottom-right."},
+        {L"击败右下区域的 Boss，再前往地图右下角的绿色撤离点。",
+         L"Defeat the area boss, then reach the green extraction point in the bottom-right."},
         {L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
          L"Press Q at the extraction point. Hold for 5 seconds without moving or taking damage."},
-        {L"击杀敌人获得 10 金币；搜寻地图上的黄色弹药和蓝色医疗包。",
-         L"Earn 10 coins per kill; search for yellow ammo and blue medkits."},
+        {L"普通敌人奖励 10 金币，Boss 奖励 100 金币；搜寻弹药和医疗包。",
+         L"Regular enemies reward 10 coins and the boss rewards 100; search for ammo and medkits."},
         {L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
          L"Arrow keys fire (1 round each); hold WASD to keep moving."},
         {L"护甲可减伤并消耗耐久；K 可暂时脱下以保留耐久。",
@@ -222,6 +225,12 @@ std::wstring localize(const std::wstring& value) {
         {L"按 P 继续  /  ESC 返回菜单", L"P resume  /  ESC menu"},
         {L"下载地址：Mokthyn - Download", L"Download: Mokthyn - Download"},
         {L"清除区域内的敌人，然后前往撤离点", L"Clear the area, then reach the extraction point"},
+        {L"清除敌人并击败区域 Boss，然后前往撤离点",
+         L"Clear the enemies and defeat the area boss, then extract"},
+        {L"击败区域 Boss 后才能撤离", L"Defeat the area boss before extracting"},
+        {L"区域 Boss", L"Area Boss"},
+        {L"Boss 已击败", L"Boss defeated"},
+        {L"区域 Boss 已击败  +100 金币", L"Area boss defeated  +100 coins"},
         {L"弹药不足，寻找弹药箱", L"Out of ammo; find an ammo cache"},
         {L"目标消灭  +10 金币", L"Target eliminated  +10 coins"},
         {L"命中目标", L"Target hit"}, {L"未命中", L"Miss"},
@@ -333,9 +342,14 @@ void drawMap() {
 
             for (const Enemy& enemy : enemies) {
                 if (!enemy.alive || enemy.x != x || enemy.y != y) continue;
-                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize * 3 / 10, Red);
+                fillCircle(left + tileSize / 2, top + tileSize / 2,
+                           enemy.boss ? tileSize * 2 / 5 : tileSize * 3 / 10,
+                           enemy.boss ? EGERGB(185, 54, 73) : Red);
                 fillCircle(left + tileSize / 2 - 3, top + tileSize / 2 - 3, tileSize / 12,
                            EGERGB(255, 174, 137));
+                if (enemy.boss)
+                    outlineRect(left + 2, top + 2, left + tileSize - 3, top + tileSize - 3,
+                                Yellow);
                 break;
             }
         }
@@ -385,25 +399,38 @@ void drawHud() {
              Text);
     drawBar(x + padding, 410, width - padding * 2, 8, kills, totalEnemies, Green);
 
-    drawText(x + padding, 444, L"护甲", 17, Muted);
-    drawText(x + 100, 442, armorOn ? L"等级 " + std::to_wstring(armorTier) : L"未装备", 17,
+    const auto boss = std::find_if(enemies.begin(), enemies.end(),
+                                   [](const Enemy& enemy) { return enemy.boss && enemy.alive; });
+    if (boss != enemies.end()) {
+        drawText(x + padding, 426, L"区域 Boss", 16, Red);
+        drawText(right - padding - 55, 426,
+                 std::to_wstring(std::max(0, boss->hp)) + L" / " +
+                     std::to_wstring(BossHealth),
+                 14, Text);
+        drawBar(x + padding, 450, width - padding * 2, 8, boss->hp, BossHealth, Red);
+    } else {
+        drawText(x + padding, 426, L"Boss 已击败", 16, Green);
+    }
+
+    drawText(x + padding, 468, L"护甲", 17, Muted);
+    drawText(x + 100, 466, armorOn ? L"等级 " + std::to_wstring(armorTier) : L"未装备", 17,
              armorOn ? Cyan : Muted);
     if (armorOn)
-        drawBar(x + padding, 470, width - padding * 2, 8, armorDurability,
+        drawBar(x + padding, 492, width - padding * 2, 8, armorDurability,
                 ArmorDurability[armorTier], Cyan);
-    drawText(x + padding, 496, L"金币", 17, Muted);
-    drawText(x + 100, 494, std::to_wstring(money), 20, Yellow);
+    drawText(x + padding, 516, L"金币", 17, Muted);
+    drawText(x + 100, 514, std::to_wstring(money), 20, Yellow);
     if (networkActive && peerConnected)
-        drawText(x + std::max(200, width / 2), 494,
+        drawText(x + std::max(200, width / 2), 514,
                  L"队友 " + std::to_wstring(peerHealth) + L" HP", 16,
                  peerHealth > 30 ? Cyan : Red);
 
-    fillRect(x + padding, 532, right - padding, 533, EGERGB(52, 65, 68));
-    drawText(x + padding, 550, L"WASD 移动    方向键射击", 15, Text);
-    drawText(x + padding, 578, L"E 拾取   H 治疗   K 护甲", 15, Muted);
-    drawText(x + padding, 606, L"Q 撤离   P 暂停   ESC 菜单", 15, Muted);
+    fillRect(x + padding, 542, right - padding, 543, EGERGB(52, 65, 68));
+    drawText(x + padding, 558, L"WASD 移动    方向键射击", 15, Text);
+    drawText(x + padding, 586, L"E 拾取   H 治疗   K 护甲", 15, Muted);
+    drawText(x + padding, 614, L"Q 撤离   P 暂停   ESC 菜单", 15, Muted);
     if (Clock::now() < messageUntil)
-        drawText(x + padding, 642, message, 16, Yellow);
+        drawText(x + padding, 650, message, 16, Yellow);
 }
 
 void drawMenu() {
@@ -425,7 +452,7 @@ void drawMenu() {
     drawText(850, 385, L"7  设置", 23, Cyan);
     drawText(850, 440, L"ESC  退出", 23, Muted);
     if (!archiveStatus.empty()) drawText(500, 650, archiveStatus, 16, Yellow);
-    else if (Clock::now() < messageUntil) drawText(500, 650, message, 16, Yellow);
+    if (Clock::now() < messageUntil) drawText(500, 680, message, 16, Yellow);
 }
 
 void drawNetworkLobby() {
