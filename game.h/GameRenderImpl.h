@@ -193,8 +193,8 @@ std::wstring localize(const std::wstring& value) {
          L"Defeat the area boss, then reach the green extraction point in the bottom-right."},
         {L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
          L"Press Q at the extraction point. Hold for 5 seconds without moving or taking damage."},
-        {L"普通敌人奖励 10 金币，Boss 奖励 100 金币；搜寻弹药和医疗包。",
-         L"Regular enemies reward 10 coins and the boss rewards 100; search for ammo and medkits."},
+        {L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后进入狂暴阶段。",
+         L"Regular enemies reward 10 coins; the boss rewards 100 and enrages below half health."},
         {L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
          L"Arrow keys fire (1 round each); hold WASD to keep moving."},
         {L"护甲可减伤并消耗耐久；K 可暂时脱下以保留耐久。",
@@ -229,6 +229,7 @@ std::wstring localize(const std::wstring& value) {
          L"Clear the enemies and defeat the area boss, then extract"},
         {L"击败区域 Boss 后才能撤离", L"Defeat the area boss before extracting"},
         {L"区域 Boss", L"Area Boss"},
+        {L"区域 Boss · 狂暴", L"Area Boss · Enraged"},
         {L"Boss 已击败", L"Boss defeated"},
         {L"区域 Boss 已击败  +100 金币", L"Area boss defeated  +100 coins"},
         {L"弹药不足，寻找弹药箱", L"Out of ammo; find an ammo cache"},
@@ -344,7 +345,10 @@ void drawMap() {
                 if (!enemy.alive || enemy.x != x || enemy.y != y) continue;
                 fillCircle(left + tileSize / 2, top + tileSize / 2,
                            enemy.boss ? tileSize * 2 / 5 : tileSize * 3 / 10,
-                           enemy.boss ? EGERGB(185, 54, 73) : Red);
+                           enemy.boss
+                               ? (enemy.hp <= BossHealth / 2 ? EGERGB(255, 101, 55)
+                                                            : EGERGB(185, 54, 73))
+                               : Red);
                 fillCircle(left + tileSize / 2 - 3, top + tileSize / 2 - 3, tileSize / 12,
                            EGERGB(255, 174, 137));
                 if (enemy.boss)
@@ -402,12 +406,15 @@ void drawHud() {
     const auto boss = std::find_if(enemies.begin(), enemies.end(),
                                    [](const Enemy& enemy) { return enemy.boss && enemy.alive; });
     if (boss != enemies.end()) {
-        drawText(x + padding, 426, L"区域 Boss", 16, Red);
+        const bool bossEnraged = boss->hp <= BossHealth / 2;
+        drawText(x + padding, 426, bossEnraged ? L"区域 Boss · 狂暴" : L"区域 Boss", 16,
+                 bossEnraged ? Yellow : Red);
         drawText(right - padding - 55, 426,
                  std::to_wstring(std::max(0, boss->hp)) + L" / " +
                      std::to_wstring(BossHealth),
                  14, Text);
-        drawBar(x + padding, 450, width - padding * 2, 8, boss->hp, BossHealth, Red);
+        drawBar(x + padding, 450, width - padding * 2, 8, boss->hp, BossHealth,
+                bossEnraged ? Yellow : Red);
     } else {
         drawText(x + padding, 426, L"Boss 已击败", 16, Green);
     }
@@ -523,7 +530,7 @@ void drawHelp() {
           L"视野以外的地图区域会变暗。"}},
         {{L"行动简报 · 目标与物资", L"清除地图中的敌人，随后前往右下角的绿色撤离点。",
           L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
-          L"击杀敌人获得 10 金币；搜寻地图上的黄色弹药和蓝色医疗包。",
+          L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后会进入狂暴阶段。",
           L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
           L"护甲可减伤并消耗耐久；K 可暂时脱下以保留耐久。",
           L"被击中会打断治疗和撤离；移动也会取消正在进行的动作。",

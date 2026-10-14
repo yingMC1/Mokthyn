@@ -258,13 +258,14 @@ void updateEnemies(Clock::time_point now) {
         }
 
         const int currentDistance = std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
-        const int attackRange = enemy.boss ? 5 : 1;
+        const bool bossEnraged = enemy.boss && enemy.hp <= BossHealth / 2;
+        const int attackRange = enemy.boss ? (bossEnraged ? 6 : 5) : 1;
         const bool bossCanSeeTarget =
             !enemy.boss || lineOfSight(enemy.x, enemy.y, targetX, targetY);
         if (currentDistance <= attackRange && bossCanSeeTarget &&
             now >= enemy.nextAttack && now >= nextPlayerHit) {
             if (targetPeer) {
-                int damage = enemy.boss ? 15 : 9;
+                int damage = enemy.boss ? (bossEnraged ? 20 : 15) : 9;
                 if (peerArmorOn && peerArmorDurability > 0) {
                     damage = std::max(1, damage - ArmorReduction[peerArmorTier]);
                     peerArmorDurability = std::max(0, peerArmorDurability - 4);
@@ -276,9 +277,10 @@ void updateEnemies(Clock::time_point now) {
                     screen = Screen::Result;
                 }
             } else {
-                health -= takeDamage(enemy.boss ? 15 : 9);
+                health -= takeDamage(enemy.boss ? (bossEnraged ? 20 : 15) : 9);
             }
-            enemy.nextAttack = now + std::chrono::milliseconds(enemy.boss ? 1500 : 1800);
+            enemy.nextAttack =
+                now + std::chrono::milliseconds(enemy.boss ? (bossEnraged ? 1000 : 1500) : 1800);
             nextPlayerHit = now + std::chrono::milliseconds(850);
             if (targetPeer && peerExtracting) {
                 peerExtracting = false;
