@@ -20,6 +20,7 @@ int main() {
     setinitmode(INIT_DEFAULT);
     initgraph(windowWidth, windowHeight);
     ege_enable_aa(true);
+    SetProcessDPIAware();
     setbkmode(TRANSPARENT);
     frameBuffer = newimage(windowWidth, windowHeight);
     if (frameBuffer == nullptr) {
@@ -36,8 +37,7 @@ int main() {
             setMessage(archiveStatus, 4000);
         settarget(frameBuffer);
         switch (screen) {
-        case Screen::Menu:
-            {
+        case Screen::Menu: {
             const bool newRunKeyPressed = keyPressed('1');
             const bool enterPressed = keyPressed(VK_RETURN);
             if (keyPressed('L')) {
@@ -55,8 +55,7 @@ int main() {
             else if (keyPressed('3')) {
                 helpInputReady = false;
                 screen = Screen::Help;
-            }
-            else if (keyPressed('4')) {
+            } else if (keyPressed('4')) {
                 if (!beginHostNetwork()) setMessage(L"主机启动失败，检查 UDP 端口是否被占用");
             } else if (keyPressed('5')) {
                 if (!beginJoinNetwork()) setMessage(L"网络初始化失败");
@@ -72,7 +71,7 @@ int main() {
             }
             drawMenu();
             break;
-            }
+        }
         case Screen::HostLobby:
             if (keyPressed(VK_ESCAPE)) {
                 closeNetwork();
@@ -154,14 +153,12 @@ int main() {
                 } else if (downloadPressed) {
                     const auto result = reinterpret_cast<INT_PTR>(ShellExecuteW(
                         nullptr, L"open", DownloadUrl, nullptr, nullptr, SW_SHOWNORMAL));
-                    if (result <= 32)
-                        setMessage(L"下载页面无法打开");
+                    if (result <= 32) setMessage(L"下载页面无法打开");
                 }
             }
             drawHelp();
             break;
-        case Screen::Settings:
-            {
+        case Screen::Settings: {
             const bool escapePressed = keyPressed(VK_ESCAPE);
             const bool enterPressed = keyPressed(VK_RETURN);
             const bool upPressed = keyPressed(VK_UP);
@@ -179,19 +176,17 @@ int main() {
                 const int direction = rightPressed ? 1 : -1;
                 bool settingApplied = true;
                 if (settingsSelection == 0) {
-                    uiScalePercent = std::clamp(
-                        uiScalePercent + direction * UiScaleStepPercent,
-                        MinUiScalePercent, MaxUiScalePercent);
+                    uiScalePercent = std::clamp(uiScalePercent + direction * UiScaleStepPercent,
+                                                MinUiScalePercent, MaxUiScalePercent);
                 } else if (settingsSelection == 1) {
-                    settingApplied = resizeGameWindow(
-                        std::clamp(windowWidth + direction * WindowWidthStep,
-                                   MinWindowWidth, MaxWindowWidth),
-                        windowHeight);
+                    settingApplied =
+                        resizeGameWindow(std::clamp(windowWidth + direction * WindowWidthStep,
+                                                    MinWindowWidth, MaxWindowWidth),
+                                         windowHeight);
                 } else {
                     settingApplied = resizeGameWindow(
-                        windowWidth,
-                        std::clamp(windowHeight + direction * WindowHeightStep,
-                                   MinWindowHeight, MaxWindowHeight));
+                        windowWidth, std::clamp(windowHeight + direction * WindowHeightStep,
+                                                MinWindowHeight, MaxWindowHeight));
                 }
                 if (settingApplied) saveArchive();
             } else if (resetPressed) {
@@ -204,7 +199,7 @@ int main() {
             }
             drawSettings();
             break;
-            }
+        }
         case Screen::Playing:
             updatePlaying();
             drawPlaying();
@@ -214,8 +209,7 @@ int main() {
             fillRect(0, 0, DesignWidth, DesignHeight, EGEARGB(170, 5, 10, 13));
             drawText(630, 365, L"已暂停", 48, Text);
             drawText(594, 435,
-                     networkPause ? L"主机暂停中  /  ESC 返回菜单"
-                                  : L"按 P 继续  /  ESC 返回菜单",
+                     networkPause ? L"主机暂停中  /  ESC 返回菜单" : L"按 P 继续  /  ESC 返回菜单",
                      20, Muted);
             if (keyPressed('P') && !networkPause) {
                 const auto pausedFor = Clock::now() - pausedAt;
