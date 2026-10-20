@@ -20,7 +20,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -DCMAKE_MAKE_PROGRAM=D:/mingw64/bin/mingw32-make.exe -DCMAKE_AR=D:/mingw64/bin/ar.exe -DCMAKE_RANLIB=D:/mingw64/bin/ranlib.exe -DCMAKE_LINKER=D:/mingw64/bin/ld.exe -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe"
         ],
         "options": {
           "cwd": "${workspaceFolder}",
@@ -48,7 +48,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-debug --config Debug --parallel; exit $LASTEXITCODE"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -DCMAKE_MAKE_PROGRAM=D:/mingw64/bin/mingw32-make.exe -DCMAKE_AR=D:/mingw64/bin/ar.exe -DCMAKE_RANLIB=D:/mingw64/bin/ranlib.exe -DCMAKE_LINKER=D:/mingw64/bin/ld.exe -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-debug --config Debug --parallel 1; exit $LASTEXITCODE"
         ],
         "options": {
           "cwd": "${workspaceFolder}",
@@ -76,7 +76,7 @@
         "args": [
           "-NoProfile",
           "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-release -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-release --config Release --parallel; exit $LASTEXITCODE"
+          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-release -DCMAKE_MAKE_PROGRAM=D:/mingw64/bin/mingw32-make.exe -DCMAKE_AR=D:/mingw64/bin/ar.exe -DCMAKE_RANLIB=D:/mingw64/bin/ranlib.exe -DCMAKE_LINKER=D:/mingw64/bin/ld.exe -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_CXX_COMPILER=D:/mingw64/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=D:/mingw64/bin/windres.exe; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-release --config Release --parallel 1; exit $LASTEXITCODE"
         ],
         "options": {
           "cwd": "${workspaceFolder}",
