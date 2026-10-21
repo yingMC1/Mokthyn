@@ -71,7 +71,7 @@ void restoreLegacyArchiveSettings(const std::string& contents, int version) {
         windowHeight = storedHeight;
 }
 
-bool loadVersion5Archive(std::istream& input) {
+bool loadVersion5Archive(std::istream& input, int version) {
     std::string marker;
     int storedEnglish = english ? 1 : 0;
     int storedUiScalePercent = uiScalePercent;
@@ -166,20 +166,24 @@ bool loadVersion5Archive(std::istream& input) {
     for (int i = 0; i < enemyCount; ++i) {
         Enemy enemy;
         int alive = 0, awake = 0, boss = 0;
+        int cooldownRemaining = 0;
         if (!readArchiveInt(input, enemy.x) || !readArchiveInt(input, enemy.y) ||
             !readArchiveInt(input, enemy.hp) || !readArchiveInt(input, alive) ||
             !readArchiveInt(input, awake) || !readArchiveInt(input, boss) ||
+            (version >= 6 && !readArchiveInt(input, cooldownRemaining)) ||
             !validArchiveValue(enemy.x, 1, MapColumns - 2) ||
             !validArchiveValue(enemy.y, 1, MapRows - 2) ||
             !validArchiveValue(enemy.hp, 0, boss != 0 ? BossHealth : EnemyHealth) ||
             !validArchiveValue(alive, 0, 1) || !validArchiveValue(awake, 0, 1) ||
-            !validArchiveValue(boss, 0, 1)) {
+            !validArchiveValue(boss, 0, 1) ||
+            !validArchiveValue(cooldownRemaining, 0, 1800)) {
             archiveStatus = L"存档敌人数据无效，已保留显示设置";
             return false;
         }
         enemy.alive = alive != 0;
         enemy.awake = awake != 0;
         enemy.boss = boss != 0;
+        enemy.nextAttack = Clock::now() + std::chrono::milliseconds(cooldownRemaining);
         storedEnemies.push_back(enemy);
     }
 
@@ -286,11 +290,11 @@ bool loadArchive() {
     std::string signature;
     int version = 0;
     if (!(input >> signature >> version) || signature != "MOKTHYN_SAVE" ||
-        version < 1 || version > 5) {
+        version < 1 || version > 6) {
         archiveStatus = L"存档格式无效，已使用默认数据";
         return false;
     }
-    if (version == 5) return loadVersion5Archive(input);
+    if (version >= 5) return loadVersion5Archive(input, version);
     restoreLegacyArchiveSettings(contents, version);
 
     int storedEnglish = 0, savedRun = 0, storedHealth = 0, storedAmmo = 0, storedMedkits = 0;
@@ -431,6 +435,7 @@ void beginNetworkArchiveSession() {
     networkArchiveSnapshot.armorOn = armorOn;
     networkArchiveSnapshot.valid = true;
     networkRun = true;
+    networkArchiveStarted = Clock::now();
 }
 
 void restoreNetworkArchiveSession() {
@@ -462,6 +467,7 @@ void restoreNetworkArchiveSession() {
     networkPause = false;
     networkRun = false;
     networkArchiveSnapshot.valid = false;
+    networkArchiveStarted = {};
     screen = Screen::Menu;
     lastArchiveSave = now;
 }
@@ -488,9 +494,13 @@ bool saveArchive() {
     const int safePlayerY = std::clamp(playerY, 1, MapRows - 2);
     const int safeArmorTier = std::clamp(armorTier, 0, 4);
     const int safeArmorDurability = std::clamp(armorDurability, 0, ArmorDurability[safeArmorTier]);
-    const int safeEnemyCount = std::clamp(static_cast<int>(enemies.size()), 0, 30);
+    if (enemies.size() > 30) {
+        archiveStatus = L"敌人数量超出存档格式上限，未保存以避免丢失数据";
+        return false;
+    }
+    const int safeEnemyCount = static_cast<int>(enemies.size());
     std::ostringstream output;
-    output << "MOKTHYN_SAVE 5\nSETTINGS " << (english ? 1 : 0) << ' ' << uiScalePercent << ' '
+    output << "MOKTHYN_SAVE 6\nSETTINGS " << (english ? 1 : 0) << ' ' << uiScalePercent << ' '
            << windowWidth << ' ' << windowHeight << "\nRUN " << (hasSavedRun ? 1 : 0) << ' '
            << std::clamp(health, 0, 100) << ' ' << std::clamp(ammo, 0, 100000) << ' '
            << std::clamp(medkits, 0, 10000) << ' ' << std::clamp(money, 0, 100000000) << ' '
@@ -503,15 +513,18 @@ bool saveArchive() {
         output << '\n';
     }
     output << "ENEMIES " << safeEnemyCount << '\n';
-    int writtenEnemies = 0;
+    const auto saveTime = Clock::now();
     for (const Enemy& enemy : enemies) {
-        if (writtenEnemies >= safeEnemyCount) break;
         const int safeX = std::clamp(enemy.x, 1, MapColumns - 2);
         const int safeY = std::clamp(enemy.y, 1, MapRows - 2);
         const int safeHp = std::clamp(enemy.hp, 0, enemy.boss ? BossHealth : EnemyHealth);
+        const auto remaining = std::clamp<long long>(
+            std::chrono::duration_cast<std::chrono::milliseconds>(enemy.nextAttack - saveTime)
+                .count(),
+            0, 1800);
         output << safeX << ' ' << safeY << ' ' << safeHp << ' ' << (enemy.alive ? 1 : 0) << ' '
-               << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << '\n';
-        ++writtenEnemies;
+               << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << ' ' << remaining
+               << '\n';
     }
     std::string contents;
     if (!protectArchive(output.str(), contents)) {

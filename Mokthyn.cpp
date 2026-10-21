@@ -1,4 +1,9 @@
 #define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#include <shellapi.h>
+#include <graphics.h>
 #include "game.h/GameArchive.h"
 #include "game.h/GameArchiveImpl.h"
 #include "game.h/GameLogic.h"
@@ -9,24 +14,20 @@
 #include "game.h/GameRenderImpl.h"
 #include "game.h/GameState.h"
 #include "game.h/GameTypes.h"
-#include <graphics.h>
-#include <shellapi.h>
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 int main() {
     using namespace mokthyn;
+    SetProcessDPIAware();
     loadArchive();
     setinitmode(INIT_DEFAULT);
     initgraph(windowWidth, windowHeight);
     ege_enable_aa(true);
-    SetProcessDPIAware();
     setbkmode(TRANSPARENT);
     frameBuffer = newimage(windowWidth, windowHeight);
     if (frameBuffer == nullptr) {
         closegraph();
         return 1;
     }
+    ++frameBufferGeneration;
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(Background, frameBuffer);
     ege_enable_aa(true, frameBuffer);
@@ -216,6 +217,8 @@ int main() {
                 if (healing) healStarted += pausedFor;
                 if (extracting) extractStarted += pausedFor;
                 if (networkHost && peerExtracting) peerExtractStarted += pausedFor;
+                nextPlayerShot += pausedFor;
+                peerNextShot += pausedFor;
                 lastMove += pausedFor;
                 lastEnemyTurn += pausedFor;
                 nextPlayerHit += pausedFor;

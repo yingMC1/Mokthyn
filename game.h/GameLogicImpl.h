@@ -25,6 +25,7 @@ void setMessage(const std::wstring& text, int milliseconds) {
 void resetRunProgress() {
     healing = false;
     extracting = false;
+    pickupPending = false;
     won = false;
     healStarted = {};
     extractStarted = {};
@@ -69,12 +70,18 @@ bool lineOfSight(int fromX, int fromY, int toX, int toY) {
 }
 
 void computeVisibility() {
+    if (visibilityPlayerX == playerX && visibilityPlayerY == playerY &&
+        computedVisibilityRevision == visibilityRevision)
+        return;
     for (int y = 0; y < MapRows; ++y) {
         for (int x = 0; x < MapColumns; ++x) {
             const int distance = std::abs(x - playerX) + std::abs(y - playerY);
             visible[y][x] = distance <= ViewRadius && lineOfSight(playerX, playerY, x, y);
         }
     }
+    visibilityPlayerX = playerX;
+    visibilityPlayerY = playerY;
+    computedVisibilityRevision = visibilityRevision;
 }
 
 bool hasEnemyAt(int x, int y) {
@@ -83,19 +90,21 @@ bool hasEnemyAt(int x, int y) {
     });
 }
 
-void placePickup(int type, int minimumDistance) {
+bool placePickup(int type, int minimumDistance) {
     for (int attempt = 0; attempt < 400; ++attempt) {
         const int x = randomInt(1, MapColumns - 2);
         const int y = randomInt(1, MapRows - 2);
         if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
             std::abs(x - playerX) + std::abs(y - playerY) >= minimumDistance) {
             world[y][x] = type;
-            return;
+            return true;
         }
     }
+    return false;
 }
 
 void startRun() {
+    ++visibilityRevision;
     if (networkActive) {
         beginNetworkArchiveSession();
     } else {
@@ -138,6 +147,8 @@ void startRun() {
     for (int x = playerX; x <= bossX; ++x) world[playerY][x] = Floor;
     for (int y = playerY; y <= bossY; ++y) world[y][bossX] = Floor;
     world[MapRows - 2][MapColumns - 2] = ExitTile;
+    const auto runStarted = Clock::now();
+    int placedEnemies = 0;
     for (int i = 0; i < 16; ++i) {
         for (int attempt = 0; attempt < 400; ++attempt) {
             const int x = randomInt(1, MapColumns - 2);
@@ -145,26 +156,35 @@ void startRun() {
             if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
                 std::abs(x - playerX) + std::abs(y - playerY) >= 8 &&
                 std::abs(x - bossX) + std::abs(y - bossY) >= 3) {
-                enemies.push_back({x, y, EnemyHealth, true, false, false, Clock::now()});
+                enemies.push_back({x, y, EnemyHealth, true, false, false,
+                                   runStarted + std::chrono::milliseconds(650)});
+                ++placedEnemies;
                 break;
             }
         }
     }
-    enemies.push_back({bossX, bossY, BossHealth, true, false, true, Clock::now()});
+    enemies.push_back({bossX, bossY, BossHealth, true, false, true,
+                       runStarted + std::chrono::milliseconds(650)});
     if (networkActive && networkHost) ++networkMapRevision;
     totalEnemies = static_cast<int>(enemies.size());
+    int missingPickups = 0;
     for (int i = 0; i < 7; ++i)
-        placePickup(AmmoPickup, 4);
+        if (!placePickup(AmmoPickup, 4)) ++missingPickups;
     for (int i = 0; i < 4; ++i)
-        placePickup(MedkitPickup, 5);
+        if (!placePickup(MedkitPickup, 5)) ++missingPickups;
     kills = 0;
     health = 100;
     armorOn = armorTier > 0 && armorDurability > 0;
     resetRunProgress();
-    lastMove = lastEnemyTurn = Clock::now();
+    lastMove = lastEnemyTurn = runStarted;
     nextPlayerHit = nextPeerHit = Clock::now();
+    nextPlayerShot = {};
     screen = Screen::Playing;
-    setMessage(L"清除敌人并击败区域 Boss，然后前往撤离点");
+    std::wstring startMessage = L"清除敌人并击败区域 Boss，然后前往撤离点";
+    if (placedEnemies < 16 || missingPickups > 0)
+        startMessage += L"（地图空间不足：敌人 " + std::to_wstring(16 - placedEnemies) +
+                        L"、物资 " + std::to_wstring(missingPickups) + L" 未生成）";
+    setMessage(startMessage);
     saveArchive();
     if (networkActive && networkHost && peerConnected) {
         sendNetworkPacket("START");
@@ -173,11 +193,23 @@ void startRun() {
 }
 
 void shoot(int dx, int dy) {
+    const auto now = Clock::now();
+    if (now < nextPlayerShot) return;
     if (ammo <= 0) {
         setMessage(L"弹药不足，寻找弹药箱");
         return;
     }
-    --ammo;
+    if (networkActive && !networkHost) {
+        if (!sendReliableNetworkPacket("SHOT " + std::to_string(dx) + " " +
+                                       std::to_string(dy))) {
+            setMessage(L"射击请求发送失败");
+            return;
+        }
+        --ammo;
+        nextPlayerShot = now + std::chrono::milliseconds(250);
+        setMessage(L"射击确认中");
+        return;
+    }
     for (int step = 1; step <= 9; ++step) {
         const int x = playerX + dx * step;
         const int y = playerY + dy * step;
@@ -188,12 +220,8 @@ void shoot(int dx, int dy) {
         if (found != enemies.end()) {
             const int targetX = found->x;
             const int targetY = found->y;
-            if (networkActive && !networkHost) {
-                sendReliableNetworkPacket("HIT " + std::to_string(targetX) + " " +
-                                          std::to_string(targetY) + " 15");
-                setMessage(L"命中确认中");
-                return;
-            }
+            --ammo;
+            nextPlayerShot = now + std::chrono::milliseconds(250);
             found->hp -= 15;
             found->awake = true;
             if (found->hp <= 0) {
@@ -207,6 +235,8 @@ void shoot(int dx, int dy) {
             return;
         }
     }
+    --ammo;
+    nextPlayerShot = now + std::chrono::milliseconds(250);
     setMessage(L"未命中");
 }
 
@@ -273,7 +303,10 @@ void updateEnemies(Clock::time_point now) {
                 if (peerArmorOn && peerArmorDurability > 0) {
                     damage = std::max(1, damage - ArmorReduction[peerArmorTier]);
                     peerArmorDurability = std::max(0, peerArmorDurability - 4);
-                    if (peerArmorDurability == 0) peerArmorOn = false;
+                    if (peerArmorDurability == 0) {
+                        peerArmorOn = false;
+                        peerArmorTier = 0;
+                    }
                 }
                 peerHealth = std::max(0, peerHealth - damage);
                 if (peerHealth == 0) {
@@ -313,25 +346,41 @@ void collectPickup() {
     if (tile == AmmoPickup) {
         const int pickupX = playerX;
         const int pickupY = playerY;
+        if (networkActive && !networkHost) {
+            if (pickupPending) return;
+            if (sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
+                                          std::to_string(pickupY) + " " +
+                                          std::to_string(AmmoPickup))) {
+                pickupPending = true;
+                setMessage(L"正在请求主机确认弹药拾取");
+            } else {
+                setMessage(L"弹药拾取请求发送失败");
+            }
+            return;
+        }
         const int found = randomInt(8, 16);
         ammo += found;
         tile = Floor;
         if (networkActive && networkHost) ++networkMapRevision;
-        if (networkActive && !networkHost)
-            sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
-                                      std::to_string(pickupY) + " " +
-                                      std::to_string(AmmoPickup));
         setMessage(L"拾取弹药  +" + std::to_wstring(found));
     } else if (tile == MedkitPickup) {
         const int pickupX = playerX;
         const int pickupY = playerY;
+        if (networkActive && !networkHost) {
+            if (pickupPending) return;
+            if (sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
+                                          std::to_string(pickupY) + " " +
+                                          std::to_string(MedkitPickup))) {
+                pickupPending = true;
+                setMessage(L"正在请求主机确认医疗包拾取");
+            } else {
+                setMessage(L"医疗包拾取请求发送失败");
+            }
+            return;
+        }
         ++medkits;
         tile = Floor;
         if (networkActive && networkHost) ++networkMapRevision;
-        if (networkActive && !networkHost)
-            sendReliableNetworkPacket("PICKUP " + std::to_string(pickupX) + " " +
-                                      std::to_string(pickupY) + " " +
-                                      std::to_string(MedkitPickup));
         setMessage(L"拾取医疗包  +1");
     } else {
         setMessage(L"这里没有可拾取的物资");
@@ -342,7 +391,10 @@ void movePlayer(int dx, int dy) {
     const int nextX = playerX + dx;
     const int nextY = playerY + dy;
     if (nextX <= 0 || nextX >= MapColumns - 1 || nextY <= 0 || nextY >= MapRows - 1 ||
-        world[nextY][nextX] == Wall || hasEnemyAt(nextX, nextY))
+        world[nextY][nextX] == Wall || hasEnemyAt(nextX, nextY) ||
+        (dx != 0 && dy != 0 &&
+         (world[playerY][nextX] == Wall || world[nextY][playerX] == Wall ||
+          hasEnemyAt(nextX, playerY) || hasEnemyAt(playerX, nextY))))
         return;
     playerX = nextX;
     playerY = nextY;
@@ -396,6 +448,7 @@ void updatePlaying() {
         else {
             resetRunProgress();
             screen = Screen::Menu;
+            if (!saveArchive()) setMessage(archiveStatus, 4000);
         }
         return;
     }
@@ -439,14 +492,8 @@ void updatePlaying() {
     if (now - lastMove >= std::chrono::milliseconds(115)) {
         int dx = 0;
         int dy = 0;
-        if (keystate('W'))
-            dy = -1;
-        else if (keystate('S'))
-            dy = 1;
-        else if (keystate('A'))
-            dx = -1;
-        else if (keystate('D'))
-            dx = 1;
+        dx = (keystate('D') ? 1 : 0) - (keystate('A') ? 1 : 0);
+        dy = (keystate('S') ? 1 : 0) - (keystate('W') ? 1 : 0);
         if (dx != 0 || dy != 0) {
             movePlayer(dx, dy);
             lastMove = now;

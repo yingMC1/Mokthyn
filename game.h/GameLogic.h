@@ -10,7 +10,7 @@ inline void cancelExtraction();
 inline bool lineOfSight(int fromX, int fromY, int toX, int toY);
 inline void computeVisibility();
 inline bool hasEnemyAt(int x, int y);
-inline void placePickup(int type, int minimumDistance);
+inline bool placePickup(int type, int minimumDistance);
 inline void startRun();
 inline void shoot(int dx, int dy);
 inline int takeDamage(int damage);

@@ -58,6 +58,7 @@ bool resizeGameWindow(int width, int height) {
     resizewindow(width, height);
     PIMAGE previousBuffer = frameBuffer;
     frameBuffer = resizedBuffer;
+    ++frameBufferGeneration;
     windowWidth = width;
     windowHeight = height;
     setbkmode(TRANSPARENT, frameBuffer);
@@ -115,6 +116,7 @@ std::wstring localize(const std::wstring& value) {
         {L"网络消息确认超时", L"Network message acknowledgement timed out"},
         {L"可靠网络消息队列已满", L"Reliable network message queue is full"},
         {L"命中确认中", L"Hit sent; awaiting confirmation"},
+        {L"射击确认中", L"Shot sent; awaiting confirmation"},
         {L"弹药库存", L"Ammo reserve"}, {L"持有金币", L"Coins"},
         {L"高清战术视图   /   EGE GRAPHICS", L"TACTICAL VIEW   /   EGE GRAPHICS"},
         {L"继续存档", L"Resume saved run"}, {L"切换语言：L", L"Language: L"},
@@ -317,11 +319,14 @@ void drawText(int x, int y, const std::wstring& value, int size, ege::color_t co
     setfontbkcolor(TRANSPARENT, frameBuffer);
     static PIMAGE fontTarget = nullptr;
     static int fontHeight = 0;
+    static unsigned int fontGeneration = static_cast<unsigned int>(-1);
     const int requestedFontHeight = std::max(1, scaledLength(size));
-    if (fontTarget != frameBuffer || fontHeight != requestedFontHeight) {
+    if (fontTarget != frameBuffer || fontHeight != requestedFontHeight ||
+        fontGeneration != frameBufferGeneration) {
         setfont(requestedFontHeight, 0, L"Microsoft YaHei UI", frameBuffer);
         fontTarget = frameBuffer;
         fontHeight = requestedFontHeight;
+        fontGeneration = frameBufferGeneration;
     }
     settextcolor(color);
     outtextxy(scaledX(x), scaledY(y), displayed.c_str());
@@ -448,11 +453,15 @@ void drawHud() {
     }
 
     drawText(x + padding, 468, L"护甲", 17, Muted);
-    drawText(x + 100, 466, armorOn ? L"等级 " + std::to_wstring(armorTier) : L"未装备", 17,
-             armorOn ? Cyan : Muted);
-    if (armorOn)
+    const bool hasArmor = armorTier > 0 && armorDurability > 0;
+    const std::wstring armorDescription =
+        hasArmor ? (english ? L"Tier " : L"等级 ") + std::to_wstring(armorTier) +
+                       (armorOn ? L"" : (english ? L" (unequipped)" : L"（已脱下）"))
+                 : (english ? L"Not equipped" : L"未装备");
+    drawText(x + 100, 466, armorDescription, 17, hasArmor ? Cyan : Muted);
+    if (hasArmor)
         drawBar(x + padding, 492, width - padding * 2, 8, armorDurability,
-                ArmorDurability[armorTier], Cyan);
+                ArmorDurability[armorTier], armorOn ? Cyan : Muted);
     drawText(x + padding, 516, L"金币", 17, Muted);
     drawText(x + 100, 514, std::to_wstring(money), 20, Yellow);
     if (networkActive && peerConnected)
@@ -465,7 +474,10 @@ void drawHud() {
     drawText(x + padding, 586, L"E 拾取   H 治疗   K 护甲", 15, Muted);
     drawText(x + padding, 614, L"Q 撤离   P 暂停   ESC 菜单", 15, Muted);
     if (Clock::now() < messageUntil)
-        drawText(x + padding, 650, message, 16, Yellow);
+        drawText(x + padding, visibleDesignHeight() - 52, message, 16, Yellow);
+    if (networkActive && !networkStatus.empty())
+        drawText(x + padding, visibleDesignHeight() - 30, networkStatus, 15,
+                 networkHost && peerConnected ? Cyan : Yellow);
 }
 
 void drawMenu() {
@@ -499,10 +511,10 @@ void drawNetworkLobby() {
     drawText(220, 160, title, 42, Text);
     drawText(225, 250, networkStatus, 22, Green);
     if (screen == Screen::HostLobby) {
-        drawText(225, 330, L"主机 IPv4 地址", 18, Muted);
+        drawText(225, 330, L"可用主机 IPv4 地址", 18, Muted);
         const std::wstring localIp = getLocalIPv4();
         drawText(225, 372, localIp, 34, Cyan);
-        drawText(225, 470, L"将此地址发给同一局域网内的队友。", 20, Text);
+        drawText(225, 470, L"将队友可访问的地址发给同一局域网内的队友。", 20, Text);
         drawText(225, 520,
                  peerConnected ? L"按 ENTER 开始合作行动"
                                : L"等待玩家连接 · UDP " + std::to_wstring(NetworkPort),
@@ -530,12 +542,27 @@ void drawShop() {
     drawText(1175, 135, L"持有金币", 17, Muted);
     drawText(1320, 127, std::to_wstring(money), 32, Yellow);
 
-    const std::array<std::wstring, 6> labels = {L"一级护甲       耐久 50 / 减伤 4       100 金",
-                                                L"二级护甲       耐久 75 / 减伤 7       200 金",
-                                                L"三级护甲       耐久 100 / 减伤 10     350 金",
-                                                L"四级护甲       耐久 125 / 减伤 13     550 金",
-                                                L"弹药补给       +10 发                 5 金",
-                                                L"医疗包         +1 个                  20 金"};
+    const std::array<std::wstring, 4> armorNames = {L"一级护甲", L"二级护甲", L"三级护甲",
+                                                    L"四级护甲"};
+    std::array<std::wstring, 6> labels{};
+    for (int tier = 1; tier <= 4; ++tier) {
+        if (english) {
+            labels[tier - 1] =
+                L"Tier " + std::to_wstring(tier) + L" armor    durability " +
+                std::to_wstring(ArmorDurability[tier]) + L" / reduction " +
+                std::to_wstring(ArmorReduction[tier]) + L"    " +
+                std::to_wstring(ArmorPrices[tier]) + L" coins";
+        } else {
+            labels[tier - 1] =
+                armorNames[tier - 1] + L"       耐久 " +
+                std::to_wstring(ArmorDurability[tier]) + L" / 减伤 " +
+                std::to_wstring(ArmorReduction[tier]) + L"       " +
+                std::to_wstring(ArmorPrices[tier]) + L" 金";
+        }
+    }
+    labels[4] = english ? L"Ammo supply       +10 rounds       5 coins"
+                        : L"弹药补给       +10 发       5 金";
+    labels[5] = english ? L"Medkit       +1       20 coins" : L"医疗包         +1 个       20 金";
     for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
         const int y = 240 + i * 74;
         fillRect(155, y, 1440, y + 56, shopSelection == i ? PanelLight : EGERGB(25, 36, 42));
@@ -624,6 +651,16 @@ void drawResult() {
     drawText(1040, 332, L"持有金币", 20, Muted);
     drawText(1040, 370, std::to_wstring(money), 38, Yellow);
     drawText(345, 500, L"按 ENTER 返回主菜单", 23, Text);
+    drawText(345, 440, L"护甲", 20, Muted);
+    const bool hasArmor = armorTier > 0 && armorDurability > 0;
+    const std::wstring armorDescription =
+        hasArmor ? (english ? L"Tier " : L"等级 ") + std::to_wstring(armorTier) +
+                       (english ? L"  ·  " : L"  ·  ") + std::to_wstring(armorDurability) +
+                       L" / " + std::to_wstring(ArmorDurability[armorTier]) +
+                       (armorOn ? L"" : (english ? L"  (unequipped)" : L"  （已脱下）"))
+                 : (english ? L"Not equipped" : L"未装备");
+    drawText(440, 440, armorDescription, 20, hasArmor ? Cyan : Muted);
+    if (!networkStatus.empty()) drawText(345, 550, networkStatus, 18, Yellow);
 }
 
 void drawPlaying() {
