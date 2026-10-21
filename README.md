@@ -6,8 +6,9 @@
 
 ## 📥 下载
 
-1. [主下载站](https://mokthyn.rf.gd/Mokthyn.html)（推荐，更新及时）
-2. [备用下载站](https://fancy-unit-740c.ying110189.workers.dev)（更新较慢）
+1. [主下载站](https://mokthyn.rf.gd/download)（推荐，更新及时）
+2. [备用下载站](https://mokthyn-3xya338.maozi.io/)（更新较慢）
+3. [备用下载站](https://fancy-unit-740c.ying110189.workers.dev)（更新较慢）
 
 ## 📖 简介
 
@@ -15,7 +16,7 @@ Mokthyn（莫克廷）是一个「逃离雅科夫模式」的游戏，核心玩�
 
 基于 C++ 与 EGE (Easy Graphics Engine) 图形库开发，使用 CMake + VSCode 构建，界面较前代项目有显著提升。
 
-### 📕新手手册
+## 📕新手手册
 
 请查看[新手手册](./新手手册.md)。游戏内主菜单按 `3` 可打开分
 页操作说明；在手册页按 `D` 可打开下载页，按方向键翻页。
@@ -34,7 +35,7 @@ Mokthyn（莫克廷）是一个「逃离雅科夫模式」的游戏，核心玩�
 如果你希望为 Mokthyn 贡献自定义功能：
 
 1. 上传 `.h` 文件前，请先确认该功能尚未存在（可通过 Issue 询问）。
-2. 打开[下载站](https://mokthyn-3xya338.maozi.io/)，使用贡献功能上传 `.h` 文件。
+2. 打开[下载站](https://mokthyn.rf.gd/#suggest)，使用贡献功能上传 `.h` 文件。
 
 **要求：**
 - 体验过 Mokthyn 游戏
@@ -48,4 +49,4 @@ Mokthyn（莫克廷）是一个「逃离雅科夫模式」的游戏，核心玩�
 
 ## 💬 联系与反馈
 
-欢迎通过 [GitHub Issues](https://github.com/yingMC1/Mokthyn-public/issues) 提交 Bug 报告、功能建议或参与讨论。
+欢迎通过 [GitHub Issues](https://mokthyn.rf.gd/#suggest) 提交 Bug 报告、功能建议或参与讨论。
