@@ -40,7 +40,6 @@ inline bool pickupPending = false;
 inline bool won = false;
 inline bool networkRun = false;
 inline ArchiveSnapshot networkArchiveSnapshot{};
-inline Clock::time_point networkArchiveStarted{};
 inline bool peerArmorInitialized = false;
 inline bool peerExtractConfirmed = false;
 inline bool networkPause = false;

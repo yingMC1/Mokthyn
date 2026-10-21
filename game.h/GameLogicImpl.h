@@ -207,7 +207,7 @@ void shoot(int dx, int dy) {
         }
         --ammo;
         nextPlayerShot = now + std::chrono::milliseconds(250);
-        setMessage(L"射击确认中");
+        setMessage(L"射击确认中", 500);
         return;
     }
     for (int step = 1; step <= 9; ++step) {
@@ -283,7 +283,8 @@ void updateEnemies(Clock::time_point now) {
             for (const auto& direction : directions) {
                 const int nextX = enemy.x + direction[0];
                 const int nextY = enemy.y + direction[1];
-                if (world[nextY][nextX] == Floor && !hasEnemyAt(nextX, nextY) &&
+                if (nextX > 0 && nextX < MapColumns - 1 && nextY > 0 && nextY < MapRows - 1 &&
+                    world[nextY][nextX] == Floor && !hasEnemyAt(nextX, nextY) &&
                     (nextX != playerX || nextY != playerY) && (nextX != peerX || nextY != peerY)) {
                     enemy.x = nextX;
                     enemy.y = nextY;
@@ -352,7 +353,7 @@ void collectPickup() {
                                           std::to_string(pickupY) + " " +
                                           std::to_string(AmmoPickup))) {
                 pickupPending = true;
-                setMessage(L"正在请求主机确认弹药拾取");
+                setMessage(L"正在请求主机确认弹药拾取", 500);
             } else {
                 setMessage(L"弹药拾取请求发送失败");
             }
@@ -372,7 +373,7 @@ void collectPickup() {
                                           std::to_string(pickupY) + " " +
                                           std::to_string(MedkitPickup))) {
                 pickupPending = true;
-                setMessage(L"正在请求主机确认医疗包拾取");
+                setMessage(L"正在请求主机确认医疗包拾取", 500);
             } else {
                 setMessage(L"医疗包拾取请求发送失败");
             }
@@ -485,9 +486,9 @@ void updatePlaying() {
             setMessage(L"现在无法治疗");
     }
     if (keyPressed(VK_UP)) shoot(0, -1);
-    if (keyPressed(VK_DOWN)) shoot(0, 1);
-    if (keyPressed(VK_LEFT)) shoot(-1, 0);
-    if (keyPressed(VK_RIGHT)) shoot(1, 0);
+    else if (keyPressed(VK_DOWN)) shoot(0, 1);
+    else if (keyPressed(VK_LEFT)) shoot(-1, 0);
+    else if (keyPressed(VK_RIGHT)) shoot(1, 0);
 
     if (now - lastMove >= std::chrono::milliseconds(115)) {
         int dx = 0;

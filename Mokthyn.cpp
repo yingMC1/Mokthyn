@@ -47,7 +47,7 @@ int main() {
             } else if (keyPressed('6') && hasSavedRun) {
                 resetRunProgress();
                 screen = Screen::Playing;
-                lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = Clock::now();
+                lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = nextPlayerShot = Clock::now();
                 setMessage(L"已继续存档行动");
             } else if (newRunKeyPressed || enterPressed) {
                 startRun();

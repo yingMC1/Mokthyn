@@ -435,7 +435,6 @@ void beginNetworkArchiveSession() {
     networkArchiveSnapshot.armorOn = armorOn;
     networkArchiveSnapshot.valid = true;
     networkRun = true;
-    networkArchiveStarted = Clock::now();
 }
 
 void restoreNetworkArchiveSession() {
@@ -467,7 +466,6 @@ void restoreNetworkArchiveSession() {
     networkPause = false;
     networkRun = false;
     networkArchiveSnapshot.valid = false;
-    networkArchiveStarted = {};
     screen = Screen::Menu;
     lastArchiveSave = now;
 }
@@ -551,6 +549,7 @@ bool saveArchive() {
         archiveStatus = L"保存存档失败";
         return false;
     }
+    CopyFileW(path.c_str(), (path + L".bak").c_str(), FALSE);
     archiveStatus.clear();
     return true;
 }

@@ -403,7 +403,7 @@ void processNetwork() {
             }
         } else if (command == "HEAL_DONE" && networkHost) {
             if (peerHealing && screen == Screen::Playing && peerHealth > 0 &&
-                peerHealth < 100 && now - peerHealStarted >= std::chrono::seconds(3)) {
+                peerHealth < 100) {
                 peerHealth = std::min(100, peerHealth + 20);
             }
             peerHealing = false;
