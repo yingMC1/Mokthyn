@@ -19,3 +19,36 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-------------------------------------------------------------------------------
+Third-Party Software
+-------------------------------------------------------------------------------
+
+This project depends on and bundles the Easy Graphics Engine (EGE), located
+under the "ege/" directory (headers in "ege/include/" and prebuilt libraries
+in "ege/lib/"). EGE is NOT covered by the MIT License above; it is licensed
+under the GNU Lesser General Public License, version 2.1 (LGPL-2.1).
+
+  EGE (Easy Graphics Engine)
+  Copyright (c) misakamm and the x-ege community
+  License: LGPL-2.1
+  Website: https://xege.org
+  Source:  https://github.com/x-ege/xege
+
+The full text of the LGPL-2.1 is available at:
+  https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+
+Because this project links EGE statically, the following LGPL-2.1 obligations
+apply to the EGE portion of any distributed binary:
+
+  1. The EGE copyright notice and license text must be preserved and made
+     available to recipients (this file and the "ege/" directory satisfy this).
+  2. Recipients must be able to relink the application with a modified version
+     of EGE. To that end, the object files of this project (or the source code
+     needed to regenerate them) are provided so that relinking is possible.
+  3. If you modify EGE itself, those modifications must be released under the
+     LGPL-2.1 (or a compatible license) and made available to recipients.
+
+The MIT-licensed code in this repository (everything outside "ege/") may be
+used, modified and redistributed under the MIT terms above, provided the
+LGPL-2.1 terms are respected for the EGE dependency.
