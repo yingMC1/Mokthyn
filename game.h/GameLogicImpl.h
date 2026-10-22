@@ -118,14 +118,21 @@ void startRun() {
     for (int y = 0; y < MapRows; ++y)
         world[y][0] = world[y][MapColumns - 1] = Wall;
 
-    playerX = MapColumns / 2;
-    playerY = MapRows / 2;
-    for (int block = 0; block < 9; ++block) {
-        const int width = randomInt(2, 4);
-        const int height = randomInt(2, 3);
+    const bool pvp = gameMode == GameMode::Pvp;
+    if (pvp && networkActive) {
+        playerX = networkHost ? 4 : MapColumns - 5;
+        playerY = MapRows / 2;
+    } else {
+        playerX = MapColumns / 2;
+        playerY = MapRows / 2;
+    }
+    const int blockCount = MapColumns * MapRows / 90;
+    for (int block = 0; block < blockCount; ++block) {
+        const int width = randomInt(2, 5);
+        const int height = randomInt(2, 4);
         const int left = randomInt(2, MapColumns - width - 2);
         const int top = randomInt(2, MapRows - height - 2);
-        if (std::abs(left - playerX) + std::abs(top - playerY) < 5) continue;
+        if (std::abs(left - playerX) + std::abs(top - playerY) < 6) continue;
         for (int y = top; y < top + height; ++y)
             for (int x = left; x < left + width; ++x)
                 world[y][x] = Wall;
@@ -138,24 +145,21 @@ void startRun() {
             if (x > 0 && y > 0 && x < MapColumns - 1 && y < MapRows - 1) world[y][x] = Floor;
 
     enemies.clear();
-    const int bossX = MapColumns - 3;
-    const int bossY = MapRows - 3;
-    for (int y = bossY - 1; y <= bossY + 1; ++y)
-        for (int x = bossX - 1; x <= bossX + 1; ++x)
-            if (x > 0 && y > 0 && x < MapColumns - 1 && y < MapRows - 1)
-                world[y][x] = Floor;
-    for (int x = playerX; x <= bossX; ++x) world[playerY][x] = Floor;
-    for (int y = playerY; y <= bossY; ++y) world[y][bossX] = Floor;
-    world[MapRows - 2][MapColumns - 2] = ExitTile;
     const auto runStarted = Clock::now();
+    const double enemyScale = difficulty == Difficulty::Easy   ? 0.6
+                              : difficulty == Difficulty::Hard ? 1.4
+                                                               : 1.0;
+    const int regularCount =
+        std::max(8, static_cast<int>(RegularEnemyCount * enemyScale));
+    const int bossCount =
+        std::max(1, static_cast<int>(BossEnemyCount * enemyScale));
     int placedEnemies = 0;
-    for (int i = 0; i < 16; ++i) {
-        for (int attempt = 0; attempt < 400; ++attempt) {
+    for (int i = 0; i < regularCount; ++i) {
+        for (int attempt = 0; attempt < 800; ++attempt) {
             const int x = randomInt(1, MapColumns - 2);
             const int y = randomInt(1, MapRows - 2);
             if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
-                std::abs(x - playerX) + std::abs(y - playerY) >= 8 &&
-                std::abs(x - bossX) + std::abs(y - bossY) >= 3) {
+                std::abs(x - playerX) + std::abs(y - playerY) >= 10) {
                 enemies.push_back({x, y, EnemyHealth, true, false, false,
                                    runStarted + std::chrono::milliseconds(650)});
                 ++placedEnemies;
@@ -163,15 +167,27 @@ void startRun() {
             }
         }
     }
-    enemies.push_back({bossX, bossY, BossHealth, true, false, true,
-                       runStarted + std::chrono::milliseconds(650)});
+    for (int i = 0; i < bossCount; ++i) {
+        for (int attempt = 0; attempt < 800; ++attempt) {
+            const int x = randomInt(3, MapColumns - 4);
+            const int y = randomInt(3, MapRows - 4);
+            if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
+                std::abs(x - playerX) + std::abs(y - playerY) >= 15) {
+                enemies.push_back({x, y, BossHealth, true, false, true,
+                                   runStarted + std::chrono::milliseconds(650)});
+                break;
+            }
+        }
+    }
     if (networkActive && networkHost) ++networkMapRevision;
     totalEnemies = static_cast<int>(enemies.size());
     int missingPickups = 0;
-    for (int i = 0; i < 7; ++i)
-        if (!placePickup(AmmoPickup, 4)) ++missingPickups;
-    for (int i = 0; i < 4; ++i)
-        if (!placePickup(MedkitPickup, 5)) ++missingPickups;
+    const int ammoCount = std::max(8, static_cast<int>(AmmoPickupCount * enemyScale));
+    const int medkitCount = std::max(4, static_cast<int>(MedkitPickupCount * enemyScale));
+    for (int i = 0; i < ammoCount; ++i)
+        if (!placePickup(AmmoPickup, 6)) ++missingPickups;
+    for (int i = 0; i < medkitCount; ++i)
+        if (!placePickup(MedkitPickup, 7)) ++missingPickups;
     kills = 0;
     health = 100;
     armorOn = armorTier > 0 && armorDurability > 0;
@@ -180,14 +196,15 @@ void startRun() {
     nextPlayerHit = nextPeerHit = Clock::now();
     nextPlayerShot = {};
     screen = Screen::Playing;
-    std::wstring startMessage = L"清除敌人并击败区域 Boss，然后前往撤离点";
-    if (placedEnemies < 16 || missingPickups > 0)
-        startMessage += L"（地图空间不足：敌人 " + std::to_wstring(16 - placedEnemies) +
+    std::wstring startMessage = pvp ? L"消灭对方玩家！物资竞争，生死由命"
+                                    : L"清除敌人并击败区域 Boss，然后前往撤离点";
+    if (placedEnemies < regularCount || missingPickups > 0)
+        startMessage += L"（地图空间不足：敌人 " + std::to_wstring(regularCount - placedEnemies) +
                         L"、物资 " + std::to_wstring(missingPickups) + L" 未生成）";
     setMessage(startMessage);
     saveArchive();
     if (networkActive && networkHost && peerConnected) {
-        sendNetworkPacket("START");
+        sendNetworkPacket("START " + std::string(gameMode == GameMode::Pvp ? "PVP" : "COOP"));
         sendNetworkState();
     }
 }
@@ -214,6 +231,19 @@ void shoot(int dx, int dy) {
         const int x = playerX + dx * step;
         const int y = playerY + dy * step;
         if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows || world[y][x] == Wall) break;
+        if (gameMode == GameMode::Pvp && peerConnected && peerHealth > 0 &&
+            x == peerX && y == peerY) {
+            --ammo;
+            nextPlayerShot = now + std::chrono::milliseconds(250);
+            peerHealth = std::max(0, peerHealth - 15);
+            if (peerHealth == 0) {
+                won = true;
+                screen = Screen::Result;
+            } else {
+                setMessage(L"命中对手");
+            }
+            return;
+        }
         auto found = std::find_if(enemies.begin(), enemies.end(), [=](const Enemy& enemy) {
             return enemy.alive && enemy.x == x && enemy.y == y;
         });
@@ -311,7 +341,7 @@ void updateEnemies(Clock::time_point now) {
                 }
                 peerHealth = std::max(0, peerHealth - damage);
                 if (peerHealth == 0) {
-                    won = false;
+                    won = (gameMode == GameMode::Pvp);
                     screen = Screen::Result;
                 }
             } else {
@@ -532,7 +562,9 @@ void updatePlaying() {
         return;
     }
     if (keyPressed('Q')) {
-        if (world[playerY][playerX] != ExitTile)
+        if (gameMode == GameMode::Pvp) {
+            setMessage(L"PVP 模式下战斗至最后一人，无法撤离");
+        } else if (world[playerY][playerX] != ExitTile)
             setMessage(L"前往地图上的撤离点");
         else if (std::any_of(enemies.begin(), enemies.end(), [](const Enemy& enemy) {
                      return enemy.boss && enemy.alive;

@@ -22,12 +22,16 @@ inline constexpr int DesignHeight = 900;
 inline constexpr int MinUiScalePercent = 100;
 inline constexpr int MaxUiScalePercent = 130;
 inline constexpr int UiScaleStepPercent = 10;
-inline constexpr int MapColumns = 36;
-inline constexpr int MapRows = 24;
-inline constexpr int ViewRadius = 18;
+inline constexpr int MapColumns = 72;
+inline constexpr int MapRows = 48;
+inline constexpr int ViewRadius = 28;
 inline constexpr int EnemyHealth = 45;
 inline constexpr int BossHealth = 300;
 inline constexpr unsigned short NetworkPort = 8888;
+inline constexpr int RegularEnemyCount = 64;
+inline constexpr int BossEnemyCount = 4;
+inline constexpr int AmmoPickupCount = 28;
+inline constexpr int MedkitPickupCount = 16;
 inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
 inline const ege::color_t Background = EGERGB(12, 18, 24);
@@ -46,6 +50,8 @@ inline const std::array<int, 5> ArmorReduction = {0, 4, 7, 10, 13};
 
 enum Tile : int { Floor, Wall, AmmoPickup, ExitTile, MedkitPickup };
 enum class Screen { Menu, Shop, Help, Settings, Playing, Paused, Result, HostLobby, JoinIp, JoinLobby };
+enum class GameMode { Coop, Pvp };
+enum class Difficulty { Easy, Normal, Hard };
 
 struct Enemy {
     int x = 0;

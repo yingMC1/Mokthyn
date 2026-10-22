@@ -485,21 +485,33 @@ void drawMenu() {
     setfillcolor(Background);
     bar(0, 0, windowWidth, windowHeight);
 
-    drawText(500, 210, L"无限枪洲", 58, Text);
-    drawText(1190, 225, L"切换语言：L", 16, Muted);
+    drawText(500, 180, L"无限枪洲", 58, Text);
+    drawText(1190, 195, L"切换语言：L", 16, Muted);
 
-    drawText(500, 330, L"1  开始行动", 23, Green);
-    drawText(500, 385, L"2  黑市商店", 23, Yellow);
-    drawText(500, 440, L"3  操作说明", 23, Cyan);
-    drawText(500, 495, L"4  创建联机主机", 23, Text);
-    drawText(500, 550, L"5  加入局域网游戏", 23, Text);
+    const std::wstring diffText =
+        difficulty == Difficulty::Easy   ? L"简单"
+        : difficulty == Difficulty::Normal ? L"普通"
+                                           : L"困难";
+    drawText(500, 260, L"当前难度：" + diffText + L"（按 0 切换）", 18,
+             difficulty == Difficulty::Easy   ? Green
+             : difficulty == Difficulty::Normal ? Yellow
+                                                : Red);
+
+    drawText(500, 320, L"1  开始行动", 23, Green);
+    drawText(500, 370, L"2  黑市商店", 23, Yellow);
+    drawText(500, 420, L"3  操作说明", 23, Cyan);
+    drawText(500, 470, L"4  创建联机主机", 23, Text);
+    drawText(500, 520, L"5  加入局域网游戏", 23, Text);
+    drawText(500, 570, L"8  快速开始", 23, Green);
+    drawText(500, 620, L"9  PVP 对战", 23, Red);
     if (hasSavedRun) {
-        drawText(850, 330, L"6  继续存档", 23, Cyan);
+        drawText(850, 320, L"6  继续存档", 23, Cyan);
     }
-    drawText(850, 385, L"7  设置", 23, Cyan);
-    drawText(850, 440, L"ESC  退出", 23, Muted);
-    if (!archiveStatus.empty()) drawText(500, 650, archiveStatus, 16, Yellow);
-    if (Clock::now() < messageUntil) drawText(500, 680, message, 16, Yellow);
+    drawText(850, 370, L"7  设置", 23, Cyan);
+    drawText(850, 420, L"0  切换难度", 23, Yellow);
+    drawText(850, 470, L"ESC  退出", 23, Muted);
+    if (!archiveStatus.empty()) drawText(500, 700, archiveStatus, 16, Yellow);
+    if (Clock::now() < messageUntil) drawText(500, 730, message, 16, Yellow);
 }
 
 void drawNetworkLobby() {

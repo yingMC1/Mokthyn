@@ -19,6 +19,8 @@ inline std::mt19937
     randomEngine(static_cast<unsigned int>(Clock::now().time_since_epoch().count()));
 
 inline Screen screen = Screen::Menu;
+inline GameMode gameMode = GameMode::Coop;
+inline Difficulty difficulty = Difficulty::Normal;
 inline int playerX = MapColumns / 2;
 inline int playerY = MapRows / 2;
 inline int health = 100;

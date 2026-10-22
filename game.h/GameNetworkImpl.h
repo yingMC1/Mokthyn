@@ -258,7 +258,7 @@ void processNetwork() {
         lastConnectAttempt = now;
     }
 
-    char buffer[8192];
+    char buffer[65536];
     sockaddr_in sender{};
     for (int packetsProcessed = 0; packetsProcessed < 32; ++packetsProcessed) {
         int senderLength = sizeof(sender);
@@ -384,7 +384,10 @@ void processNetwork() {
                     peerArmorTier = reportedTier;
                     peerArmorDurability = reportedDurability;
                     peerArmorInitialized = true;
-                } else if (peerArmorTier == reportedTier) {
+                } else if (peerArmorTier != reportedTier) {
+                    peerArmorTier = reportedTier;
+                    peerArmorDurability = reportedDurability;
+                } else {
                     peerArmorDurability = std::min(peerArmorDurability, reportedDurability);
                 }
                 peerArmorOn =
@@ -427,6 +430,12 @@ void processNetwork() {
                 if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows ||
                     world[y][x] == Wall)
                     break;
+                if (gameMode == GameMode::Pvp && health > 0 && x == playerX && y == playerY) {
+                    health = std::max(0, health - 15);
+                    if (health == 0) won = false;
+                    hitEnemy = true;
+                    break;
+                }
                 for (Enemy& enemy : enemies) {
                     if (enemy.alive && enemy.x == x && enemy.y == y) {
                         enemy.hp -= 15;
@@ -494,6 +503,9 @@ void processNetwork() {
             receivedReliablePacketOrder.clear();
             networkStatus = L"队友已离开";
         } else if (command == "START" && !networkHost && screen == Screen::JoinLobby) {
+            std::string modeTag;
+            if (input >> modeTag && modeTag == "PVP") gameMode = GameMode::Pvp;
+            else gameMode = GameMode::Coop;
             startRun();
         } else if (command == "STATE" && !networkHost) {
             int hostX, hostY, hostHp, clientX, clientY, clientHp;
@@ -507,7 +519,7 @@ void processNetwork() {
                   syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
                   finished >> result >> mapRevision >> mapIncluded >> enemyCount >>
                   syncedPeerAmmo) ||
-                  enemyCount < 0 || enemyCount > 30 ||
+                  enemyCount < 0 || enemyCount > 200 ||
                   syncedPeerAmmo < -1 || syncedPeerAmmo > 100000 ||
                   (mapIncluded != 0 && mapIncluded != 1) ||
                   (hostEvacuating != 0 && hostEvacuating != 1) ||
@@ -605,7 +617,7 @@ void processNetwork() {
                 totalEnemies = std::max(totalEnemies, static_cast<int>(enemies.size()));
             }
             if (finished != 0) {
-                won = result != 0;
+                won = gameMode == GameMode::Pvp ? (result == 0) : (result != 0);
                 screen = Screen::Result;
             }
         }
@@ -647,6 +659,7 @@ void processNetwork() {
         lastEvacSend = now;
     }
     if (networkHost && peerExtracting && screen == Screen::Playing &&
+        gameMode == GameMode::Coop &&
         now - peerExtractStarted >= std::chrono::seconds(5) && health > 0 && peerX > 0 &&
         peerX < MapColumns - 1 && peerY > 0 && peerY < MapRows - 1 &&
         world[peerY][peerX] == ExitTile && peerHealth > 0) {

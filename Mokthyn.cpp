@@ -62,6 +62,19 @@ int main() {
                 if (!beginJoinNetwork()) setMessage(L"网络初始化失败");
             } else if (keyPressed('7')) {
                 screen = Screen::Settings;
+            } else if (keyPressed('8')) {
+                startRun();
+            } else if (keyPressed('9')) {
+                gameMode = GameMode::Pvp;
+                if (!beginHostNetwork()) setMessage(L"PVP 主机启动失败，检查 UDP 端口是否被占用");
+            } else if (keyPressed('0')) {
+                difficulty = difficulty == Difficulty::Easy   ? Difficulty::Normal
+                             : difficulty == Difficulty::Normal ? Difficulty::Hard
+                                                                 : Difficulty::Easy;
+                saveArchive();
+                setMessage(difficulty == Difficulty::Easy   ? L"难度：简单"
+                           : difficulty == Difficulty::Normal ? L"难度：普通"
+                                                              : L"难度：困难");
             } else if (keyPressed(VK_ESCAPE)) {
                 saveArchive();
                 settarget(nullptr);
@@ -77,6 +90,10 @@ int main() {
             if (keyPressed(VK_ESCAPE)) {
                 closeNetwork();
                 screen = Screen::Menu;
+            } else if (keyPressed('M')) {
+                gameMode = gameMode == GameMode::Pvp ? GameMode::Coop : GameMode::Pvp;
+                networkStatus = gameMode == GameMode::Pvp ? L"模式：PVP 对战（按 M 切换）"
+                                                          : L"模式：合作 PVE（按 M 切换）";
             } else if (peerConnected && keyPressed(VK_RETURN)) {
                 startRun();
             }

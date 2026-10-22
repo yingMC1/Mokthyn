@@ -49,7 +49,7 @@ void restoreLegacyArchiveSettings(const std::string& contents, int version) {
         version >= 4 ? static_cast<size_t>(MapColumns * MapRows) : 24 * 18;
     const size_t enemyCountIndex = 2 + fixedHeaderFieldCount + legacyMapFieldCount;
     int enemyCount = 0;
-    if (!readValue(enemyCountIndex, enemyCount) || !validArchiveValue(enemyCount, 0, 30))
+    if (!readValue(enemyCountIndex, enemyCount) || !validArchiveValue(enemyCount, 0, 200))
         return;
     const size_t enemyFieldCount = version >= 4 ? 6 : 5;
     const size_t settingsIndex = enemyCountIndex + 1 +
@@ -157,7 +157,7 @@ bool loadVersion5Archive(std::istream& input, int version) {
         return false;
     }
     int enemyCount = 0;
-    if (!readArchiveInt(input, enemyCount) || !validArchiveValue(enemyCount, 0, 30)) {
+    if (!readArchiveInt(input, enemyCount) || !validArchiveValue(enemyCount, 0, 200)) {
         archiveStatus = L"存档敌人数据无效，已保留显示设置";
         return false;
     }
@@ -290,8 +290,8 @@ bool loadArchive() {
     std::string signature;
     int version = 0;
     if (!(input >> signature >> version) || signature != "MOKTHYN_SAVE" ||
-        version < 1 || version > 6) {
-        archiveStatus = L"存档格式无效，已使用默认数据";
+        version < 7 || version > 7) {
+        archiveStatus = L"存档格式无效或版本过旧，已使用默认数据";
         return false;
     }
     if (version >= 5) return loadVersion5Archive(input, version);
@@ -341,7 +341,7 @@ bool loadArchive() {
     }
 
     int enemyCount = 0;
-    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, 30)) {
+    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, 200)) {
         archiveStatus = L"存档敌人数据无效，已使用默认数据";
         return false;
     }
@@ -492,13 +492,13 @@ bool saveArchive() {
     const int safePlayerY = std::clamp(playerY, 1, MapRows - 2);
     const int safeArmorTier = std::clamp(armorTier, 0, 4);
     const int safeArmorDurability = std::clamp(armorDurability, 0, ArmorDurability[safeArmorTier]);
-    if (enemies.size() > 30) {
+    if (enemies.size() > 200) {
         archiveStatus = L"敌人数量超出存档格式上限，未保存以避免丢失数据";
         return false;
     }
     const int safeEnemyCount = static_cast<int>(enemies.size());
     std::ostringstream output;
-    output << "MOKTHYN_SAVE 6\nSETTINGS " << (english ? 1 : 0) << ' ' << uiScalePercent << ' '
+    output << "MOKTHYN_SAVE 7\nSETTINGS " << (english ? 1 : 0) << ' ' << uiScalePercent << ' '
            << windowWidth << ' ' << windowHeight << "\nRUN " << (hasSavedRun ? 1 : 0) << ' '
            << std::clamp(health, 0, 100) << ' ' << std::clamp(ammo, 0, 100000) << ' '
            << std::clamp(medkits, 0, 10000) << ' ' << std::clamp(money, 0, 100000000) << ' '
