@@ -241,6 +241,10 @@ int main() {
                 nextPlayerHit += pausedFor;
                 nextPeerHit += pausedFor;
                 if (peerHealing) peerHealStarted += pausedFor;
+                if (reloading) reloadStarted += pausedFor;
+                nextMelee += pausedFor;
+                if (peerReloading) peerReloadStarted += pausedFor;
+                peerNextMelee += pausedFor;
                 pausedAt = {};
                 screen = Screen::Playing;
             } else if (keyPressed(VK_ESCAPE)) {

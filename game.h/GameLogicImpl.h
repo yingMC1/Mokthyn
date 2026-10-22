@@ -150,9 +150,9 @@ void startRun() {
                               : difficulty == Difficulty::Hard ? 1.4
                                                                : 1.0;
     const int regularCount =
-        std::max(8, static_cast<int>(RegularEnemyCount * enemyScale));
+        pvp ? 0 : std::max(8, static_cast<int>(RegularEnemyCount * enemyScale));
     const int bossCount =
-        std::max(1, static_cast<int>(BossEnemyCount * enemyScale));
+        pvp ? 0 : std::max(1, static_cast<int>(BossEnemyCount * enemyScale));
     int placedEnemies = 0;
     for (int i = 0; i < regularCount; ++i) {
         for (int attempt = 0; attempt < 800; ++attempt) {
@@ -190,7 +190,19 @@ void startRun() {
         if (!placePickup(MedkitPickup, 7)) ++missingPickups;
     kills = 0;
     health = 100;
+    if (pvp) {
+        ammo = PvpStartAmmo;
+        medkits = 0;
+        armorTier = 0;
+        armorDurability = 0;
+        armorOn = false;
+    }
     armorOn = armorTier > 0 && armorDurability > 0;
+    magazineAmmo = std::min(MagazineSize, ammo);
+    ammo -= magazineAmmo;
+    reloading = false;
+    weaponMode = WeaponMode::Gun;
+    nextMelee = {};
     resetRunProgress();
     lastMove = lastEnemyTurn = runStarted;
     nextPlayerHit = nextPeerHit = Clock::now();
@@ -204,6 +216,12 @@ void startRun() {
     setMessage(startMessage);
     saveArchive();
     if (networkActive && networkHost && peerConnected) {
+        peerAmmoInitialized = false;
+        peerMagazineInitialized = false;
+        peerMedkitsInitialized = false;
+        peerArmorInitialized = false;
+        peerReloading = false;
+        peerNextMelee = {};
         sendNetworkPacket("START " + std::string(gameMode == GameMode::Pvp ? "PVP" : "COOP"));
         sendNetworkState();
     }
@@ -211,9 +229,20 @@ void startRun() {
 
 void shoot(int dx, int dy) {
     const auto now = Clock::now();
+    if (weaponMode != WeaponMode::Gun) return;
+    if (reloading) {
+        setMessage(L"换弹中...", 300);
+        return;
+    }
     if (now < nextPlayerShot) return;
-    if (ammo <= 0) {
-        setMessage(L"弹药不足，寻找弹药箱");
+    if (magazineAmmo <= 0) {
+        if (ammo <= 0) {
+            setMessage(L"弹药不足，寻找弹药箱");
+        } else {
+            reloading = true;
+            reloadStarted = now;
+            setMessage(L"弹匣已空，开始换弹", 800);
+        }
         return;
     }
     if (networkActive && !networkHost) {
@@ -222,8 +251,12 @@ void shoot(int dx, int dy) {
             setMessage(L"射击请求发送失败");
             return;
         }
-        --ammo;
+        --magazineAmmo;
         nextPlayerShot = now + std::chrono::milliseconds(250);
+        if (magazineAmmo == 0 && ammo > 0) {
+            reloading = true;
+            reloadStarted = now;
+        }
         setMessage(L"射击确认中", 500);
         return;
     }
@@ -233,10 +266,21 @@ void shoot(int dx, int dy) {
         if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows || world[y][x] == Wall) break;
         if (gameMode == GameMode::Pvp && peerConnected && peerHealth > 0 &&
             x == peerX && y == peerY) {
-            --ammo;
+            --magazineAmmo;
             nextPlayerShot = now + std::chrono::milliseconds(250);
             peerHealth = std::max(0, peerHealth - 15);
+            if (magazineAmmo == 0 && ammo > 0) {
+                reloading = true;
+                reloadStarted = now;
+            }
             if (peerHealth == 0) {
+                peerAmmo = 0;
+                peerMagazineAmmo = 0;
+                peerMedkits = 0;
+                peerArmorTier = 0;
+                peerArmorDurability = 0;
+                peerArmorOn = false;
+                peerReloading = false;
                 won = true;
                 screen = Screen::Result;
             } else {
@@ -248,12 +292,14 @@ void shoot(int dx, int dy) {
             return enemy.alive && enemy.x == x && enemy.y == y;
         });
         if (found != enemies.end()) {
-            const int targetX = found->x;
-            const int targetY = found->y;
-            --ammo;
+            --magazineAmmo;
             nextPlayerShot = now + std::chrono::milliseconds(250);
             found->hp -= 15;
             found->awake = true;
+            if (magazineAmmo == 0 && ammo > 0) {
+                reloading = true;
+                reloadStarted = now;
+            }
             if (found->hp <= 0) {
                 found->alive = false;
                 ++kills;
@@ -265,9 +311,61 @@ void shoot(int dx, int dy) {
             return;
         }
     }
-    --ammo;
+    --magazineAmmo;
     nextPlayerShot = now + std::chrono::milliseconds(250);
+    if (magazineAmmo == 0 && ammo > 0) {
+        reloading = true;
+        reloadStarted = now;
+    }
     setMessage(L"未命中");
+}
+
+void meleeAttack() {
+    const auto now = Clock::now();
+    if (weaponMode != WeaponMode::Knife) return;
+    if (now < nextMelee) return;
+    nextMelee = now + std::chrono::milliseconds(MeleeCooldownMs);
+    if (networkActive && !networkHost) {
+        if (sendReliableNetworkPacket("MELEE"))
+            setMessage(L"挥刀", 300);
+        else
+            setMessage(L"挥刀请求发送失败");
+        return;
+    }
+    bool hit = false;
+    for (int dy = -MeleeRange; dy <= MeleeRange; ++dy) {
+        for (int dx = -MeleeRange; dx <= MeleeRange; ++dx) {
+            if (dx == 0 && dy == 0) continue;
+            if (std::abs(dx) + std::abs(dy) > MeleeRange) continue;
+            const int tx = playerX + dx;
+            const int ty = playerY + dy;
+            if (tx <= 0 || tx >= MapColumns - 1 || ty <= 0 || ty >= MapRows - 1) continue;
+            if (gameMode == GameMode::Pvp && peerConnected && peerHealth > 0 &&
+                tx == peerX && ty == peerY) {
+                peerHealth = std::max(0, peerHealth - MeleeDamage);
+                hit = true;
+                if (peerHealth == 0) {
+                    won = true;
+                    screen = Screen::Result;
+                    return;
+                }
+            }
+            for (Enemy& enemy : enemies) {
+                if (enemy.alive && enemy.x == tx && enemy.y == ty) {
+                    enemy.hp -= MeleeDamage;
+                    enemy.awake = true;
+                    hit = true;
+                    if (enemy.hp <= 0) {
+                        enemy.alive = false;
+                        ++kills;
+                        money += enemy.boss ? 100 : 10;
+                        setMessage(enemy.boss ? L"刀杀 Boss  +100 金币" : L"刀杀敌人  +10 金币");
+                    }
+                }
+            }
+        }
+    }
+    if (!hit) setMessage(L"挥空", 300);
 }
 
 int takeDamage(int damage) {
@@ -341,6 +439,13 @@ void updateEnemies(Clock::time_point now) {
                 }
                 peerHealth = std::max(0, peerHealth - damage);
                 if (peerHealth == 0) {
+                    peerAmmo = 0;
+                    peerMagazineAmmo = 0;
+                    peerMedkits = 0;
+                    peerArmorTier = 0;
+                    peerArmorDurability = 0;
+                    peerArmorOn = false;
+                    peerReloading = false;
                     won = (gameMode == GameMode::Pvp);
                     screen = Screen::Result;
                 }
@@ -515,10 +620,37 @@ void updatePlaying() {
         } else
             setMessage(L"现在无法治疗");
     }
-    if (keyPressed(VK_UP)) shoot(0, -1);
-    else if (keyPressed(VK_DOWN)) shoot(0, 1);
-    else if (keyPressed(VK_LEFT)) shoot(-1, 0);
-    else if (keyPressed(VK_RIGHT)) shoot(1, 0);
+    if (keyPressed('F')) {
+        weaponMode = weaponMode == WeaponMode::Gun ? WeaponMode::Knife : WeaponMode::Gun;
+        setMessage(weaponMode == WeaponMode::Gun ? L"武器：枪械" : L"武器：战术刀", 800);
+    }
+    if (keyPressed('R') && weaponMode == WeaponMode::Gun && !reloading && magazineAmmo < MagazineSize &&
+        ammo > 0) {
+        if (!networkActive || networkHost || sendReliableNetworkPacket("RELOAD")) {
+            reloading = true;
+            reloadStarted = now;
+            setMessage(L"开始换弹", 600);
+        } else {
+            setMessage(L"换弹请求发送失败");
+        }
+    }
+    if (reloading && now - reloadStarted >= std::chrono::milliseconds(ReloadDurationMs)) {
+        const int take = std::min(MagazineSize, ammo);
+        magazineAmmo = take;
+        ammo -= take;
+        reloading = false;
+        setMessage(L"换弹完成", 500);
+    }
+    if (weaponMode == WeaponMode::Gun) {
+        if (keyPressed(VK_UP)) shoot(0, -1);
+        else if (keyPressed(VK_DOWN)) shoot(0, 1);
+        else if (keyPressed(VK_LEFT)) shoot(-1, 0);
+        else if (keyPressed(VK_RIGHT)) shoot(1, 0);
+    } else {
+        if (keyPressed(VK_UP) || keyPressed(VK_DOWN) || keyPressed(VK_LEFT) ||
+            keyPressed(VK_RIGHT))
+            meleeAttack();
+    }
 
     if (now - lastMove >= std::chrono::milliseconds(115)) {
         int dx = 0;
@@ -548,6 +680,13 @@ void updatePlaying() {
         health = 0;
         won = false;
         hasSavedRun = false;
+        ammo = 0;
+        magazineAmmo = 0;
+        medkits = 0;
+        armorTier = 0;
+        armorDurability = 0;
+        armorOn = false;
+        reloading = false;
         screen = Screen::Result;
         saveArchive();
         return;

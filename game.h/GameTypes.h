@@ -52,6 +52,13 @@ enum Tile : int { Floor, Wall, AmmoPickup, ExitTile, MedkitPickup };
 enum class Screen { Menu, Shop, Help, Settings, Playing, Paused, Result, HostLobby, JoinIp, JoinLobby };
 enum class GameMode { Coop, Pvp };
 enum class Difficulty { Easy, Normal, Hard };
+enum class WeaponMode { Gun, Knife };
+inline constexpr int MagazineSize = 10;
+inline constexpr int ReloadDurationMs = 1000;
+inline constexpr int MeleeCooldownMs = 500;
+inline constexpr int MeleeRange = 2;
+inline constexpr int MeleeDamage = 12;
+inline constexpr int PvpStartAmmo = 50;
 
 struct Enemy {
     int x = 0;
@@ -70,6 +77,7 @@ struct ArchiveSnapshot {
     int playerY = MapRows / 2;
     int health = 100;
     int ammo = 30;
+    int magazineAmmo = 0;
     int medkits = 2;
     int money = 200;
     int armorTier = 0;

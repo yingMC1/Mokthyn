@@ -424,10 +424,29 @@ void drawHud() {
     drawBar(x + padding, 211, width - padding * 2, 12, health, 100, health > 30 ? Green : Red);
 
     drawText(x + padding, 245, L"弹药", 17, Muted);
-    drawText(x + padding, 270, std::to_wstring(ammo), 34, Yellow);
-    drawText(x + 105, 287, L"发", 16, Muted);
-    drawText(x + std::max(180, width / 2), 245, L"医疗包", 17, Muted);
-    drawText(x + std::max(180, width / 2), 270, std::to_wstring(medkits), 34, Cyan);
+    if (weaponMode == WeaponMode::Gun) {
+        drawText(x + padding, 270, std::to_wstring(magazineAmmo) + L" / " +
+                                       std::to_wstring(MagazineSize),
+                 30, reloading ? Muted : Yellow);
+        drawText(x + 160, 282, L"备弹 " + std::to_wstring(ammo), 16, Muted);
+        if (reloading) {
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                     Clock::now() - reloadStarted)
+                                     .count();
+            const int pct = std::clamp(static_cast<int>(elapsed * 100 / ReloadDurationMs), 0, 100);
+            drawBar(x + padding, 305, width - padding * 2, 6, pct, 100, Cyan);
+            drawText(x + padding, 312, L"换弹中...", 13, Cyan);
+        }
+    } else {
+        drawText(x + padding, 270, L"战术刀", 30, Green);
+        drawText(x + 160, 282, L"范围 " + std::to_wstring(MeleeRange) + L"  伤害 " +
+                                   std::to_wstring(MeleeDamage),
+                 16, Muted);
+    }
+    drawText(x + std::max(220, width / 2), 245, L"医疗包", 17, Muted);
+    drawText(x + std::max(220, width / 2), 270, std::to_wstring(medkits), 34, Cyan);
+    drawText(right - padding - 80, 250, weaponMode == WeaponMode::Gun ? L"[F]切刀" : L"[F]切枪",
+             14, Muted);
 
     fillRect(x + padding, 324, right - padding, 325, EGERGB(52, 65, 68));
     drawText(x + padding, 344, L"任务进度", 17, Muted);
@@ -470,9 +489,9 @@ void drawHud() {
                  peerHealth > 30 ? Cyan : Red);
 
     fillRect(x + padding, 542, right - padding, 543, EGERGB(52, 65, 68));
-    drawText(x + padding, 558, L"WASD 移动    方向键射击", 15, Text);
-    drawText(x + padding, 586, L"E 拾取   H 治疗   K 护甲", 15, Muted);
-    drawText(x + padding, 614, L"Q 撤离   P 暂停   ESC 菜单", 15, Muted);
+    drawText(x + padding, 558, L"WASD 移动    方向键射击/挥刀", 15, Text);
+    drawText(x + padding, 586, L"E 拾取   H 治疗   K 护甲   F 切武器", 15, Muted);
+    drawText(x + padding, 614, L"R 换弹   Q 撤离   P 暂停   ESC 菜单", 15, Muted);
     if (Clock::now() < messageUntil)
         drawText(x + padding, visibleDesignHeight() - 52, message, 16, Yellow);
     if (networkActive && !networkStatus.empty())

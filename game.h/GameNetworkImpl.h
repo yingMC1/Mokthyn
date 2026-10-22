@@ -46,6 +46,9 @@ void closeNetwork() {
     peerX = peerY = -1;
     peerAmmo = 0;
     peerAmmoInitialized = false;
+    peerMagazineAmmo = 0;
+    peerMagazineInitialized = false;
+    peerReloading = false;
     healing = false;
     extracting = false;
     pickupPending = false;
@@ -232,7 +235,9 @@ void sendNetworkState() {
            << (screen == Screen::Paused ? 1 : 0) << ' '
            << (screen == Screen::Result ? 1 : 0) << ' ' << (won ? 1 : 0) << ' '
            << networkMapRevision << ' ' << (includeMap ? 1 : 0) << ' ' << enemies.size() << ' '
-           << (peerAmmoInitialized ? peerAmmo : -1) << ' ';
+           << (peerAmmoInitialized ? peerAmmo : -1) << ' '
+           << (peerMagazineInitialized ? peerMagazineAmmo : -1) << ' '
+           << (peerReloading ? 1 : 0) << ' ';
     for (const Enemy& enemy : enemies)
         packet << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
                << ' ' << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << ' ';
@@ -249,6 +254,13 @@ void sendNetworkState() {
 void processNetwork() {
     if (!networkActive || networkSocket == INVALID_SOCKET) return;
     const auto now = Clock::now();
+    if (networkHost && peerConnected && peerReloading &&
+        now - peerReloadStarted >= std::chrono::milliseconds(ReloadDurationMs)) {
+        const int take = std::min(MagazineSize, peerAmmo);
+        peerMagazineAmmo = take;
+        peerAmmo -= take;
+        peerReloading = false;
+    }
     if (!networkHost && (!peerConnected || screen == Screen::JoinLobby) &&
         peerAddress.sin_addr.s_addr != 0 &&
         peerAddress.sin_port != 0 &&
@@ -288,6 +300,10 @@ void processNetwork() {
                 peerHealth = 100;
                 peerAmmo = 0;
                 peerAmmoInitialized = false;
+                peerMagazineAmmo = 0;
+                peerMagazineInitialized = false;
+                peerReloading = false;
+                peerNextMelee = {};
                 peerNextShot = now;
                 peerMedkits = 0;
                 peerMedkitsInitialized = false;
@@ -354,8 +370,9 @@ void processNetwork() {
 
         if (command == "POS" && networkHost) {
             int x, y, tier, durability, armorEnabled, reportedMedkits, reportedAmmo;
+            int reportedMagazine = 0, reportedReloading = 0;
             if (input >> x >> y >> tier >> durability >> armorEnabled >> reportedMedkits >>
-                    reportedAmmo &&
+                    reportedAmmo >> reportedMagazine >> reportedReloading &&
                 x > 0 && x < MapColumns - 1 && y > 0 && y < MapRows - 1 &&
                 world[y][x] != Wall && !hasEnemyAt(x, y) &&
                 (peerX < 0 ||
@@ -376,6 +393,11 @@ void processNetwork() {
                 if (!peerAmmoInitialized) {
                     peerAmmo = std::clamp(reportedAmmo, 0, 100000);
                     peerAmmoInitialized = true;
+                }
+                if (!peerMagazineInitialized) {
+                    peerMagazineAmmo = std::clamp(reportedMagazine, 0, MagazineSize);
+                    peerReloading = reportedReloading != 0;
+                    peerMagazineInitialized = true;
                 }
                 const int reportedTier = std::clamp(tier, 0, 4);
                 const int reportedDurability =
@@ -419,9 +441,13 @@ void processNetwork() {
             if (!(input >> dx >> dy) ||
                 !((dx == 0 && (dy == 1 || dy == -1)) ||
                   (dy == 0 && (dx == 1 || dx == -1))) ||
-                peerX <= 0 || peerY <= 0 || peerAmmo <= 0 || now < peerNextShot)
+                peerX <= 0 || peerY <= 0 || peerMagazineAmmo <= 0 || now < peerNextShot)
                 continue;
-            --peerAmmo;
+            --peerMagazineAmmo;
+            if (peerMagazineAmmo == 0 && peerAmmo > 0 && !peerReloading) {
+                peerReloading = true;
+                peerReloadStarted = now;
+            }
             peerNextShot = now + std::chrono::milliseconds(250);
             bool hitEnemy = false;
             for (int step = 1; step <= 9; ++step) {
@@ -451,6 +477,42 @@ void processNetwork() {
                 }
                 if (hitEnemy) break;
             }
+        } else if (command == "RELOAD" && networkHost) {
+            if (peerX > 0 && peerY > 0 && !peerReloading &&
+                peerMagazineAmmo < MagazineSize && peerAmmo > 0) {
+                peerReloading = true;
+                peerReloadStarted = now;
+            }
+        } else if (command == "MELEE" && networkHost) {
+            if (peerX > 0 && peerY > 0 && peerHealth > 0 && now >= peerNextMelee) {
+                peerNextMelee = now + std::chrono::milliseconds(MeleeCooldownMs);
+                for (int mdy = -MeleeRange; mdy <= MeleeRange; ++mdy) {
+                    for (int mdx = -MeleeRange; mdx <= MeleeRange; ++mdx) {
+                        if (mdx == 0 && mdy == 0) continue;
+                        if (std::abs(mdx) + std::abs(mdy) > MeleeRange) continue;
+                        const int tx = peerX + mdx;
+                        const int ty = peerY + mdy;
+                        if (tx <= 0 || tx >= MapColumns - 1 || ty <= 0 || ty >= MapRows - 1)
+                            continue;
+                        if (gameMode == GameMode::Pvp && health > 0 &&
+                            tx == playerX && ty == playerY) {
+                            health = std::max(0, health - MeleeDamage);
+                            if (health == 0) won = false;
+                        }
+                        for (Enemy& enemy : enemies) {
+                            if (enemy.alive && enemy.x == tx && enemy.y == ty) {
+                                enemy.hp -= MeleeDamage;
+                                enemy.awake = true;
+                                if (enemy.hp <= 0) {
+                                    enemy.alive = false;
+                                    ++kills;
+                                    money += enemy.boss ? 100 : 10;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         } else if (command == "PICKUP" && networkHost) {
             int x, y, type;
             if (input >> x >> y >> type && peerX > 0 && peerY > 0 &&
@@ -472,6 +534,7 @@ void processNetwork() {
             int status;
             if (input >> status && (status == 0 || status == 1)) {
                 const bool requested =
+                    gameMode == GameMode::Coop &&
                     status == 1 && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
                     peerY < MapRows - 1 && world[peerY][peerX] == ExitTile && peerHealth > 0 &&
                     std::none_of(enemies.begin(), enemies.end(), [](const Enemy& enemy) {
@@ -491,6 +554,9 @@ void processNetwork() {
             peerHealth = 0;
             peerAmmo = 0;
             peerAmmoInitialized = false;
+            peerMagazineAmmo = 0;
+            peerMagazineInitialized = false;
+            peerReloading = false;
             peerMedkits = 0;
             peerMedkitsInitialized = false;
             peerHealing = false;
@@ -511,16 +577,19 @@ void processNetwork() {
             int hostX, hostY, hostHp, clientX, clientY, clientHp;
             int clientArmorTier, clientArmorDurability, clientArmorOn;
             int syncedMedkits, syncedKills, syncedTotal, syncedMoney, hostEvacuating, peerEvacuating,
-                hostPaused, finished, result, mapIncluded, syncedPeerAmmo;
+                hostPaused, finished, result, mapIncluded, syncedPeerAmmo, syncedPeerMagazine,
+                syncedPeerReloading;
             unsigned int mapRevision;
             int enemyCount;
             if (!(input >> hostX >> hostY >> hostHp >> clientX >> clientY >> clientHp >>
                   clientArmorTier >> clientArmorDurability >> clientArmorOn >> syncedMedkits >> syncedKills >>
                   syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
                   finished >> result >> mapRevision >> mapIncluded >> enemyCount >>
-                  syncedPeerAmmo) ||
+                  syncedPeerAmmo >> syncedPeerMagazine >> syncedPeerReloading) ||
                   enemyCount < 0 || enemyCount > 200 ||
                   syncedPeerAmmo < -1 || syncedPeerAmmo > 100000 ||
+                  syncedPeerMagazine < -1 || syncedPeerMagazine > MagazineSize ||
+                  (syncedPeerReloading != 0 && syncedPeerReloading != 1) ||
                   (mapIncluded != 0 && mapIncluded != 1) ||
                   (hostEvacuating != 0 && hostEvacuating != 1) ||
                   (peerEvacuating != 0 && peerEvacuating != 1) ||
@@ -543,6 +612,13 @@ void processNetwork() {
             peerHealth = std::clamp(hostHp, 0, 100);
             health = std::clamp(clientHp, 0, 100);
             if (syncedPeerAmmo >= 0) ammo = syncedPeerAmmo;
+            if (syncedPeerMagazine >= 0) magazineAmmo = syncedPeerMagazine;
+            if (syncedPeerReloading && !reloading) {
+                reloading = true;
+                reloadStarted = now;
+            } else if (!syncedPeerReloading && reloading) {
+                reloading = false;
+            }
             if (syncedMedkits >= 0) medkits = std::clamp(syncedMedkits, 0, 10000);
             if (extracting && health < previousHealth) cancelExtraction();
             if (health < previousHealth && healing) {
@@ -574,6 +650,8 @@ void processNetwork() {
                 lastEnemyTurn += pausedFor;
                 nextPlayerHit += pausedFor;
                 nextPeerHit += pausedFor;
+                if (reloading) reloadStarted += pausedFor;
+                nextMelee += pausedFor;
                 pausedAt = {};
                 if (screen == Screen::Paused) screen = Screen::Playing;
             }
@@ -618,6 +696,15 @@ void processNetwork() {
             }
             if (finished != 0) {
                 won = gameMode == GameMode::Pvp ? (result == 0) : (result != 0);
+                if (!won) {
+                    ammo = 0;
+                    magazineAmmo = 0;
+                    medkits = 0;
+                    armorTier = 0;
+                    armorDurability = 0;
+                    armorOn = false;
+                    reloading = false;
+                }
                 screen = Screen::Result;
             }
         }
@@ -649,7 +736,8 @@ void processNetwork() {
         now - lastNetworkSend >= std::chrono::milliseconds(100)) {
         std::ostringstream packet;
         packet << "POS " << playerX << ' ' << playerY << ' ' << armorTier << ' ' << armorDurability
-               << ' ' << (armorOn ? 1 : 0) << ' ' << medkits << ' ' << ammo;
+               << ' ' << (armorOn ? 1 : 0) << ' ' << medkits << ' ' << ammo << ' '
+               << magazineAmmo << ' ' << (reloading ? 1 : 0);
         sendNetworkPacket(packet.str());
         lastNetworkSend = now;
     }
@@ -677,6 +765,9 @@ void processNetwork() {
         peerMedkits = 0;
         peerAmmo = 0;
         peerAmmoInitialized = false;
+        peerMagazineAmmo = 0;
+        peerMagazineInitialized = false;
+        peerReloading = false;
         peerMedkitsInitialized = false;
         peerHealing = false;
         peerHealStarted = {};

@@ -190,6 +190,13 @@ bool loadVersion5Archive(std::istream& input, int version) {
     hasSavedRun = savedRun != 0;
     health = storedHealth;
     ammo = storedAmmo;
+    magazineAmmo = 0;
+    reloading = false;
+    weaponMode = WeaponMode::Gun;
+    if (hasSavedRun) {
+        magazineAmmo = std::min(MagazineSize, ammo);
+        ammo -= magazineAmmo;
+    }
     medkits = storedMedkits;
     money = storedMoney;
     armorTier = storedArmorTier;
@@ -395,6 +402,13 @@ bool loadArchive() {
     hasSavedRun = savedRun != 0;
     health = storedHealth;
     ammo = storedAmmo;
+    magazineAmmo = 0;
+    reloading = false;
+    weaponMode = WeaponMode::Gun;
+    if (hasSavedRun) {
+        magazineAmmo = std::min(MagazineSize, ammo);
+        ammo -= magazineAmmo;
+    }
     medkits = storedMedkits;
     money = storedMoney;
     armorTier = storedArmorTier;
@@ -421,6 +435,7 @@ void beginNetworkArchiveSession() {
     networkArchiveSnapshot.playerY = playerY;
     networkArchiveSnapshot.health = health;
     networkArchiveSnapshot.ammo = ammo;
+    networkArchiveSnapshot.magazineAmmo = magazineAmmo;
     networkArchiveSnapshot.medkits = medkits;
     networkArchiveSnapshot.money = money;
     networkArchiveSnapshot.armorTier = armorTier;
@@ -445,6 +460,10 @@ void restoreNetworkArchiveSession() {
     playerY = networkArchiveSnapshot.playerY;
     health = networkArchiveSnapshot.health;
     ammo = networkArchiveSnapshot.ammo;
+    magazineAmmo = networkArchiveSnapshot.magazineAmmo;
+    reloading = false;
+    weaponMode = WeaponMode::Gun;
+    nextMelee = {};
     medkits = networkArchiveSnapshot.medkits;
     money = networkArchiveSnapshot.money;
     armorTier = networkArchiveSnapshot.armorTier;
@@ -497,10 +516,11 @@ bool saveArchive() {
         return false;
     }
     const int safeEnemyCount = static_cast<int>(enemies.size());
+    const int savedTotalAmmo = std::clamp(ammo + magazineAmmo, 0, 100000);
     std::ostringstream output;
     output << "MOKTHYN_SAVE 7\nSETTINGS " << (english ? 1 : 0) << ' ' << uiScalePercent << ' '
            << windowWidth << ' ' << windowHeight << "\nRUN " << (hasSavedRun ? 1 : 0) << ' '
-           << std::clamp(health, 0, 100) << ' ' << std::clamp(ammo, 0, 100000) << ' '
+           << std::clamp(health, 0, 100) << ' ' << savedTotalAmmo << ' '
            << std::clamp(medkits, 0, 10000) << ' ' << std::clamp(money, 0, 100000000) << ' '
            << safeArmorTier << ' ' << safeArmorDurability << ' ' << (armorOn ? 1 : 0) << ' '
            << safePlayerX << ' ' << safePlayerY << ' ' << std::clamp(kills, 0, 100000) << ' '
