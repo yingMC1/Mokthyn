@@ -193,6 +193,7 @@ bool loadVersion5Archive(std::istream& input, int version) {
     magazineAmmo = 0;
     reloading = false;
     weaponMode = WeaponMode::Gun;
+    nextMelee = {};
     if (hasSavedRun) {
         magazineAmmo = std::min(MagazineSize, ammo);
         ammo -= magazineAmmo;
@@ -405,6 +406,7 @@ bool loadArchive() {
     magazineAmmo = 0;
     reloading = false;
     weaponMode = WeaponMode::Gun;
+    nextMelee = {};
     if (hasSavedRun) {
         magazineAmmo = std::min(MagazineSize, ammo);
         ammo -= magazineAmmo;

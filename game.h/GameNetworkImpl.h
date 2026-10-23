@@ -256,8 +256,9 @@ void processNetwork() {
     const auto now = Clock::now();
     if (networkHost && peerConnected && peerReloading &&
         now - peerReloadStarted >= std::chrono::milliseconds(ReloadDurationMs)) {
-        const int take = std::min(MagazineSize, peerAmmo);
-        peerMagazineAmmo = take;
+        const int need = MagazineSize - peerMagazineAmmo;
+        const int take = std::min(need, peerAmmo);
+        peerMagazineAmmo += take;
         peerAmmo -= take;
         peerReloading = false;
     }
@@ -660,10 +661,14 @@ void processNetwork() {
             }
             std::vector<Enemy> syncedEnemies;
             syncedEnemies.reserve(enemyCount);
+            bool enemiesComplete = true;
             for (int i = 0; i < enemyCount; ++i) {
                 Enemy enemy;
                 int alive, awake, boss;
-                if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake >> boss)) break;
+                if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake >> boss)) {
+                    enemiesComplete = false;
+                    break;
+                }
                 if (enemy.x > 0 && enemy.x < MapColumns - 1 && enemy.y > 0 &&
                     enemy.y < MapRows - 1 && enemy.hp >= 0 &&
                     enemy.hp <= (boss != 0 ? BossHealth : EnemyHealth) &&
@@ -671,6 +676,8 @@ void processNetwork() {
                     (boss == 0 || boss == 1))
                     syncedEnemies.push_back(
                         {enemy.x, enemy.y, enemy.hp, alive != 0, awake != 0, boss != 0, now});
+                else
+                    enemiesComplete = false;
             }
             if (mapIncluded != 0) {
                 std::string mapMarker;
@@ -691,7 +698,8 @@ void processNetwork() {
                 sendNetworkPacket("MAP_ACK " + std::to_string(peerMapRevision));
             }
             {
-                enemies = std::move(syncedEnemies);
+                // 仅在敌人列表完整解析时才整体替换，避免损坏包导致敌人凭空消失
+                if (enemiesComplete) enemies = std::move(syncedEnemies);
                 totalEnemies = std::max(totalEnemies, static_cast<int>(enemies.size()));
             }
             if (finished != 0) {
@@ -759,6 +767,7 @@ void processNetwork() {
     if (networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused) &&
         now - lastNetworkReceive > std::chrono::seconds(5)) {
+        const bool wasPvp = gameMode == GameMode::Pvp;
         peerConnected = false;
         peerX = peerY = -1;
         peerHealth = 0;
@@ -777,7 +786,12 @@ void processNetwork() {
         peerExtracting = false;
         receivedReliablePacketIds.clear();
         receivedReliablePacketOrder.clear();
-        networkStatus = L"队友连接中断";
+        networkStatus = wasPvp ? L"对手已断开连接" : L"队友连接中断";
+        if (wasPvp) {
+            // 对手掉线，主机获胜，避免 PVP 无法撤离导致死局
+            won = true;
+            screen = Screen::Result;
+        }
     }
     if (!networkHost && !peerConnected && screen == Screen::JoinLobby &&
         lastNetworkReceive != Clock::time_point{} &&

@@ -57,6 +57,7 @@ int main() {
                 helpInputReady = false;
                 screen = Screen::Help;
             } else if (keyPressed('4')) {
+                gameMode = GameMode::Coop;
                 if (!beginHostNetwork()) setMessage(L"主机启动失败，检查 UDP 端口是否被占用");
             } else if (keyPressed('5')) {
                 if (!beginJoinNetwork()) setMessage(L"网络初始化失败");

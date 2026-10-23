@@ -31,20 +31,45 @@ int visibleDesignWidth() { return DesignWidth * 100 / uiScalePercent; }
 
 int visibleDesignHeight() { return DesignHeight * 100 / uiScalePercent; }
 
-int battleTileSize() {
-    return std::max(20, std::min((visibleDesignWidth() - 460) / MapColumns,
-                                 (visibleDesignHeight() - 140) / MapRows));
-}
-
 int battleMapLeft() { return 30; }
 
 int battleMapTop() { return 90; }
 
-int battleHudLeft() { return battleMapLeft() + MapColumns * battleTileSize() + 24; }
+int battleHudLeft() { return visibleDesignWidth() - 406; }
 
 int battleHudRight() { return visibleDesignWidth() - 24; }
 
+int battleMapAreaWidth() { return battleHudLeft() - 24 - battleMapLeft(); }
+
+int battleMapAreaHeight() { return visibleDesignHeight() - 50 - battleMapTop(); }
+
 int battleHudWidth() { return battleHudRight() - battleHudLeft(); }
+
+int battleTileSize() {
+    const int byWidth = battleMapAreaWidth() / 30;
+    const int byHeight = battleMapAreaHeight() / 20;
+    return std::clamp(std::min(byWidth, byHeight), 18, 40);
+}
+
+int battleTilesX() { return battleMapAreaWidth() / battleTileSize(); }
+
+int battleTilesY() { return battleMapAreaHeight() / battleTileSize(); }
+
+int battleCameraX() {
+    const int tx = battleTilesX();
+    if (tx >= MapColumns) return -(tx - MapColumns) / 2;
+    return std::clamp(playerX - tx / 2, 0, MapColumns - tx);
+}
+
+int battleCameraY() {
+    const int ty = battleTilesY();
+    if (ty >= MapRows) return -(ty - MapRows) / 2;
+    return std::clamp(playerY - ty / 2, 0, MapRows - ty);
+}
+
+int tileScreenX(int x) { return battleMapLeft() + (x - battleCameraX()) * battleTileSize(); }
+
+int tileScreenY(int y) { return battleMapTop() + (y - battleCameraY()) * battleTileSize(); }
 
 bool resizeGameWindow(int width, int height) {
     if (width == windowWidth && height == windowHeight) return true;
@@ -338,18 +363,61 @@ void drawBar(int x, int y, int width, int height, int value, int maximum, ege::c
     if (filled > 0) fillRect(x, y, x + filled, y + height, color);
 }
 
+// 目标在当前视口外时，在战斗区边缘画一个指向它的方向标记
+void drawOffscreenMarker(int targetX, int targetY, ege::color_t color, const wchar_t* label) {
+    const int ts = battleTileSize();
+    const int sx = tileScreenX(targetX) + ts / 2;
+    const int sy = tileScreenY(targetY) + ts / 2;
+    const int aL = battleMapLeft();
+    const int aT = battleMapTop();
+    const int aR = aL + battleMapAreaWidth();
+    const int aB = aT + battleMapAreaHeight();
+    const int margin = 20;
+    const int L = aL + margin;
+    const int R = aR - margin;
+    const int T = aT + margin;
+    const int B = aB - margin;
+    if (sx >= L && sx <= R && sy >= T && sy <= B) return;
+    const int cx = (aL + aR) / 2;
+    const int cy = (aT + aB) / 2;
+    const double dx = static_cast<double>(sx - cx);
+    const double dy = static_cast<double>(sy - cy);
+    double t = 1e9;
+    if (dx > 0.001) t = std::min(t, static_cast<double>(R - cx) / dx);
+    if (dx < -0.001) t = std::min(t, static_cast<double>(L - cx) / dx);
+    if (dy > 0.001) t = std::min(t, static_cast<double>(B - cy) / dy);
+    if (dy < -0.001) t = std::min(t, static_cast<double>(T - cy) / dy);
+    const int px = static_cast<int>(cx + dx * t);
+    const int py = static_cast<int>(cy + dy * t);
+    fillCircle(px, py, 12, color);
+    drawText(px - 7, py - 11, label, 18, Background);
+}
+
 void drawMap() {
     computeVisibility();
     const int tileSize = battleTileSize();
-    const int mapLeft = battleMapLeft();
-    const int mapTop = battleMapTop();
-    fillRect(mapLeft - 4, mapTop - 4, mapLeft + MapColumns * tileSize + 4,
-             mapTop + MapRows * tileSize + 4, EGERGB(9, 14, 18));
+    const int areaLeft = battleMapLeft();
+    const int areaTop = battleMapTop();
+    const int areaW = battleMapAreaWidth();
+    const int areaH = battleMapAreaHeight();
+    const int camX = battleCameraX();
+    const int camY = battleCameraY();
+    const int tilesX = battleTilesX();
+    const int tilesY = battleTilesY();
+    fillRect(areaLeft - 4, areaTop - 4, areaLeft + areaW + 4, areaTop + areaH + 4,
+             EGERGB(9, 14, 18));
 
-    for (int y = 0; y < MapRows; ++y) {
-        for (int x = 0; x < MapColumns; ++x) {
-            const int left = mapLeft + x * tileSize;
-            const int top = mapTop + y * tileSize;
+    for (int sy = 0; sy < tilesY; ++sy) {
+        for (int sx = 0; sx < tilesX; ++sx) {
+            const int x = camX + sx;
+            const int y = camY + sy;
+            const int left = areaLeft + sx * tileSize;
+            const int top = areaTop + sy * tileSize;
+            if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows) {
+                fillRect(left, top, left + tileSize - 1, top + tileSize - 1,
+                         EGERGB(16, 23, 28));
+                continue;
+            }
             if (!visible[y][x]) {
                 fillRect(left, top, left + tileSize - 1, top + tileSize - 1,
                          EGERGB(16, 23, 28));
@@ -394,17 +462,24 @@ void drawMap() {
 
     if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
         peerY < MapRows - 1 && visible[peerY][peerX]) {
-        const int peerCenterX = mapLeft + peerX * tileSize + tileSize / 2;
-        const int peerCenterY = mapTop + peerY * tileSize + tileSize / 2;
+        const int peerCenterX = tileScreenX(peerX) + tileSize / 2;
+        const int peerCenterY = tileScreenY(peerY) + tileSize / 2;
         fillCircle(peerCenterX, peerCenterY, tileSize * 2 / 5, EGERGB(37, 55, 76));
         fillCircle(peerCenterX, peerCenterY, tileSize / 4, Cyan);
     }
 
-    const int playerCenterX = mapLeft + playerX * tileSize + tileSize / 2;
-    const int playerCenterY = mapTop + playerY * tileSize + tileSize / 2;
+    const int playerCenterX = tileScreenX(playerX) + tileSize / 2;
+    const int playerCenterY = tileScreenY(playerY) + tileSize / 2;
     fillCircle(playerCenterX, playerCenterY, tileSize / 2, EGERGB(37, 70, 62));
     fillCircle(playerCenterX, playerCenterY, tileSize / 3, Green);
     fillCircle(playerCenterX + 3, playerCenterY - 3, tileSize / 10, Text);
+
+    // 视口外的撤离点和队友方向标记（PVP 不显示对手位置，避免透视）
+    if (gameMode != GameMode::Pvp)
+        drawOffscreenMarker(MapColumns - 2, MapRows - 2, Green, L"E");
+    if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
+        peerY < MapRows - 1 && gameMode != GameMode::Pvp)
+        drawOffscreenMarker(peerX, peerY, Cyan, L"P");
 }
 
 void drawHud() {
@@ -449,26 +524,41 @@ void drawHud() {
              14, Muted);
 
     fillRect(x + padding, 324, right - padding, 325, EGERGB(52, 65, 68));
-    drawText(x + padding, 344, L"任务进度", 17, Muted);
-    drawText(x + padding, 373,
-             std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies) + L"  目标", 21,
-             Text);
-    drawBar(x + padding, 410, width - padding * 2, 8, kills, totalEnemies, Green);
-
-    const auto boss = std::find_if(enemies.begin(), enemies.end(),
-                                   [](const Enemy& enemy) { return enemy.boss && enemy.alive; });
-    if (boss != enemies.end()) {
-        const bool bossEnraged = boss->hp <= BossHealth / 2;
-        drawText(x + padding, 426, bossEnraged ? L"区域 Boss · 狂暴" : L"区域 Boss", 16,
-                 bossEnraged ? Yellow : Red);
-        drawText(right - padding - 55, 426,
-                 std::to_wstring(std::max(0, boss->hp)) + L" / " +
-                     std::to_wstring(BossHealth),
-                 14, Text);
-        drawBar(x + padding, 450, width - padding * 2, 8, boss->hp, BossHealth,
-                bossEnraged ? Yellow : Red);
+    if (gameMode == GameMode::Pvp) {
+        drawText(x + padding, 344, L"对手", 17, Muted);
+        const bool opponentConnected = networkActive && peerConnected;
+        const int opponentHp = opponentConnected ? std::clamp(peerHealth, 0, 100) : 100;
+        drawText(x + padding, 373,
+                 opponentConnected ? std::to_wstring(opponentHp) + L" / 100"
+                                   : (english ? L"Waiting..." : L"等待对手加入"),
+                 21, opponentHp > 30 ? Red : Yellow);
+        drawBar(x + padding, 410, width - padding * 2, 8, opponentHp, 100, Red);
+        drawText(x + padding, 426,
+                 opponentConnected ? (peerHealth > 0 ? L"目标：击倒对手" : L"对手已被击倒")
+                                   : L"等待对手加入后开始",
+                 16, opponentConnected ? Yellow : Muted);
     } else {
-        drawText(x + padding, 426, L"Boss 已击败", 16, Green);
+        drawText(x + padding, 344, L"任务进度", 17, Muted);
+        drawText(x + padding, 373,
+                 std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies) + L"  目标", 21,
+                 Text);
+        drawBar(x + padding, 410, width - padding * 2, 8, kills, totalEnemies, Green);
+
+        const auto boss = std::find_if(enemies.begin(), enemies.end(),
+                                       [](const Enemy& enemy) { return enemy.boss && enemy.alive; });
+        if (boss != enemies.end()) {
+            const bool bossEnraged = boss->hp <= BossHealth / 2;
+            drawText(x + padding, 426, bossEnraged ? L"区域 Boss · 狂暴" : L"区域 Boss", 16,
+                     bossEnraged ? Yellow : Red);
+            drawText(right - padding - 55, 426,
+                     std::to_wstring(std::max(0, boss->hp)) + L" / " +
+                         std::to_wstring(BossHealth),
+                     14, Text);
+            drawBar(x + padding, 450, width - padding * 2, 8, boss->hp, BossHealth,
+                    bossEnraged ? Yellow : Red);
+        } else {
+            drawText(x + padding, 426, L"Boss 已击败", 16, Green);
+        }
     }
 
     drawText(x + padding, 468, L"护甲", 17, Muted);
@@ -674,11 +764,17 @@ void drawSettings() {
 void drawResult() {
     cleardevice();
     fillRect(250, 155, 1350, 755, Panel);
-    drawText(340, 230, won ? L"撤离成功" : L"行动结束", 58, won ? Green : Red);
-    drawText(345, 332, L"本次击杀", 20, Muted);
-    drawText(345, 370, std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies), 38, Text);
+    const bool pvp = gameMode == GameMode::Pvp;
+    drawText(340, 230,
+             pvp ? (won ? L"胜利" : L"失败") : (won ? L"撤离成功" : L"行动结束"), 58,
+             won ? Green : Red);
+    if (!pvp) {
+        drawText(345, 332, L"本次击杀", 20, Muted);
+        drawText(345, 370,
+                 std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies), 38, Text);
+    }
     drawText(720, 332, L"剩余弹药", 20, Muted);
-    drawText(720, 370, std::to_wstring(ammo), 38, Yellow);
+    drawText(720, 370, std::to_wstring(ammo + magazineAmmo), 38, Yellow);
     drawText(1040, 332, L"持有金币", 20, Muted);
     drawText(1040, 370, std::to_wstring(money), 38, Yellow);
     drawText(345, 500, L"按 ENTER 返回主菜单", 23, Text);

@@ -28,10 +28,10 @@ inline constexpr int ViewRadius = 28;
 inline constexpr int EnemyHealth = 45;
 inline constexpr int BossHealth = 300;
 inline constexpr unsigned short NetworkPort = 8888;
-inline constexpr int RegularEnemyCount = 64;
-inline constexpr int BossEnemyCount = 4;
-inline constexpr int AmmoPickupCount = 28;
-inline constexpr int MedkitPickupCount = 16;
+inline constexpr int RegularEnemyCount = 24;
+inline constexpr int BossEnemyCount = 2;
+inline constexpr int AmmoPickupCount = 24;
+inline constexpr int MedkitPickupCount = 14;
 inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
 inline const ege::color_t Background = EGERGB(12, 18, 24);

@@ -20,7 +20,7 @@ inline std::mt19937
 
 inline Screen screen = Screen::Menu;
 inline GameMode gameMode = GameMode::Coop;
-inline Difficulty difficulty = Difficulty::Normal;
+inline Difficulty difficulty = Difficulty::Easy;
 inline int playerX = MapColumns / 2;
 inline int playerY = MapRows / 2;
 inline int health = 100;

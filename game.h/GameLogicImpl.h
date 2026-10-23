@@ -110,6 +110,7 @@ void startRun() {
     } else {
         networkRun = false;
         hasSavedRun = true;
+        gameMode = GameMode::Coop;
     }
     for (auto& row : world)
         row.fill(Floor);
@@ -182,8 +183,9 @@ void startRun() {
     if (networkActive && networkHost) ++networkMapRevision;
     totalEnemies = static_cast<int>(enemies.size());
     int missingPickups = 0;
-    const int ammoCount = std::max(8, static_cast<int>(AmmoPickupCount * enemyScale));
-    const int medkitCount = std::max(4, static_cast<int>(MedkitPickupCount * enemyScale));
+    const double pickupScale = pvp ? 1.0 : enemyScale;
+    const int ammoCount = std::max(8, static_cast<int>(AmmoPickupCount * pickupScale));
+    const int medkitCount = std::max(4, static_cast<int>(MedkitPickupCount * pickupScale));
     for (int i = 0; i < ammoCount; ++i)
         if (!placePickup(AmmoPickup, 6)) ++missingPickups;
     for (int i = 0; i < medkitCount; ++i)
@@ -345,6 +347,13 @@ void meleeAttack() {
                 peerHealth = std::max(0, peerHealth - MeleeDamage);
                 hit = true;
                 if (peerHealth == 0) {
+                    peerAmmo = 0;
+                    peerMagazineAmmo = 0;
+                    peerMedkits = 0;
+                    peerArmorTier = 0;
+                    peerArmorDurability = 0;
+                    peerArmorOn = false;
+                    peerReloading = false;
                     won = true;
                     screen = Screen::Result;
                     return;
@@ -635,11 +644,12 @@ void updatePlaying() {
         }
     }
     if (reloading && now - reloadStarted >= std::chrono::milliseconds(ReloadDurationMs)) {
-        const int take = std::min(MagazineSize, ammo);
-        magazineAmmo = take;
+        const int need = MagazineSize - magazineAmmo;
+        const int take = std::min(need, ammo);
+        magazineAmmo += take;
         ammo -= take;
         reloading = false;
-        setMessage(L"换弹完成", 500);
+        setMessage(take > 0 ? L"换弹完成" : L"备弹不足", 500);
     }
     if (weaponMode == WeaponMode::Gun) {
         if (keyPressed(VK_UP)) shoot(0, -1);
