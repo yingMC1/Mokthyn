@@ -1,5 +1,8 @@
 # Mokthyn
 
+本项目保证 AI 的贡献远小于 yingMC1 和 abah-abah-111。
+本项目保证所有 AI 的建议和 bug 全都是工作人员自己调的。
+
 ![C++](https://img.shields.io/badge/Language-C++17/20-blue?style=flat-square&logo=c%2B%2B)
 ![EGE](https://img.shields.io/badge/Graphics-EGE-orange?style=flat-square)
 ![CMake](https://img.shields.io/badge/Build-CMake-red?style=flat-square&logo=cmake)
@@ -32,27 +35,6 @@ Mokthyn 是一款**俯视角战术撤离射击游戏**。你在一片随机生�
 ```
 
 支持**单人 / 局域网合作 PVE / PVP 对战**。项目从 Infinite-Shooter 迁移而来，现在在 Mokthyn 私有主仓库里继续迭代。
-
-## 怎么做的
-
-底层是现代 C++（C++17/20，构建配置已经往 C++26 靠了），图形用 EGE，UI 框架是自己写的，物理部分用的是 Verlet 积分离散物理引擎。构建走 CMake，平时在 Visual Studio 和 VSCode 里写。跑在 Windows x64 上，绿色免安装。
-
-## 仓库里有什么
-
-```
-Mokthyn/
-├── .vscode/            # 编辑器配置
-├── ege/                # EGE 图形库，多平台头文件和库
-├── game.h              # 游戏核心头文件
-├── Mokthyn.cpp         # 主程序入口和游戏逻辑
-├── CMakeLists.txt      # 构建配置
-├── .clang-format       # 代码格式化规则
-├── .gitignore
-├── LICENSE             # 含 EGE 的 LGPL-2.1 归属说明
-├── README.md
-├── ege.md              # EGE 相关说明
-└── 新手手册.md          # 完整手册，第一次玩先看这个
-```
 
 ## 新手先看手册
 
