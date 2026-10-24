@@ -1,6 +1,7 @@
 # Mokthyn
 
 本项目保证 AI 的贡献远小于 yingMC1 和 abah-abah-111。
+
 本项目保证所有 AI 的建议和 bug 全都是工作人员自己调的。
 
 ![C++](https://img.shields.io/badge/Language-C++17/20-blue?style=flat-square&logo=c%2B%2B)
