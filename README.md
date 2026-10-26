@@ -4,7 +4,7 @@
 
 本项目保证所有 AI 的建议和 bug 全都是工作人员自己调的。
 
-![C++](https://img.shields.io/badge/Language-C++17/20-blue?style=flat-square&logo=c%2B%2B)
+![C++](https://img.shields.io/badge/Language-C++26-blue?style=flat-square&logo=c%2B%2B)
 ![EGE](https://img.shields.io/badge/Graphics-EGE-orange?style=flat-square)
 ![CMake](https://img.shields.io/badge/Build-CMake-red?style=flat-square&logo=cmake)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square&logo=windows)
