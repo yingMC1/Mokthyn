@@ -19,12 +19,16 @@
         "command": "powershell",
         "args": [
           "-NoProfile",
-          "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -G \"MinGW Makefiles\" -DCMAKE_MAKE_PROGRAM=\"D:/mingw64/bin/mingw32-make.exe\" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=\"D:/mingw64/bin/x86_64-w64-mingw32-g++.exe\""
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}\\build.ps1",
+          "-Config",
+          "Debug",
+          "-Configure"
         ],
         "options": {
-          "cwd": "${workspaceFolder}",
-          "env": { "CMAKE_GENERATOR": "MinGW Makefiles" }
+          "cwd": "${workspaceFolder}"
         }
       }
     },
@@ -47,12 +51,15 @@
         "command": "powershell",
         "args": [
           "-NoProfile",
-          "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-debug -G \"MinGW Makefiles\" -DCMAKE_MAKE_PROGRAM=\"D:/mingw64/bin/mingw32-make.exe\" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=\"D:/mingw64/bin/x86_64-w64-mingw32-g++.exe\"; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-debug --config Debug --parallel 1; exit $LASTEXITCODE"
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}\\build.ps1",
+          "-Config",
+          "Debug"
         ],
         "options": {
-          "cwd": "${workspaceFolder}",
-          "env": { "CMAKE_GENERATOR": "MinGW Makefiles" }
+          "cwd": "${workspaceFolder}"
         }
       }
     },
@@ -75,12 +82,15 @@
         "command": "powershell",
         "args": [
           "-NoProfile",
-          "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" -S . -B build/cmake-release -G \"MinGW Makefiles\" -DCMAKE_MAKE_PROGRAM=\"D:/mingw64/bin/mingw32-make.exe\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=\"D:/mingw64/bin/x86_64-w64-mingw32-g++.exe\"; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-release --config Release --parallel 1; exit $LASTEXITCODE"
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}\\build.ps1",
+          "-Config",
+          "Release"
         ],
         "options": {
-          "cwd": "${workspaceFolder}",
-          "env": { "CMAKE_GENERATOR": "MinGW Makefiles" }
+          "cwd": "${workspaceFolder}"
         }
       }
     },
@@ -147,8 +157,11 @@
         "command": "powershell",
         "args": [
           "-NoProfile",
-          "-Command",
-          "& \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-debug --target clean; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & \"$env:ProgramFiles\\CMake\\bin\\cmake.exe\" --build build/cmake-release --target clean; exit $LASTEXITCODE"
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}\\build.ps1",
+          "-Clean"
         ],
         "options": { "cwd": "${workspaceFolder}" }
       }
