@@ -37,6 +37,25 @@ void resetRunProgress() {
     pausedAt = {};
 }
 
+// 清除队友战斗状态（PVP 击败 / 队友死亡等场景复用，消除重复清零块）
+void resetPeerCombatState() {
+    peerAmmo = 0;
+    peerMagazineAmmo = 0;
+    peerMedkits = 0;
+    peerArmorTier = 0;
+    peerArmorDurability = 0;
+    peerArmorOn = false;
+    peerReloading = false;
+}
+
+// 弹匣打空且还有备弹时立即开始换弹（消除三处重复自动换弹块）
+void startAutoReloadIfEmpty(Clock::time_point now) {
+    if (magazineAmmo == 0 && ammo > 0) {
+        reloading = true;
+        reloadStarted = now;
+    }
+}
+
 void cancelExtraction() {
     extracting = false;
     peerExtractConfirmed = false;
@@ -73,11 +92,20 @@ void computeVisibility() {
     if (visibilityPlayerX == playerX && visibilityPlayerY == playerY &&
         computedVisibilityRevision == visibilityRevision)
         return;
-    for (int y = 0; y < MapRows; ++y) {
-        for (int x = 0; x < MapColumns; ++x) {
-            const int distance = std::abs(x - playerX) + std::abs(y - playerY);
-            visible[y][x] = distance <= ViewRadius && lineOfSight(playerX, playerY, x, y);
-        }
+    // 只对玩家周围曼哈顿距离 <= ViewRadius 的菱形区域做视线检测，其余区域置不可见
+    const int minY = std::max(0, playerY - ViewRadius);
+    const int maxY = std::min(MapRows - 1, playerY + ViewRadius);
+    for (int y = 0; y < minY; ++y) visible[y].fill(false);
+    for (int y = maxY + 1; y < MapRows; ++y) visible[y].fill(false);
+    for (int y = minY; y <= maxY; ++y) {
+        const int halfWidth = ViewRadius - std::abs(y - playerY);
+        if (halfWidth < 0) continue;
+        const int minX = std::max(0, playerX - halfWidth);
+        const int maxX = std::min(MapColumns - 1, playerX + halfWidth);
+        for (int x = 0; x < minX; ++x) visible[y][x] = false;
+        for (int x = minX; x <= maxX; ++x)
+            visible[y][x] = lineOfSight(playerX, playerY, x, y);
+        for (int x = maxX + 1; x < MapColumns; ++x) visible[y][x] = false;
     }
     visibilityPlayerX = playerX;
     visibilityPlayerY = playerY;
@@ -160,22 +188,21 @@ void startRun() {
             const int x = randomInt(1, MapColumns - 2);
             const int y = randomInt(1, MapRows - 2);
             if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
-                std::abs(x - playerX) + std::abs(y - playerY) >= 10) {
+                std::abs(x - playerX) + std::abs(y - playerY) >= EnemySpawnMinDistance) {
                 enemies.push_back({x, y, EnemyHealth, true, false, false,
-                                   runStarted + std::chrono::milliseconds(650)});
+                                   runStarted + std::chrono::milliseconds(EnemyTurnIntervalMs)});
                 ++placedEnemies;
                 break;
-            }
-        }
+            }        }
     }
     for (int i = 0; i < bossCount; ++i) {
         for (int attempt = 0; attempt < 800; ++attempt) {
             const int x = randomInt(3, MapColumns - 4);
             const int y = randomInt(3, MapRows - 4);
             if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
-                std::abs(x - playerX) + std::abs(y - playerY) >= 15) {
+                std::abs(x - playerX) + std::abs(y - playerY) >= BossSpawnMinDistance) {
                 enemies.push_back({x, y, BossHealth, true, false, true,
-                                   runStarted + std::chrono::milliseconds(650)});
+                                   runStarted + std::chrono::milliseconds(EnemyTurnIntervalMs)});
                 break;
             }
         }
@@ -187,11 +214,11 @@ void startRun() {
     const int ammoCount = std::max(8, static_cast<int>(AmmoPickupCount * pickupScale));
     const int medkitCount = std::max(4, static_cast<int>(MedkitPickupCount * pickupScale));
     for (int i = 0; i < ammoCount; ++i)
-        if (!placePickup(AmmoPickup, 6)) ++missingPickups;
+        if (!placePickup(AmmoPickup, AmmoPickupMinDistance)) ++missingPickups;
     for (int i = 0; i < medkitCount; ++i)
-        if (!placePickup(MedkitPickup, 7)) ++missingPickups;
+        if (!placePickup(MedkitPickup, MedkitPickupMinDistance)) ++missingPickups;
     kills = 0;
-    health = 100;
+    health = MaxHealth;
     if (pvp) {
         ammo = PvpStartAmmo;
         medkits = 0;
@@ -262,27 +289,18 @@ void shoot(int dx, int dy) {
         setMessage(L"射击确认中", 500);
         return;
     }
-    for (int step = 1; step <= 9; ++step) {
+    for (int step = 1; step <= GunRange; ++step) {
         const int x = playerX + dx * step;
         const int y = playerY + dy * step;
         if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows || world[y][x] == Wall) break;
         if (gameMode == GameMode::Pvp && peerConnected && peerHealth > 0 &&
             x == peerX && y == peerY) {
             --magazineAmmo;
-            nextPlayerShot = now + std::chrono::milliseconds(250);
-            peerHealth = std::max(0, peerHealth - 15);
-            if (magazineAmmo == 0 && ammo > 0) {
-                reloading = true;
-                reloadStarted = now;
-            }
+            nextPlayerShot = now + std::chrono::milliseconds(ShotCooldownMs);
+            peerHealth = std::max(0, peerHealth - GunDamage);
+            startAutoReloadIfEmpty(now);
             if (peerHealth == 0) {
-                peerAmmo = 0;
-                peerMagazineAmmo = 0;
-                peerMedkits = 0;
-                peerArmorTier = 0;
-                peerArmorDurability = 0;
-                peerArmorOn = false;
-                peerReloading = false;
+                resetPeerCombatState();
                 won = true;
                 screen = Screen::Result;
             } else {
@@ -295,17 +313,14 @@ void shoot(int dx, int dy) {
         });
         if (found != enemies.end()) {
             --magazineAmmo;
-            nextPlayerShot = now + std::chrono::milliseconds(250);
-            found->hp -= 15;
+            nextPlayerShot = now + std::chrono::milliseconds(ShotCooldownMs);
+            found->hp -= GunDamage;
             found->awake = true;
-            if (magazineAmmo == 0 && ammo > 0) {
-                reloading = true;
-                reloadStarted = now;
-            }
+            startAutoReloadIfEmpty(now);
             if (found->hp <= 0) {
                 found->alive = false;
                 ++kills;
-                money += found->boss ? 100 : 10;
+                money += found->boss ? BossKillReward : EnemyKillReward;
                 setMessage(found->boss ? L"区域 Boss 已击败  +100 金币" : L"目标消灭  +10 金币");
             } else {
                 setMessage(L"命中目标");
@@ -314,11 +329,8 @@ void shoot(int dx, int dy) {
         }
     }
     --magazineAmmo;
-    nextPlayerShot = now + std::chrono::milliseconds(250);
-    if (magazineAmmo == 0 && ammo > 0) {
-        reloading = true;
-        reloadStarted = now;
-    }
+    nextPlayerShot = now + std::chrono::milliseconds(ShotCooldownMs);
+    startAutoReloadIfEmpty(now);
     setMessage(L"未命中");
 }
 
@@ -347,13 +359,7 @@ void meleeAttack() {
                 peerHealth = std::max(0, peerHealth - MeleeDamage);
                 hit = true;
                 if (peerHealth == 0) {
-                    peerAmmo = 0;
-                    peerMagazineAmmo = 0;
-                    peerMedkits = 0;
-                    peerArmorTier = 0;
-                    peerArmorDurability = 0;
-                    peerArmorOn = false;
-                    peerReloading = false;
+                    resetPeerCombatState();
                     won = true;
                     screen = Screen::Result;
                     return;
@@ -379,7 +385,8 @@ void meleeAttack() {
 
 int takeDamage(int damage) {
     if (!armorOn || armorDurability <= 0) return damage;
-    const int reduction = ArmorReduction[armorTier];
+    const int reduction =
+        ArmorReduction[std::clamp(armorTier, 0, static_cast<int>(ArmorReduction.size()) - 1)];
     armorDurability = std::max(0, armorDurability - std::max(1, damage / 2));
     if (armorDurability == 0) {
         armorOn = false;
@@ -391,7 +398,7 @@ int takeDamage(int damage) {
 
 void updateEnemies(Clock::time_point now) {
     if (networkActive && !networkHost) return;
-    if (now - lastEnemyTurn < std::chrono::milliseconds(650)) return;
+    if (now - lastEnemyTurn < std::chrono::milliseconds(EnemyTurnIntervalMs)) return;
     lastEnemyTurn = now;
 
     for (Enemy& enemy : enemies) {
@@ -408,11 +415,13 @@ void updateEnemies(Clock::time_point now) {
             targetPeer = true;
         }
         const int distance = std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
-        if (!enemy.awake && distance <= 6 && lineOfSight(enemy.x, enemy.y, targetX, targetY))
+        if (!enemy.awake && distance <= EnemyAwakeDistance &&
+            lineOfSight(enemy.x, enemy.y, targetX, targetY))
             enemy.awake = true;
 
         const bool bossEnraged = enemy.boss && enemy.hp <= BossHealth / 2;
-        const int attackRange = enemy.boss ? (bossEnraged ? 6 : 5) : 1;
+        const int attackRange =
+            enemy.boss ? (bossEnraged ? BossEnragedAttackRange : BossAttackRange) : 1;
         if (enemy.awake && distance > attackRange) {
             const int dx = (targetX > enemy.x) - (targetX < enemy.x);
             const int dy = (targetY > enemy.y) - (targetY < enemy.y);
@@ -437,10 +446,15 @@ void updateEnemies(Clock::time_point now) {
             now >= enemy.nextAttack &&
             now >= (targetPeer ? nextPeerHit : nextPlayerHit)) {
             if (targetPeer) {
-                int damage = enemy.boss ? (bossEnraged ? 20 : 15) : 9;
+                int damage = enemy.boss ? (bossEnraged ? BossEnragedDamage : BossDamage)
+                                        : EnemyDamage;
                 if (peerArmorOn && peerArmorDurability > 0) {
-                    damage = std::max(1, damage - ArmorReduction[peerArmorTier]);
-                    peerArmorDurability = std::max(0, peerArmorDurability - 4);
+                    damage = std::max(
+                        1, damage -
+                               ArmorReduction[std::clamp(
+                                   peerArmorTier, 0,
+                                   static_cast<int>(ArmorReduction.size()) - 1)]);
+                    peerArmorDurability = std::max(0, peerArmorDurability - ArmorWearPerHit);
                     if (peerArmorDurability == 0) {
                         peerArmorOn = false;
                         peerArmorTier = 0;
@@ -448,25 +462,22 @@ void updateEnemies(Clock::time_point now) {
                 }
                 peerHealth = std::max(0, peerHealth - damage);
                 if (peerHealth == 0) {
-                    peerAmmo = 0;
-                    peerMagazineAmmo = 0;
-                    peerMedkits = 0;
-                    peerArmorTier = 0;
-                    peerArmorDurability = 0;
-                    peerArmorOn = false;
-                    peerReloading = false;
+                    resetPeerCombatState();
                     won = (gameMode == GameMode::Pvp);
                     screen = Screen::Result;
                 }
             } else {
-                health -= takeDamage(enemy.boss ? (bossEnraged ? 20 : 15) : 9);
+                health -= takeDamage(enemy.boss ? (bossEnraged ? BossEnragedDamage : BossDamage)
+                                                : EnemyDamage);
             }
-            enemy.nextAttack =
-                now + std::chrono::milliseconds(enemy.boss ? (bossEnraged ? 1000 : 1500) : 1800);
+            enemy.nextAttack = now + std::chrono::milliseconds(
+                                         enemy.boss ? (bossEnraged ? BossEnragedCooldownMs
+                                                                   : BossAttackCooldownMs)
+                                                    : EnemyAttackIntervalMs);
             if (targetPeer)
-                nextPeerHit = now + std::chrono::milliseconds(850);
+                nextPeerHit = now + std::chrono::milliseconds(HitCooldownMs);
             else
-                nextPlayerHit = now + std::chrono::milliseconds(850);
+                nextPlayerHit = now + std::chrono::milliseconds(HitCooldownMs);
             if (targetPeer) {
                 peerHealing = false;
                 peerHealStarted = {};
@@ -503,7 +514,7 @@ void collectPickup() {
             }
             return;
         }
-        const int found = randomInt(8, 16);
+        const int found = randomInt(PickupAmmoMin, PickupAmmoMax);
         ammo += found;
         tile = Floor;
         if (networkActive && networkHost) ++networkMapRevision;
@@ -565,12 +576,12 @@ void buySelectedItem() {
         armorDurability = ArmorDurability[tier];
         armorOn = true;
         setMessage(L"护甲已装备");
-    } else if (item == 4 && money >= 5) {
-        money -= 5;
-        ammo += 10;
+    } else if (item == 4 && money >= AmmoSupplyCost) {
+        money -= AmmoSupplyCost;
+        ammo += AmmoSupplyAmount;
         setMessage(L"弹药补给完成");
-    } else if (item == 5 && money >= 20) {
-        money -= 20;
+    } else if (item == 5 && money >= MedkitCost) {
+        money -= MedkitCost;
         ++medkits;
         setMessage(L"医疗包已补充");
     } else {
@@ -616,7 +627,7 @@ void updatePlaying() {
     }
     if (keyPressed('E')) collectPickup();
     if (keyPressed('H')) {
-        if (medkits > 0 && health < 100 && !healing && !extracting) {
+        if (medkits > 0 && health < MaxHealth && !healing && !extracting) {
             if (!networkActive || networkHost ||
                 sendReliableNetworkPacket("HEAL_START")) {
                 --medkits;
@@ -662,7 +673,7 @@ void updatePlaying() {
             meleeAttack();
     }
 
-    if (now - lastMove >= std::chrono::milliseconds(115)) {
+    if (now - lastMove >= std::chrono::milliseconds(PlayerMoveIntervalMs)) {
         int dx = 0;
         int dy = 0;
         dx = (keystate('D') ? 1 : 0) - (keystate('A') ? 1 : 0);
@@ -674,7 +685,7 @@ void updatePlaying() {
     }
 
     updateEnemies(now);
-    if (healing && now - healStarted >= std::chrono::seconds(3)) {
+    if (healing && now - healStarted >= std::chrono::milliseconds(HealDurationMs)) {
         healing = false;
         if (networkActive && !networkHost) {
             if (sendReliableNetworkPacket("HEAL_DONE"))
@@ -682,7 +693,7 @@ void updatePlaying() {
             else
                 setMessage(L"治疗确认发送失败");
         } else {
-            health = std::min(100, health + 20);
+            health = std::min(MaxHealth, health + HealAmount);
             setMessage(L"治疗完成  +20 生命");
         }
     }
@@ -703,7 +714,7 @@ void updatePlaying() {
     }
 
     if (extracting && !(networkActive && !networkHost) &&
-        now - extractStarted >= std::chrono::seconds(5)) {
+        now - extractStarted >= std::chrono::milliseconds(ExtractDurationMs)) {
         won = true;
         hasSavedRun = false;
         screen = Screen::Result;

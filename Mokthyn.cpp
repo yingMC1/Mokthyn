@@ -41,6 +41,54 @@ int main() {
         case Screen::Menu: {
             const bool newRunKeyPressed = keyPressed('1');
             const bool enterPressed = keyPressed(VK_RETURN);
+            int clickX = 0, clickY = 0;
+            if (pollMouseClick(clickX, clickY)) {
+                if (designPointInRect(clickX, clickY, menuLeftButton(0)))
+                    startRun();
+                else if (designPointInRect(clickX, clickY, menuLeftButton(1)))
+                    screen = Screen::Shop;
+                else if (designPointInRect(clickX, clickY, menuLeftButton(2))) {
+                    helpInputReady = false;
+                    screen = Screen::Help;
+                } else if (designPointInRect(clickX, clickY, menuLeftButton(3))) {
+                    gameMode = GameMode::Coop;
+                    if (!beginHostNetwork()) setMessage(L"主机启动失败，检查 UDP 端口是否被占用");
+                } else if (designPointInRect(clickX, clickY, menuLeftButton(4))) {
+                    if (!beginJoinNetwork()) setMessage(L"网络初始化失败");
+                } else if (hasSavedRun && designPointInRect(clickX, clickY, menuRightButton(0))) {
+                    resetRunProgress();
+                    screen = Screen::Playing;
+                    lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = nextPlayerShot =
+                        Clock::now();
+                    setMessage(L"已继续存档行动");
+                } else if (designPointInRect(clickX, clickY, menuRightButton(1)))
+                    screen = Screen::Settings;
+                else if (designPointInRect(clickX, clickY, menuRightButton(2)))
+                    startRun();
+                else if (designPointInRect(clickX, clickY, menuRightButton(3))) {
+                    gameMode = GameMode::Pvp;
+                    if (!beginHostNetwork()) setMessage(L"PVP 主机启动失败，检查 UDP 端口是否被占用");
+                } else if (designPointInRect(clickX, clickY, menuBottomButton(0))) {
+                    difficulty = difficulty == Difficulty::Easy   ? Difficulty::Normal
+                                 : difficulty == Difficulty::Normal ? Difficulty::Hard
+                                                                    : Difficulty::Easy;
+                    saveArchive();
+                    setMessage(difficulty == Difficulty::Easy   ? L"难度：简单"
+                               : difficulty == Difficulty::Normal ? L"难度：普通"
+                                                                  : L"难度：困难");
+                } else if (designPointInRect(clickX, clickY, menuBottomButton(1)) ||
+                           designPointInRect(clickX, clickY, menuLanguageButton())) {
+                    english = !english;
+                    saveArchive();
+                } else if (designPointInRect(clickX, clickY, menuBottomButton(2))) {
+                    saveArchive();
+                    settarget(nullptr);
+                    closeNetwork();
+                    delimage(frameBuffer);
+                    closegraph();
+                    return 0;
+                }
+            }
             if (keyPressed('L')) {
                 english = !english;
                 saveArchive();
@@ -87,7 +135,16 @@ int main() {
             drawMenu();
             break;
         }
-        case Screen::HostLobby:
+        case Screen::HostLobby: {
+            int clickX = 0, clickY = 0;
+            if (pollMouseClick(clickX, clickY)) {
+                if (designPointInRect(clickX, clickY, lobbyStartButton()) && peerConnected)
+                    startRun();
+                else if (designPointInRect(clickX, clickY, lobbyBackButton())) {
+                    closeNetwork();
+                    screen = Screen::Menu;
+                }
+            }
             if (keyPressed(VK_ESCAPE)) {
                 closeNetwork();
                 screen = Screen::Menu;
@@ -100,6 +157,7 @@ int main() {
             }
             drawNetworkLobby();
             break;
+        }
         case Screen::JoinIp:
             if (kbhit()) {
                 const int character = getch();
@@ -125,9 +183,26 @@ int main() {
                     hostIpInput.push_back(static_cast<char>(character));
                 }
             }
+            {
+                int clickX = 0, clickY = 0;
+                if (pollMouseClick(clickX, clickY) &&
+                    designPointInRect(clickX, clickY, lobbyBackButton())) {
+                    closeNetwork();
+                    screen = Screen::Menu;
+                }
+            }
             if (screen == Screen::JoinIp) drawNetworkLobby();
             break;
         case Screen::JoinLobby:
+            {
+                int clickX = 0, clickY = 0;
+                if (pollMouseClick(clickX, clickY) &&
+                    designPointInRect(clickX, clickY, lobbyBackButton())) {
+                    sendNetworkPacket("LEAVE");
+                    closeNetwork();
+                    screen = Screen::Menu;
+                }
+            }
             if (keyPressed(VK_ESCAPE)) {
                 sendNetworkPacket("LEAVE");
                 closeNetwork();
@@ -136,6 +211,21 @@ int main() {
             drawNetworkLobby();
             break;
         case Screen::Shop:
+            {
+                int clickX = 0, clickY = 0;
+                if (pollMouseClick(clickX, clickY)) {
+                    bool handled = false;
+                    for (int i = 0; i < 6 && !handled; ++i) {
+                        if (designPointInRect(clickX, clickY, shopItemRect(i))) {
+                            shopSelection = i;
+                            buySelectedItem();
+                            handled = true;
+                        }
+                    }
+                    if (!handled && designPointInRect(clickX, clickY, shopBackButton()))
+                        screen = Screen::Menu;
+                }
+            }
             if (keyPressed(VK_ESCAPE) || keyPressed('0'))
                 screen = Screen::Menu;
             else if (keyPressed(VK_UP))
@@ -155,6 +245,17 @@ int main() {
             drawShop();
             break;
         case Screen::Help:
+            {
+                int clickX = 0, clickY = 0;
+                if (pollMouseClick(clickX, clickY)) {
+                    if (designPointInRect(clickX, clickY, helpPrevButton()) && helpPage > 0)
+                        helpPage = (helpPage + 2) % 3;
+                    else if (designPointInRect(clickX, clickY, helpNextButton()) && helpPage < 2)
+                        helpPage = (helpPage + 1) % 3;
+                    else if (designPointInRect(clickX, clickY, helpBackButton()))
+                        screen = Screen::Menu;
+                }
+            }
             if (!helpInputReady) {
                 if (!keystate('3')) helpInputReady = true;
             } else {
@@ -178,21 +279,7 @@ int main() {
             drawHelp();
             break;
         case Screen::Settings: {
-            const bool escapePressed = keyPressed(VK_ESCAPE);
-            const bool enterPressed = keyPressed(VK_RETURN);
-            const bool upPressed = keyPressed(VK_UP);
-            const bool downPressed = keyPressed(VK_DOWN);
-            const bool leftPressed = keyPressed(VK_LEFT);
-            const bool rightPressed = keyPressed(VK_RIGHT);
-            const bool resetPressed = keyPressed('0');
-            if (escapePressed || enterPressed) {
-                screen = Screen::Menu;
-            } else if (upPressed) {
-                settingsSelection = (settingsSelection + 2) % 3;
-            } else if (downPressed) {
-                settingsSelection = (settingsSelection + 1) % 3;
-            } else if (leftPressed || rightPressed) {
-                const int direction = rightPressed ? 1 : -1;
+            const auto adjustSetting = [&](int direction) {
                 bool settingApplied = true;
                 if (settingsSelection == 0) {
                     uiScalePercent = std::clamp(uiScalePercent + direction * UiScaleStepPercent,
@@ -208,13 +295,56 @@ int main() {
                                                 MinWindowHeight, MaxWindowHeight));
                 }
                 if (settingApplied) saveArchive();
-            } else if (resetPressed) {
+            };
+            const auto resetSettings = [&]() {
                 const bool resizeSucceeded =
                     resizeGameWindow(DefaultWindowWidth, DefaultWindowHeight);
-                uiScalePercent = 120;
+                uiScalePercent = DefaultUiScalePercent;
                 const std::wstring resizeError = resizeSucceeded ? L"" : archiveStatus;
                 saveArchive();
                 if (!resizeSucceeded) archiveStatus = resizeError;
+            };
+            int clickX = 0, clickY = 0;
+            if (pollMouseClick(clickX, clickY)) {
+                bool handled = false;
+                for (int i = 0; i < 3 && !handled; ++i) {
+                    if (designPointInRect(clickX, clickY, settingsMinusButton(i))) {
+                        settingsSelection = i;
+                        handled = true;
+                        adjustSetting(-1);
+                    } else if (designPointInRect(clickX, clickY, settingsPlusButton(i))) {
+                        settingsSelection = i;
+                        handled = true;
+                        adjustSetting(1);
+                    } else if (designPointInRect(clickX, clickY, settingsRowRect(i))) {
+                        settingsSelection = i;
+                        handled = true;
+                    }
+                }
+                if (!handled) {
+                    if (designPointInRect(clickX, clickY, settingsResetButton()))
+                        resetSettings();
+                    else if (designPointInRect(clickX, clickY, settingsBackButton()))
+                        screen = Screen::Menu;
+                }
+            }
+            const bool escapePressed = keyPressed(VK_ESCAPE);
+            const bool enterPressed = keyPressed(VK_RETURN);
+            const bool upPressed = keyPressed(VK_UP);
+            const bool downPressed = keyPressed(VK_DOWN);
+            const bool leftPressed = keyPressed(VK_LEFT);
+            const bool rightPressed = keyPressed(VK_RIGHT);
+            const bool resetPressed = keyPressed('0');
+            if (escapePressed || enterPressed) {
+                screen = Screen::Menu;
+            } else if (upPressed) {
+                settingsSelection = (settingsSelection + 2) % 3;
+            } else if (downPressed) {
+                settingsSelection = (settingsSelection + 1) % 3;
+            } else if (leftPressed || rightPressed) {
+                adjustSetting(rightPressed ? 1 : -1);
+            } else if (resetPressed) {
+                resetSettings();
             }
             drawSettings();
             break;
@@ -223,14 +353,8 @@ int main() {
             updatePlaying();
             drawPlaying();
             break;
-        case Screen::Paused:
-            drawPlaying();
-            fillRect(0, 0, DesignWidth, DesignHeight, EGEARGB(170, 5, 10, 13));
-            drawText(630, 365, L"已暂停", 48, Text);
-            drawText(594, 435,
-                     networkPause ? L"主机暂停中  /  ESC 返回菜单" : L"按 P 继续  /  ESC 返回菜单",
-                     20, Muted);
-            if (keyPressed('P') && !networkPause) {
+        case Screen::Paused: {
+            const auto resumeGame = [&]() {
                 const auto pausedFor = Clock::now() - pausedAt;
                 if (healing) healStarted += pausedFor;
                 if (extracting) extractStarted += pausedFor;
@@ -248,7 +372,8 @@ int main() {
                 peerNextMelee += pausedFor;
                 pausedAt = {};
                 screen = Screen::Playing;
-            } else if (keyPressed(VK_ESCAPE)) {
+            };
+            const auto exitPauseToMenu = [&]() {
                 if (networkActive) {
                     sendNetworkPacket("LEAVE");
                     closeNetwork();
@@ -260,9 +385,48 @@ int main() {
                     saveArchive();
                     screen = Screen::Menu;
                 }
+            };
+            int clickX = 0, clickY = 0;
+            if (pollMouseClick(clickX, clickY)) {
+                if (designPointInRect(clickX, clickY, pauseResumeButton()) && !networkPause)
+                    resumeGame();
+                else if (designPointInRect(clickX, clickY, pauseExitButton()))
+                    exitPauseToMenu();
             }
+            drawPlaying();
+            fillRect(0, 0, DesignWidth, DesignHeight, EGEARGB(170, 5, 10, 13));
+            drawText(630, 365, L"已暂停", 48, Text);
+            drawText(594, 435,
+                     networkPause ? L"主机暂停中  /  ESC 返回菜单" : L"按 P 继续  /  ESC 返回菜单",
+                     20, Muted);
+            if (keyPressed('P') && !networkPause) resumeGame();
+            else if (keyPressed(VK_ESCAPE)) exitPauseToMenu();
+            int mouseX = 0, mouseY = 0;
+            mousepos(&mouseX, &mouseY);
+            int hoverX = 0, hoverY = 0;
+            mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
+            drawButton(pauseResumeButton(), L"继续  P", 22, Green, !networkPause, hoverX, hoverY);
+            drawButton(pauseExitButton(), L"返回菜单  ESC", 20, Red, true, hoverX, hoverY);
             break;
+        }
         case Screen::Result:
+            {
+                int clickX = 0, clickY = 0;
+                if (pollMouseClick(clickX, clickY) &&
+                    designPointInRect(clickX, clickY, resultBackButton())) {
+                    if (networkActive) {
+                        sendNetworkPacket("LEAVE");
+                        closeNetwork();
+                    }
+                    if (networkRun)
+                        restoreNetworkArchiveSession();
+                    else {
+                        resetRunProgress();
+                        screen = Screen::Menu;
+                        saveArchive();
+                    }
+                }
+            }
             drawResult();
             if (keyPressed(VK_RETURN)) {
                 if (networkActive) {
@@ -284,6 +448,22 @@ int main() {
         delay_fps(60);
     }
     settarget(nullptr);
+    // 对局中直接关闭窗口视为放弃本局，按失败结算
+    if (screen == Screen::Playing || screen == Screen::Paused) {
+        if (!networkActive && !networkRun) {
+            health = 0;
+            won = false;
+            hasSavedRun = false;
+            ammo = 0;
+            magazineAmmo = 0;
+            medkits = 0;
+            armorTier = 0;
+            armorDurability = 0;
+            armorOn = false;
+            reloading = false;
+            archiveStatus = L"对局未完成直接退出，已按失败结算";
+        }
+    }
     saveArchive();
     delimage(frameBuffer);
     closegraph();

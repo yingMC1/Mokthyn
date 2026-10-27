@@ -46,16 +46,13 @@
         },
         {
             "name": "Win32",
-            "cStandard": "c23",
-            "cppStandard": "c++26",
-            "compilerPath": "D:/mingw64/bin/g++.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "compilerPath": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe",
             "defines": [
                 "SHOW_CONSOLE=1",
                 "_CRT_SECURE_NO_WARNINGS=1",
                 "NOMINMAX=1"
-            ],
-            "compilerArgs": [
-                "/Zc:__cplusplus"
             ],
             "includePath": [
                 "${myDefaultIncludePath}"

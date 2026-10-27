@@ -49,7 +49,7 @@ void restoreLegacyArchiveSettings(const std::string& contents, int version) {
         version >= 4 ? static_cast<size_t>(MapColumns * MapRows) : 24 * 18;
     const size_t enemyCountIndex = 2 + fixedHeaderFieldCount + legacyMapFieldCount;
     int enemyCount = 0;
-    if (!readValue(enemyCountIndex, enemyCount) || !validArchiveValue(enemyCount, 0, 200))
+    if (!readValue(enemyCountIndex, enemyCount) || !validArchiveValue(enemyCount, 0, MaxEnemyCount))
         return;
     const size_t enemyFieldCount = version >= 4 ? 6 : 5;
     const size_t settingsIndex = enemyCountIndex + 1 +
@@ -124,7 +124,7 @@ bool loadVersion5Archive(std::istream& input, int version) {
           readArchiveInt(input, storedArmorDurability) && readArchiveInt(input, storedArmorOn) &&
           readArchiveInt(input, storedPlayerX) && readArchiveInt(input, storedPlayerY) &&
           readArchiveInt(input, storedKills) && readArchiveInt(input, storedTotalEnemies)) ||
-        !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, 100) ||
+        !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, MaxHealth) ||
         !validArchiveValue(storedAmmo, 0, 100000) || !validArchiveValue(storedMedkits, 0, 10000) ||
         !validArchiveValue(storedMoney, 0, 100000000) ||
         !validArchiveValue(storedArmorTier, 0, 4) ||
@@ -157,7 +157,7 @@ bool loadVersion5Archive(std::istream& input, int version) {
         return false;
     }
     int enemyCount = 0;
-    if (!readArchiveInt(input, enemyCount) || !validArchiveValue(enemyCount, 0, 200)) {
+    if (!readArchiveInt(input, enemyCount) || !validArchiveValue(enemyCount, 0, MaxEnemyCount)) {
         archiveStatus = L"存档敌人数据无效，已保留显示设置";
         return false;
     }
@@ -176,7 +176,7 @@ bool loadVersion5Archive(std::istream& input, int version) {
             !validArchiveValue(enemy.hp, 0, boss != 0 ? BossHealth : EnemyHealth) ||
             !validArchiveValue(alive, 0, 1) || !validArchiveValue(awake, 0, 1) ||
             !validArchiveValue(boss, 0, 1) ||
-            !validArchiveValue(cooldownRemaining, 0, 1800)) {
+            !validArchiveValue(cooldownRemaining, 0, EnemyAttackIntervalMs)) {
             archiveStatus = L"存档敌人数据无效，已保留显示设置";
             return false;
         }
@@ -249,8 +249,7 @@ bool unprotectArchive(const std::string& encrypted, std::string& plainText) {
 }
 } // namespace
 
-bool loadArchive() {
-    const std::wstring path = archivePath();
+bool loadArchiveFromPath(const std::wstring& path) {
     if (path.empty()) {
         archiveStatus = L"无法读取 APPDATA 环境变量，存档功能不可用";
         return false;
@@ -312,7 +311,7 @@ bool loadArchive() {
           storedMedkits >> storedMoney >> storedArmorTier >> storedArmorDurability >> storedArmorOn >>
           storedPlayerX >> storedPlayerY >> storedKills >> storedTotalEnemies) ||
         !validArchiveValue(storedEnglish, 0, 1) ||
-        !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, 100) ||
+        !validArchiveValue(savedRun, 0, 1) || !validArchiveValue(storedHealth, 0, MaxHealth) ||
         !validArchiveValue(storedAmmo, 0, 100000) || !validArchiveValue(storedMedkits, 0, 10000) ||
         !validArchiveValue(storedMoney, 0, 100000000) ||
         !validArchiveValue(storedArmorTier, 0, 4) ||
@@ -349,7 +348,7 @@ bool loadArchive() {
     }
 
     int enemyCount = 0;
-    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, 200)) {
+    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, MaxEnemyCount)) {
         archiveStatus = L"存档敌人数据无效，已使用默认数据";
         return false;
     }
@@ -427,6 +426,16 @@ bool loadArchive() {
     if (!encryptedArchive && !saveArchive())
         archiveStatus = L"存档已读取，但自动加密迁移失败，下次启动将重试";
     return true;
+}
+
+bool loadArchive() {
+    if (loadArchiveFromPath(archivePath())) return true;
+    const std::wstring backupPath = archivePath() + L".bak";
+    if (loadArchiveFromPath(backupPath)) {
+        archiveStatus = L"主存档损坏，已从备份恢复";
+        return true;
+    }
+    return false;
 }
 
 void beginNetworkArchiveSession() {
@@ -513,7 +522,7 @@ bool saveArchive() {
     const int safePlayerY = std::clamp(playerY, 1, MapRows - 2);
     const int safeArmorTier = std::clamp(armorTier, 0, 4);
     const int safeArmorDurability = std::clamp(armorDurability, 0, ArmorDurability[safeArmorTier]);
-    if (enemies.size() > 200) {
+    if (enemies.size() > MaxEnemyCount) {
         archiveStatus = L"敌人数量超出存档格式上限，未保存以避免丢失数据";
         return false;
     }
@@ -522,7 +531,7 @@ bool saveArchive() {
     std::ostringstream output;
     output << "MOKTHYN_SAVE 7\nSETTINGS " << (english ? 1 : 0) << ' ' << uiScalePercent << ' '
            << windowWidth << ' ' << windowHeight << "\nRUN " << (hasSavedRun ? 1 : 0) << ' '
-           << std::clamp(health, 0, 100) << ' ' << savedTotalAmmo << ' '
+           << std::clamp(health, 0, MaxHealth) << ' ' << savedTotalAmmo << ' '
            << std::clamp(medkits, 0, 10000) << ' ' << std::clamp(money, 0, 100000000) << ' '
            << safeArmorTier << ' ' << safeArmorDurability << ' ' << (armorOn ? 1 : 0) << ' '
            << safePlayerX << ' ' << safePlayerY << ' ' << std::clamp(kills, 0, 100000) << ' '
@@ -541,7 +550,7 @@ bool saveArchive() {
         const auto remaining = std::clamp<long long>(
             std::chrono::duration_cast<std::chrono::milliseconds>(enemy.nextAttack - saveTime)
                 .count(),
-            0, 1800);
+            0, EnemyAttackIntervalMs);
         output << safeX << ' ' << safeY << ' ' << safeHp << ' ' << (enemy.alive ? 1 : 0) << ' '
                << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << ' ' << remaining
                << '\n';

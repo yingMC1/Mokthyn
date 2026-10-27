@@ -5,12 +5,8 @@
   "cmake.generator": "MinGW Makefiles",
   "cmake.buildDirectory": "${workspaceFolder}/build/cmake-${buildType}",
   "cmake.configureSettings": {
-    "CMAKE_SYSTEM_NAME": "Windows",
-    "CMAKE_CXX_COMPILER": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe",
-    "CMAKE_RC_COMPILER": "D:/mingw64/bin/windres.exe",
-    "CMAKE_FIND_ROOT_PATH_MODE_PROGRAM": "NEVER",
-    "CMAKE_FIND_ROOT_PATH_MODE_LIBRARY": "ONLY",
-    "CMAKE_FIND_ROOT_PATH_MODE_INCLUDE": "ONLY"
+    "CMAKE_MAKE_PROGRAM": "D:/mingw64/bin/mingw32-make.exe",
+    "CMAKE_CXX_COMPILER": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
   },
   "C_Cpp.default.compilerPath": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
 }

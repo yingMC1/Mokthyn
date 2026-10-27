@@ -172,7 +172,7 @@ bool sendNetworkPacket(const std::string& packet) {
 bool sendReliableNetworkPacket(const std::string& packet) {
     if (networkHost || !networkActive || !peerConnected || networkSocket == INVALID_SOCKET)
         return false;
-    if (pendingReliablePackets.size() >= 64) {
+    if (pendingReliablePackets.size() >= MaxReliablePackets) {
         networkStatus = L"可靠网络消息队列已满";
         setMessage(networkStatus);
         return false;
@@ -298,7 +298,7 @@ void processNetwork() {
                 peerAddress = sender;
                 peerConnected = true;
                 peerX = peerY = -1;
-                peerHealth = 100;
+                peerHealth = MaxHealth;
                 peerAmmo = 0;
                 peerAmmoInitialized = false;
                 peerMagazineAmmo = 0;
@@ -317,6 +317,9 @@ void processNetwork() {
                 receivedReliablePacketIds.clear();
                 receivedReliablePacketOrder.clear();
                 networkStatus = L"玩家已连接，按 ENTER 开始";
+            } else if (screen == Screen::Playing || screen == Screen::Paused ||
+                       screen == Screen::Result) {
+                networkStatus = L"队友已重新连接";
             }
             const std::string acknowledgment = "ACK " + networkSessionToken;
             sendto(networkSocket, acknowledgment.c_str(),
@@ -421,7 +424,7 @@ void processNetwork() {
                 }
             }
         } else if (command == "HEAL_START" && networkHost) {
-            if (screen == Screen::Playing && peerHealth > 0 && peerHealth < 100 &&
+            if (screen == Screen::Playing && peerHealth > 0 && peerHealth < MaxHealth &&
                 peerMedkits > 0 && !peerHealing && !peerExtracting) {
                 --peerMedkits;
                 peerHealing = true;
@@ -429,8 +432,8 @@ void processNetwork() {
             }
         } else if (command == "HEAL_DONE" && networkHost) {
             if (peerHealing && screen == Screen::Playing && peerHealth > 0 &&
-                peerHealth < 100) {
-                peerHealth = std::min(100, peerHealth + 20);
+                peerHealth < MaxHealth) {
+                peerHealth = std::min(MaxHealth, peerHealth + HealAmount);
             }
             peerHealing = false;
             peerHealStarted = {};
@@ -449,28 +452,28 @@ void processNetwork() {
                 peerReloading = true;
                 peerReloadStarted = now;
             }
-            peerNextShot = now + std::chrono::milliseconds(250);
+            peerNextShot = now + std::chrono::milliseconds(ShotCooldownMs);
             bool hitEnemy = false;
-            for (int step = 1; step <= 9; ++step) {
+            for (int step = 1; step <= GunRange; ++step) {
                 const int x = peerX + dx * step;
                 const int y = peerY + dy * step;
                 if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows ||
                     world[y][x] == Wall)
                     break;
                 if (gameMode == GameMode::Pvp && health > 0 && x == playerX && y == playerY) {
-                    health = std::max(0, health - 15);
+                    health = std::max(0, health - GunDamage);
                     if (health == 0) won = false;
                     hitEnemy = true;
                     break;
                 }
                 for (Enemy& enemy : enemies) {
                     if (enemy.alive && enemy.x == x && enemy.y == y) {
-                        enemy.hp -= 15;
+                        enemy.hp -= GunDamage;
                         enemy.awake = true;
                         if (enemy.hp <= 0) {
                             enemy.alive = false;
                             ++kills;
-                            money += enemy.boss ? 100 : 10;
+                            money += enemy.boss ? BossKillReward : EnemyKillReward;
                         }
                         hitEnemy = true;
                         break;
@@ -507,7 +510,7 @@ void processNetwork() {
                                 if (enemy.hp <= 0) {
                                     enemy.alive = false;
                                     ++kills;
-                                    money += enemy.boss ? 100 : 10;
+                                    money += enemy.boss ? BossKillReward : EnemyKillReward;
                                 }
                             }
                         }
@@ -524,7 +527,7 @@ void processNetwork() {
                 if (type == MedkitPickup)
                     peerMedkits = std::min(10000, peerMedkits + 1);
                 else
-                    peerAmmo = std::min(100000, peerAmmo + randomInt(8, 16));
+                    peerAmmo = std::min(100000, peerAmmo + randomInt(PickupAmmoMin, PickupAmmoMax));
                 ++networkMapRevision;
             }
         } else if (command == "MAP_ACK" && networkHost) {
@@ -610,8 +613,8 @@ void processNetwork() {
                 peerX = hostX;
                 peerY = hostY;
             }
-            peerHealth = std::clamp(hostHp, 0, 100);
-            health = std::clamp(clientHp, 0, 100);
+            peerHealth = std::clamp(hostHp, 0, MaxHealth);
+            health = std::clamp(clientHp, 0, MaxHealth);
             if (syncedPeerAmmo >= 0) ammo = syncedPeerAmmo;
             if (syncedPeerMagazine >= 0) magazineAmmo = syncedPeerMagazine;
             if (syncedPeerReloading && !reloading) {
@@ -721,7 +724,7 @@ void processNetwork() {
     for (auto pending = pendingReliablePackets.begin();
          pending != pendingReliablePackets.end();) {
         auto& packet = pending->second;
-        if (packet.attempts >= 20) {
+        if (packet.attempts >= ReliableMaxAttempts) {
             networkStatus = L"网络消息确认超时";
             setMessage(networkStatus);
             pending = pendingReliablePackets.erase(pending);
@@ -737,7 +740,7 @@ void processNetwork() {
 
     if (networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result) &&
-        now - lastNetworkSend >= std::chrono::milliseconds(200))
+        now - lastNetworkSend >= std::chrono::milliseconds(NetworkSendIntervalMs))
         sendNetworkState();
     if (!networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused) &&
@@ -756,7 +759,8 @@ void processNetwork() {
     }
     if (networkHost && peerExtracting && screen == Screen::Playing &&
         gameMode == GameMode::Coop &&
-        now - peerExtractStarted >= std::chrono::seconds(5) && health > 0 && peerX > 0 &&
+        now - peerExtractStarted >= std::chrono::milliseconds(ExtractDurationMs) && health > 0 &&
+        peerX > 0 &&
         peerX < MapColumns - 1 && peerY > 0 && peerY < MapRows - 1 &&
         world[peerY][peerX] == ExitTile && peerHealth > 0) {
         won = true;
@@ -766,7 +770,7 @@ void processNetwork() {
     }
     if (networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused) &&
-        now - lastNetworkReceive > std::chrono::seconds(5)) {
+        now - lastNetworkReceive > std::chrono::seconds(NetworkTimeoutSeconds)) {
         const bool wasPvp = gameMode == GameMode::Pvp;
         peerConnected = false;
         peerX = peerY = -1;
@@ -793,6 +797,15 @@ void processNetwork() {
             screen = Screen::Result;
         }
     }
+    // 客户端对局中连续收不到主机数据时主动重发 CONNECT，尝试恢复连接
+    if (!networkHost && peerConnected &&
+        (screen == Screen::Playing || screen == Screen::Paused) &&
+        peerAddress.sin_addr.s_addr != 0 && peerAddress.sin_port != 0 &&
+        now - lastNetworkReceive >= std::chrono::milliseconds(NetworkClientTimeoutMs)) {
+        sendto(networkSocket, "CONNECT", 7, 0,
+               reinterpret_cast<const sockaddr*>(&peerAddress), sizeof(peerAddress));
+        lastConnectAttempt = now;
+    }
     if (!networkHost && !peerConnected && screen == Screen::JoinLobby &&
         lastNetworkReceive != Clock::time_point{} &&
         now - lastNetworkReceive > std::chrono::seconds(10)) {
@@ -804,7 +817,7 @@ void processNetwork() {
     if (!networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result ||
          screen == Screen::JoinLobby) &&
-        now - lastNetworkReceive > std::chrono::seconds(5)) {
+        now - lastNetworkReceive > std::chrono::seconds(NetworkTimeoutSeconds)) {
         networkStatus = L"主机连接中断";
         closeNetwork();
         won = false;

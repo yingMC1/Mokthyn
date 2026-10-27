@@ -71,6 +71,94 @@ int tileScreenX(int x) { return battleMapLeft() + (x - battleCameraX()) * battle
 
 int tileScreenY(int y) { return battleMapTop() + (y - battleCameraY()) * battleTileSize(); }
 
+// ===== 鼠标按钮化 UI 工具 =====
+struct MenuRect {
+    int left, top, right, bottom;
+};
+
+bool mouseDesignPos(int px, int py, int& dx, int& dy) {
+    dx = static_cast<int>(static_cast<long long>(px) * DesignWidth * 100 /
+                          (windowWidth * uiScalePercent));
+    dy = static_cast<int>(static_cast<long long>(py) * DesignHeight * 100 /
+                          (windowHeight * uiScalePercent));
+    return dx >= 0 && dy >= 0;
+}
+
+bool designPointInRect(int dx, int dy, const MenuRect& rect) {
+    return dx >= rect.left && dx <= rect.right && dy >= rect.top && dy <= rect.bottom;
+}
+
+bool pollMouseClick(int& dx, int& dy) {
+    while (mousemsg()) {
+        const mouse_msg message = getmouse();
+        if (message.is_left() && message.is_down() &&
+            mouseDesignPos(message.x, message.y, dx, dy))
+            return true;
+    }
+    return false;
+}
+
+int textWidthEstimate(const std::wstring& value, int size) {
+    int width = 0;
+    for (const wchar_t character : value) {
+        if (character >= 0x4E00 && character <= 0x9FFF)
+            width += size;
+        else if (character == L' ')
+            width += size / 2;
+        else
+            width += size * 6 / 10;
+    }
+    return width;
+}
+
+void drawTextCentered(const MenuRect& rect, const std::wstring& value, int size,
+                      ege::color_t color) {
+    const int textWidth = textWidthEstimate(value, size);
+    drawText((rect.left + rect.right) / 2 - textWidth / 2,
+             (rect.top + rect.bottom) / 2 - size * 3 / 4, value, size, color);
+}
+
+void drawButton(const MenuRect& rect, const std::wstring& label, int fontSize,
+                ege::color_t accent, bool enabled, int hoverX, int hoverY) {
+    const bool hovered = enabled && designPointInRect(hoverX, hoverY, rect);
+    const ege::color_t fillColor =
+        enabled ? (hovered ? EGERGB(40, 56, 64) : PanelLight) : EGERGB(18, 25, 30);
+    const ege::color_t borderColor =
+        enabled ? (hovered ? accent : EGERGB(64, 82, 88)) : Muted;
+    const int radius = scaledLength(12);
+    const int left = scaledX(rect.left);
+    const int top = scaledY(rect.top);
+    const int right = scaledX(rect.right);
+    const int bottom = scaledY(rect.bottom);
+    setfillcolor(fillColor);
+    fillroundrect(left, top, right, bottom, radius, radius);
+    setlinecolor(borderColor);
+    roundrect(left, top, right, bottom, radius, radius);
+    drawTextCentered(rect, label, fontSize,
+                     enabled ? (hovered ? accent : Text) : Muted);
+}
+
+// ===== 界面按钮布局（设计坐标系 1600×900）=====
+MenuRect menuLeftButton(int index) { return {440, 268 + index * 88, 780, 334 + index * 88}; }
+MenuRect menuRightButton(int index) { return {820, 268 + index * 88, 1160, 334 + index * 88}; }
+MenuRect menuBottomButton(int index) { return {450 + index * 320, 760, 700 + index * 320, 830}; }
+MenuRect menuLanguageButton() { return {1420, 140, 1560, 200}; }
+MenuRect shopItemRect(int index) { return {155, 240 + index * 74, 1440, 296 + index * 74}; }
+MenuRect shopBackButton() { return {155, 700, 430, 766}; }
+MenuRect helpPrevButton() { return {150, 655, 330, 720}; }
+MenuRect helpNextButton() { return {390, 655, 570, 720}; }
+MenuRect helpBackButton() { return {620, 655, 880, 720}; }
+MenuRect settingsRowRect(int index) { return {130, 215 + index * 100, 1470, 265 + index * 100}; }
+MenuRect settingsMinusButton(int index) { return {1180, 215 + index * 100, 1300, 265 + index * 100}; }
+MenuRect settingsPlusButton(int index) { return {1330, 215 + index * 100, 1450, 265 + index * 100}; }
+MenuRect settingsResetButton() { return {1150, 540, 1420, 600}; }
+MenuRect settingsBackButton() { return {130, 620, 420, 690}; }
+MenuRect pauseResumeButton() { return {620, 460, 840, 530}; }
+MenuRect pauseExitButton() { return {860, 460, 1080, 530}; }
+MenuRect resultBackButton() { return {620, 520, 980, 590}; }
+MenuRect lobbyStartButton() { return {620, 600, 980, 670}; }
+MenuRect lobbyBackButton() { return {180, 680, 460, 750}; }
+
 bool resizeGameWindow(int width, int height) {
     if (width == windowWidth && height == windowHeight) return true;
     PIMAGE resizedBuffer = newimage(width, height);
@@ -189,6 +277,33 @@ std::wstring localize(const std::wstring& value) {
         {L"玩家已连接，按 ENTER 开始", L"Player connected; press ENTER to start"},
         {L"已连接，等待主机开始", L"Connected; waiting for host to start"},
         {L"队友已离开", L"Teammate left"},
+        {L"队友已重新连接", L"Teammate reconnected"},
+        {L"队友连接中断", L"Ally disconnected"},
+        {L"对手已断开连接", L"Opponent disconnected"},
+        {L"主存档损坏，已从备份恢复", L"Main save corrupted; recovered from backup"},
+        {L"生命危险，尽快治疗！", L"CRITICAL health; heal now!"},
+        {L"PVP 模式下战斗至最后一人，无法撤离", L"PVP: fight to the last player; extraction disabled"},
+        {L"对局未完成直接退出，已按失败结算", L"Run exited unfinished; scored as a loss"},
+        {L"换弹完成", L"Reload complete"},
+        {L"备弹不足", L"Out of reserve ammo"},
+        {L"弹匣已空，开始换弹", L"Magazine empty; reloading"},
+        {L"开始换弹", L"Reloading"},
+        {L"挥刀", L"Knife swing"},
+        {L"挥空", L"Whiffed"},
+        {L"挥刀请求发送失败", L"Melee request failed"},
+        {L"命中对手", L"Opponent hit"},
+        {L"目标消灭  +10 金币", L"Target eliminated  +10 coins"},
+        {L"刀杀敌人  +10 金币", L"Knife kill  +10 coins"},
+        {L"刀杀 Boss  +100 金币", L"Knife kill on boss  +100 coins"},
+        {L"射击请求发送失败", L"Shot request failed"},
+        {L"换弹请求发送失败", L"Reload request failed"},
+        {L"治疗请求发送失败", L"Heal request failed"},
+        {L"治疗确认发送失败", L"Heal confirmation failed"},
+        {L"正在请求主机确认弹药拾取", L"Requesting host confirmation for ammo pickup"},
+        {L"弹药拾取请求发送失败", L"Ammo pickup request failed"},
+        {L"正在请求主机确认医疗包拾取", L"Requesting host confirmation for medkit pickup"},
+        {L"医疗包拾取请求发送失败", L"Medkit pickup request failed"},
+        {L"联机行动由主机控制暂停", L"Host controls pause in co-op"},
         {L"主机连接中断", L"Connection to host lost"},
         {L"正在连接主机...", L"Connecting to host..."},
         {L"IP 格式无效，请输入 IPv4 地址", L"Invalid IP format; enter an IPv4 address"},
@@ -395,6 +510,13 @@ void drawOffscreenMarker(int targetX, int targetY, ege::color_t color, const wch
 
 void drawMap() {
     computeVisibility();
+    // 敌人位置索引：按格查找 O(1)，替代每格遍历全部敌人的 O(格数×敌人数)
+    std::unordered_map<long long, const Enemy*> enemyByTile;
+    for (const Enemy& enemy : enemies) {
+        if (enemy.alive)
+            enemyByTile[(static_cast<long long>(enemy.y) << 32) |
+                        static_cast<unsigned int>(enemy.x)] = &enemy;
+    }
     const int tileSize = battleTileSize();
     const int areaLeft = battleMapLeft();
     const int areaTop = battleMapTop();
@@ -442,8 +564,11 @@ void drawMap() {
                 drawText(left + tileSize / 2 - 6, top + tileSize / 2 - 10, L"E", 19, Green);
             }
 
-            for (const Enemy& enemy : enemies) {
-                if (!enemy.alive || enemy.x != x || enemy.y != y) continue;
+            const auto enemyEntry =
+                enemyByTile.find((static_cast<long long>(y) << 32) |
+                                 static_cast<unsigned int>(x));
+            if (enemyEntry != enemyByTile.end()) {
+                const Enemy& enemy = *enemyEntry->second;
                 fillCircle(left + tileSize / 2, top + tileSize / 2,
                            enemy.boss ? tileSize * 2 / 5 : tileSize * 3 / 10,
                            enemy.boss
@@ -455,7 +580,20 @@ void drawMap() {
                 if (enemy.boss)
                     outlineRect(left + 2, top + 2, left + tileSize - 3, top + tileSize - 3,
                                 Yellow);
-                break;
+                // 受伤敌人迷你血条
+                const int fullHp = enemy.boss ? BossHealth : EnemyHealth;
+                if (enemy.hp < fullHp) {
+                    const int barWidth = std::max(10, tileSize / 2);
+                    const int barHeight = std::max(2, tileSize / 8);
+                    const int barLeft = left + tileSize / 2 - barWidth / 2;
+                    const int barTop = top + 2;
+                    fillRect(barLeft, barTop, barLeft + barWidth, barTop + barHeight,
+                             EGERGB(20, 26, 30));
+                    const int filled = barWidth * std::clamp(enemy.hp, 0, fullHp) / fullHp;
+                    if (filled > 0)
+                        fillRect(barLeft, barTop, barLeft + filled, barTop + barHeight,
+                                 enemy.boss ? Yellow : Green);
+                }
             }
         }
     }
@@ -494,9 +632,18 @@ void drawHud() {
     drawText(x + padding, 94, L"无限枪洲", 31, Text);
     drawText(x + padding, 139, L"FIELD OPERATION  /  01", 14, Muted);
     drawText(x + padding, 183, L"生命", 17, Muted);
-    drawText(valueX, 181, std::to_wstring(health) + L" / 100", 18,
+    drawText(valueX, 181, std::to_wstring(health) + L" / " + std::to_wstring(MaxHealth), 18,
              health > 60 ? Green : (health > 30 ? Yellow : Red));
-    drawBar(x + padding, 211, width - padding * 2, 12, health, 100, health > 30 ? Green : Red);
+    drawBar(x + padding, 211, width - padding * 2, 12, health, MaxHealth,
+            health > 30 ? Green : Red);
+    // 低血量红色闪烁警告
+    if (health <= 30) {
+        const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   Clock::now().time_since_epoch())
+                                   .count();
+        if ((elapsedMs / 500) % 2 == 0)
+            drawText(x + padding, 233, L"生命危险，尽快治疗！", 18, Red);
+    }
 
     drawText(x + padding, 245, L"弹药", 17, Muted);
     if (weaponMode == WeaponMode::Gun) {
@@ -527,12 +674,13 @@ void drawHud() {
     if (gameMode == GameMode::Pvp) {
         drawText(x + padding, 344, L"对手", 17, Muted);
         const bool opponentConnected = networkActive && peerConnected;
-        const int opponentHp = opponentConnected ? std::clamp(peerHealth, 0, 100) : 100;
+        const int opponentHp = opponentConnected ? std::clamp(peerHealth, 0, MaxHealth) : MaxHealth;
         drawText(x + padding, 373,
-                 opponentConnected ? std::to_wstring(opponentHp) + L" / 100"
+                 opponentConnected ? std::to_wstring(opponentHp) + L" / " +
+                                        std::to_wstring(MaxHealth)
                                    : (english ? L"Waiting..." : L"等待对手加入"),
                  21, opponentHp > 30 ? Red : Yellow);
-        drawBar(x + padding, 410, width - padding * 2, 8, opponentHp, 100, Red);
+        drawBar(x + padding, 410, width - padding * 2, 8, opponentHp, MaxHealth, Red);
         drawText(x + padding, 426,
                  opponentConnected ? (peerHealth > 0 ? L"目标：击倒对手" : L"对手已被击倒")
                                    : L"等待对手加入后开始",
@@ -594,33 +742,43 @@ void drawMenu() {
     setfillcolor(Background);
     bar(0, 0, windowWidth, windowHeight);
 
-    drawText(500, 180, L"无限枪洲", 58, Text);
-    drawText(1190, 195, L"切换语言：L", 16, Muted);
+    int mouseX = 0, mouseY = 0;
+    mousepos(&mouseX, &mouseY);
+    int hoverX = 0, hoverY = 0;
+    mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
+
+    // 标题 + 副标题 + 装饰线
+    drawText(430, 78, L"无限枪洲", 72, Text);
+    drawText(438, 158, L"FIELD OPERATION  /  01", 17, Muted);
+    fillRect(440, 208, 1160, 211, Green);
+
+    drawButton(menuLanguageButton(), L"语言 L", 18, Cyan, true, hoverX, hoverY);
+
+    drawButton(menuLeftButton(0), L"开始行动", 23, Green, true, hoverX, hoverY);
+    drawButton(menuLeftButton(1), L"黑市商店", 23, Yellow, true, hoverX, hoverY);
+    drawButton(menuLeftButton(2), L"操作说明", 23, Cyan, true, hoverX, hoverY);
+    drawButton(menuLeftButton(3), L"创建联机主机", 21, Text, true, hoverX, hoverY);
+    drawButton(menuLeftButton(4), L"加入局域网游戏", 21, Text, true, hoverX, hoverY);
+
+    if (hasSavedRun) drawButton(menuRightButton(0), L"继续存档", 23, Cyan, true, hoverX, hoverY);
+    drawButton(menuRightButton(1), L"设置", 23, Cyan, true, hoverX, hoverY);
+    drawButton(menuRightButton(2), L"快速开始", 23, Green, true, hoverX, hoverY);
+    drawButton(menuRightButton(3), L"PVP 对战", 23, Red, true, hoverX, hoverY);
 
     const std::wstring diffText =
-        difficulty == Difficulty::Easy   ? L"简单"
-        : difficulty == Difficulty::Normal ? L"普通"
-                                           : L"困难";
-    drawText(500, 260, L"当前难度：" + diffText + L"（按 0 切换）", 18,
-             difficulty == Difficulty::Easy   ? Green
-             : difficulty == Difficulty::Normal ? Yellow
-                                                : Red);
+        difficulty == Difficulty::Easy   ? L"难度：简单"
+        : difficulty == Difficulty::Normal ? L"难度：普通"
+                                           : L"难度：困难";
+    drawButton(menuBottomButton(0), diffText, 19,
+               difficulty == Difficulty::Easy   ? Green
+               : difficulty == Difficulty::Normal ? Yellow
+                                                  : Red,
+               true, hoverX, hoverY);
+    drawButton(menuBottomButton(1), L"切换语言 L", 19, Cyan, true, hoverX, hoverY);
+    drawButton(menuBottomButton(2), L"退出", 19, Red, true, hoverX, hoverY);
 
-    drawText(500, 320, L"1  开始行动", 23, Green);
-    drawText(500, 370, L"2  黑市商店", 23, Yellow);
-    drawText(500, 420, L"3  操作说明", 23, Cyan);
-    drawText(500, 470, L"4  创建联机主机", 23, Text);
-    drawText(500, 520, L"5  加入局域网游戏", 23, Text);
-    drawText(500, 570, L"8  快速开始", 23, Green);
-    drawText(500, 620, L"9  PVP 对战", 23, Red);
-    if (hasSavedRun) {
-        drawText(850, 320, L"6  继续存档", 23, Cyan);
-    }
-    drawText(850, 370, L"7  设置", 23, Cyan);
-    drawText(850, 420, L"0  切换难度", 23, Yellow);
-    drawText(850, 470, L"ESC  退出", 23, Muted);
-    if (!archiveStatus.empty()) drawText(500, 700, archiveStatus, 16, Yellow);
-    if (Clock::now() < messageUntil) drawText(500, 730, message, 16, Yellow);
+    if (!archiveStatus.empty()) drawText(430, 700, archiveStatus, 16, Yellow);
+    if (Clock::now() < messageUntil) drawText(430, 730, message, 16, Yellow);
 }
 
 void drawNetworkLobby() {
@@ -631,16 +789,25 @@ void drawNetworkLobby() {
                                                            : L"等待主机开始";
     drawText(220, 160, title, 42, Text);
     drawText(225, 250, networkStatus, 22, Green);
+
+    int mouseX = 0, mouseY = 0;
+    mousepos(&mouseX, &mouseY);
+    int hoverX = 0, hoverY = 0;
+    mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
+
     if (screen == Screen::HostLobby) {
         drawText(225, 330, L"可用主机 IPv4 地址", 18, Muted);
         const std::wstring localIp = getLocalIPv4();
         drawText(225, 372, localIp, 34, Cyan);
         drawText(225, 470, L"将队友可访问的地址发给同一局域网内的队友。", 20, Text);
         drawText(225, 520,
-                 peerConnected ? L"按 ENTER 开始合作行动"
+                 peerConnected ? L"玩家已连接，按 ENTER 开始"
                                : L"等待玩家连接 · UDP " + std::to_wstring(NetworkPort),
                  20,
-                 Yellow);
+                 peerConnected ? Green : Yellow);
+        drawButton(lobbyStartButton(), L"开始行动  ENTER", 22,
+                   peerConnected ? Green : Muted, peerConnected, hoverX, hoverY);
+        drawButton(lobbyBackButton(), L"返回  ESC", 20, Cyan, true, hoverX, hoverY);
     } else if (screen == Screen::JoinIp) {
         fillRect(220, 355, 1120, 425, PanelLight);
         drawText(245, 370,
@@ -649,9 +816,11 @@ void drawNetworkLobby() {
                  28, Text);
         drawText(225, 490, L"输入 IP 后按 ENTER 连接，BACKSPACE 删除，ESC 返回。", 18, Muted);
         drawText(225, 545, L"双方需在同一局域网，并允许程序通过 Windows 防火墙。", 18, Muted);
+        drawButton(lobbyBackButton(), L"返回  ESC", 20, Cyan, true, hoverX, hoverY);
     } else {
         drawText(225, 365, L"连接成功。等待主机创建地图并开始行动。", 22, Text);
         drawText(225, 475, L"ESC 取消连接并返回主菜单。", 18, Muted);
+        drawButton(lobbyBackButton(), L"返回  ESC", 20, Cyan, true, hoverX, hoverY);
     }
 }
 
@@ -684,14 +853,16 @@ void drawShop() {
     labels[4] = english ? L"Ammo supply       +10 rounds       5 coins"
                         : L"弹药补给       +10 发       5 金";
     labels[5] = english ? L"Medkit       +1       20 coins" : L"医疗包         +1 个       20 金";
-    for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
-        const int y = 240 + i * 74;
-        fillRect(155, y, 1440, y + 56, shopSelection == i ? PanelLight : EGERGB(25, 36, 42));
-        drawText(178, y + 15, std::to_wstring(i + 1) + L".", 20,
-                 shopSelection == i ? Green : Muted);
-        drawText(230, y + 15, labels[i], 20, Text);
-    }
-    drawText(155, 720, L"↑ / ↓ 选择     ENTER 购买     0 返回", 18, Muted);
+
+    int mouseX = 0, mouseY = 0;
+    mousepos(&mouseX, &mouseY);
+    int hoverX = 0, hoverY = 0;
+    mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
+
+    for (int i = 0; i < ShopItemCount; ++i)
+        drawButton(shopItemRect(i), std::to_wstring(i + 1) + L".  " + labels[i], 20,
+                   shopSelection == i ? Green : Text, true, hoverX, hoverY);
+    drawButton(shopBackButton(), L"返回  0", 20, Cyan, true, hoverX, hoverY);
     drawText(155, 766, L"护甲升级会替换当前护甲。", 17, Muted);
     if (Clock::now() < messageUntil) drawText(155, 812, message, 18, Yellow);
 }
@@ -728,8 +899,17 @@ void drawHelp() {
         drawText(160, 180 + (i - 1) * 54, pages[helpPage][i], 26, i == 7 ? Green : Text);
     drawText(160, 580, L"下载地址：Mokthyn - Download", 19, Cyan);
     drawText(160, 612, DownloadUrl, 19, Cyan);
-    drawText(160, 660, L"按 ← → 或 ↑ ↓ 翻页    按 D 打开下载页面    ENTER / ESC 返回", 19, Muted);
-    if (Clock::now() < messageUntil) drawText(160, 710, message, 18, Yellow);
+
+    int mouseX = 0, mouseY = 0;
+    mousepos(&mouseX, &mouseY);
+    int hoverX = 0, hoverY = 0;
+    mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
+
+    drawButton(helpPrevButton(), L"← 上一页", 19, Cyan, helpPage > 0, hoverX, hoverY);
+    drawButton(helpNextButton(), L"下一页 →", 19, Cyan, helpPage < 2, hoverX, hoverY);
+    drawButton(helpBackButton(), L"返回  ENTER / ESC", 19, Green, true, hoverX, hoverY);
+    drawText(960, 690, L"按 D 打开下载页面", 18, Muted);
+    if (Clock::now() < messageUntil) drawText(160, 730, message, 18, Yellow);
     drawText(visibleDesignWidth() - 110, 115, std::to_wstring(helpPage + 1) + L" / 3", 22,
              Green);
 }
@@ -747,18 +927,22 @@ void drawSettings() {
         std::to_wstring(uiScalePercent) + L"%",
         std::to_wstring(windowWidth) + L" px",
         std::to_wstring(windowHeight) + L" px"};
-    for (int i = 0; i < static_cast<int>(labels.size()); ++i) {
-        const int y = 230 + i * 100;
+
+    int mouseX = 0, mouseY = 0;
+    mousepos(&mouseX, &mouseY);
+    int hoverX = 0, hoverY = 0;
+    mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
+
+    for (int i = 0; i < SettingsItemCount; ++i) {
         const bool selected = settingsSelection == i;
-        if (selected) fillRect(130, y - 15, visibleDesignWidth() - 130, y + 55, PanelLight);
-        drawText(160, y, labels[i], 25, selected ? Green : Text);
-        drawText(650, y, values[i], 27, selected ? Cyan : Muted);
-        drawText(visibleDesignWidth() - 220, y, L"←   →", 20, Muted);
+        drawButton(settingsRowRect(i), labels[i] + L"      " + values[i], 22,
+                   selected ? Green : Text, true, hoverX, hoverY);
+        drawButton(settingsMinusButton(i), L"−", 24, Cyan, true, hoverX, hoverY);
+        drawButton(settingsPlusButton(i), L"+", 24, Cyan, true, hoverX, hoverY);
     }
-    drawText(160, 500, L"↑ ↓ 选择项目，← → 调整", 20, Text);
-    drawText(160, 550, L"按 0 恢复默认值", 18, Muted);
-    drawText(160, 600, L"按 ENTER / ESC 返回主菜单", 18, Muted);
-    if (!archiveStatus.empty()) drawText(160, 650, archiveStatus, 16, Yellow);
+    drawButton(settingsResetButton(), L"恢复默认  0", 20, Yellow, true, hoverX, hoverY);
+    drawButton(settingsBackButton(), L"返回  ENTER / ESC", 20, Green, true, hoverX, hoverY);
+    if (!archiveStatus.empty()) drawText(130, 710, archiveStatus, 16, Yellow);
 }
 
 void drawResult() {
@@ -777,8 +961,7 @@ void drawResult() {
     drawText(720, 370, std::to_wstring(ammo + magazineAmmo), 38, Yellow);
     drawText(1040, 332, L"持有金币", 20, Muted);
     drawText(1040, 370, std::to_wstring(money), 38, Yellow);
-    drawText(345, 500, L"按 ENTER 返回主菜单", 23, Text);
-    drawText(345, 440, L"护甲", 20, Muted);
+    drawText(345, 500, L"护甲", 20, Muted);
     const bool hasArmor = armorTier > 0 && armorDurability > 0;
     const std::wstring armorDescription =
         hasArmor ? (english ? L"Tier " : L"等级 ") + std::to_wstring(armorTier) +
@@ -787,7 +970,14 @@ void drawResult() {
                        (armorOn ? L"" : (english ? L"  (unequipped)" : L"  （已脱下）"))
                  : (english ? L"Not equipped" : L"未装备");
     drawText(440, 440, armorDescription, 20, hasArmor ? Cyan : Muted);
-    if (!networkStatus.empty()) drawText(345, 550, networkStatus, 18, Yellow);
+
+    int mouseX = 0, mouseY = 0;
+    mousepos(&mouseX, &mouseY);
+    int hoverX = 0, hoverY = 0;
+    mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
+
+    drawButton(resultBackButton(), L"返回主菜单  ENTER", 22, Green, true, hoverX, hoverY);
+    if (!networkStatus.empty()) drawText(345, 610, networkStatus, 18, Yellow);
 }
 
 void drawPlaying() {
