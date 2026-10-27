@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿# Mokthyn 一键构建脚本（Release / Debug）
+=======
+# Mokthyn 一键构建脚本（Release / Debug）
+>>>>>>> 5888d0cc13644e36c675c1848ea6fc67962a1c38
 # 用法：
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Config Release   # 构建 Release
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Config Debug     # 构建 Debug
