@@ -56,6 +56,24 @@ void startAutoReloadIfEmpty(Clock::time_point now) {
     }
 }
 
+// 暂停期间把各战斗计时器统一顺延，本地暂停恢复与网络解除暂停共用
+void advancePausedTimers(Clock::duration pausedFor) {
+    if (healing) healStarted += pausedFor;
+    if (extracting) extractStarted += pausedFor;
+    if (peerExtracting) peerExtractStarted += pausedFor;
+    nextPlayerShot += pausedFor;
+    peerNextShot += pausedFor;
+    lastMove += pausedFor;
+    lastEnemyTurn += pausedFor;
+    nextPlayerHit += pausedFor;
+    nextPeerHit += pausedFor;
+    if (peerHealing) peerHealStarted += pausedFor;
+    if (reloading) reloadStarted += pausedFor;
+    nextMelee += pausedFor;
+    if (peerReloading) peerReloadStarted += pausedFor;
+    peerNextMelee += pausedFor;
+}
+
 void cancelExtraction() {
     extracting = false;
     peerExtractConfirmed = false;
@@ -281,10 +299,13 @@ void shoot(int dx, int dy) {
             return;
         }
         --magazineAmmo;
-        nextPlayerShot = now + std::chrono::milliseconds(250);
+        nextPlayerShot = now + std::chrono::milliseconds(ShotCooldownMs);
+        // 弹匣打空自动换弹必须通知主机，否则主机侧弹匣计数停留在 0，后续射击会被主机拒绝
         if (magazineAmmo == 0 && ammo > 0) {
-            reloading = true;
-            reloadStarted = now;
+            if (sendReliableNetworkPacket("RELOAD")) {
+                reloading = true;
+                reloadStarted = now;
+            }
         }
         setMessage(L"射击确认中", 500);
         return;
@@ -387,7 +408,8 @@ int takeDamage(int damage) {
     if (!armorOn || armorDurability <= 0) return damage;
     const int reduction =
         ArmorReduction[std::clamp(armorTier, 0, static_cast<int>(ArmorReduction.size()) - 1)];
-    armorDurability = std::max(0, armorDurability - std::max(1, damage / 2));
+    // 护甲磨损与队友路径一致（固定 ArmorWearPerHit），避免主客玩家磨损不对称
+    armorDurability = std::max(0, armorDurability - ArmorWearPerHit);
     if (armorDurability == 0) {
         armorOn = false;
         armorTier = 0;
@@ -663,13 +685,13 @@ void updatePlaying() {
         setMessage(take > 0 ? L"换弹完成" : L"备弹不足", 500);
     }
     if (weaponMode == WeaponMode::Gun) {
-        if (keyPressed(VK_UP)) shoot(0, -1);
-        else if (keyPressed(VK_DOWN)) shoot(0, 1);
-        else if (keyPressed(VK_LEFT)) shoot(-1, 0);
-        else if (keyPressed(VK_RIGHT)) shoot(1, 0);
+        if (keystate(VK_UP)) shoot(0, -1);
+        else if (keystate(VK_DOWN)) shoot(0, 1);
+        else if (keystate(VK_LEFT)) shoot(-1, 0);
+        else if (keystate(VK_RIGHT)) shoot(1, 0);
     } else {
-        if (keyPressed(VK_UP) || keyPressed(VK_DOWN) || keyPressed(VK_LEFT) ||
-            keyPressed(VK_RIGHT))
+        if (keystate(VK_UP) || keystate(VK_DOWN) || keystate(VK_LEFT) ||
+            keystate(VK_RIGHT))
             meleeAttack();
     }
 

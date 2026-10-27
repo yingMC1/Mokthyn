@@ -647,15 +647,7 @@ void processNetwork() {
                 pausedAt = now;
                 if (screen == Screen::Playing) screen = Screen::Paused;
             } else if (!networkPause && wasNetworkPaused) {
-                const auto pausedFor = now - pausedAt;
-                if (healing) healStarted += pausedFor;
-                if (extracting) extractStarted += pausedFor;
-                lastMove += pausedFor;
-                lastEnemyTurn += pausedFor;
-                nextPlayerHit += pausedFor;
-                nextPeerHit += pausedFor;
-                if (reloading) reloadStarted += pausedFor;
-                nextMelee += pausedFor;
+                advancePausedTimers(now - pausedAt);
                 pausedAt = {};
                 if (screen == Screen::Paused) screen = Screen::Playing;
             }
@@ -815,9 +807,9 @@ void processNetwork() {
         setMessage(networkStatus, 4000);
     }
     if (!networkHost && peerConnected &&
-        (screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result ||
-         screen == Screen::JoinLobby) &&
+        (screen == Screen::Playing || screen == Screen::Paused) &&
         now - lastNetworkReceive > std::chrono::seconds(NetworkTimeoutSeconds)) {
+        // 仅在对局中判定主机失联；结算页已确定胜败，不得用断线覆盖（否则撤离成功/胜利会被翻成失败）
         networkStatus = L"主机连接中断";
         closeNetwork();
         won = false;

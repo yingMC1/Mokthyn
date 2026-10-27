@@ -355,21 +355,7 @@ int main() {
             break;
         case Screen::Paused: {
             const auto resumeGame = [&]() {
-                const auto pausedFor = Clock::now() - pausedAt;
-                if (healing) healStarted += pausedFor;
-                if (extracting) extractStarted += pausedFor;
-                if (networkHost && peerExtracting) peerExtractStarted += pausedFor;
-                nextPlayerShot += pausedFor;
-                peerNextShot += pausedFor;
-                lastMove += pausedFor;
-                lastEnemyTurn += pausedFor;
-                nextPlayerHit += pausedFor;
-                nextPeerHit += pausedFor;
-                if (peerHealing) peerHealStarted += pausedFor;
-                if (reloading) reloadStarted += pausedFor;
-                nextMelee += pausedFor;
-                if (peerReloading) peerReloadStarted += pausedFor;
-                peerNextMelee += pausedFor;
+                advancePausedTimers(Clock::now() - pausedAt);
                 pausedAt = {};
                 screen = Screen::Playing;
             };

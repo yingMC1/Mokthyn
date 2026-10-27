@@ -46,8 +46,8 @@ int battleMapAreaHeight() { return visibleDesignHeight() - 50 - battleMapTop(); 
 int battleHudWidth() { return battleHudRight() - battleHudLeft(); }
 
 int battleTileSize() {
-    const int byWidth = battleMapAreaWidth() / 30;
-    const int byHeight = battleMapAreaHeight() / 20;
+    const int byWidth = battleMapAreaWidth() / BattleTilesX;
+    const int byHeight = battleMapAreaHeight() / BattleTilesY;
     return std::clamp(std::min(byWidth, byHeight), 18, 40);
 }
 
@@ -284,6 +284,15 @@ std::wstring localize(const std::wstring& value) {
         {L"生命危险，尽快治疗！", L"CRITICAL health; heal now!"},
         {L"PVP 模式下战斗至最后一人，无法撤离", L"PVP: fight to the last player; extraction disabled"},
         {L"对局未完成直接退出，已按失败结算", L"Run exited unfinished; scored as a loss"},
+        {L"难度：简单", L"Difficulty: Easy"}, {L"难度：普通", L"Difficulty: Normal"},
+        {L"难度：困难", L"Difficulty: Hard"}, {L"快速开始", L"Quick start"},
+        {L"PVP 对战", L"PVP battle"}, {L"语言 L", L"Language L"},
+        {L"切换语言 L", L"Toggle language L"},
+        {L"开始行动  ENTER", L"Start run  ENTER"}, {L"返回  ESC", L"Back  ESC"},
+        {L"返回  0", L"Back  0"}, {L"← 上一页", L"← Prev page"},
+        {L"下一页 →", L"Next page →"}, {L"返回  ENTER / ESC", L"Back  ENTER / ESC"},
+        {L"恢复默认  0", L"Restore defaults  0"}, {L"继续  P", L"Resume  P"},
+        {L"返回菜单  ESC", L"Exit to menu  ESC"}, {L"返回主菜单  ENTER", L"Back to menu  ENTER"},
         {L"换弹完成", L"Reload complete"},
         {L"备弹不足", L"Out of reserve ammo"},
         {L"弹匣已空，开始换弹", L"Magazine empty; reloading"},
@@ -612,9 +621,13 @@ void drawMap() {
     fillCircle(playerCenterX, playerCenterY, tileSize / 3, Green);
     fillCircle(playerCenterX + 3, playerCenterY - 3, tileSize / 10, Text);
 
-    // 视口外的撤离点和队友方向标记（PVP 不显示对手位置，避免透视）
-    if (gameMode != GameMode::Pvp)
+    // 视口外的撤离点、队友和存活 Boss 方向标记（PVP 不显示对手位置，避免透视）
+    if (gameMode != GameMode::Pvp) {
         drawOffscreenMarker(MapColumns - 2, MapRows - 2, Green, L"E");
+        const auto boss = std::find_if(enemies.begin(), enemies.end(),
+                                       [](const Enemy& enemy) { return enemy.boss && enemy.alive; });
+        if (boss != enemies.end()) drawOffscreenMarker(boss->x, boss->y, Yellow, L"B");
+    }
     if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
         peerY < MapRows - 1 && gameMode != GameMode::Pvp)
         drawOffscreenMarker(peerX, peerY, Cyan, L"P");

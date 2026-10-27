@@ -69,7 +69,8 @@ inline int shopSelection = 0;
 inline int uiScalePercent = DefaultUiScalePercent;
 inline int windowWidth = DefaultWindowWidth;
 inline int windowHeight = DefaultWindowHeight;
-inline int settingsSelection = 0;inline PIMAGE frameBuffer = nullptr;
+inline int settingsSelection = 0;
+inline PIMAGE frameBuffer = nullptr;
 inline unsigned int frameBufferGeneration = 0;
 
 inline SOCKET networkSocket = INVALID_SOCKET;
