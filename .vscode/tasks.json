@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Load Project",
+      "label": "Load Project (Debug)",
       "type": "shell",
       "command": "bash",
       "args": [
@@ -16,20 +16,9 @@
       },
       "problemMatcher": "$gcc",
       "windows": {
-        "command": "powershell",
-        "args": [
-          "-NoProfile",
-          "-ExecutionPolicy",
-          "Bypass",
-          "-File",
-          "${workspaceFolder}\\build.ps1",
-          "-Config",
-          "Debug",
-          "-Configure"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        }
+        "command": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+        "args": ["--preset", "debug"],
+        "options": { "cwd": "${workspaceFolder}" }
       }
     },
     {
@@ -48,19 +37,9 @@
       "group": "build",
       "problemMatcher": "$gcc",
       "windows": {
-        "command": "powershell",
-        "args": [
-          "-NoProfile",
-          "-ExecutionPolicy",
-          "Bypass",
-          "-File",
-          "${workspaceFolder}\\build.ps1",
-          "-Config",
-          "Debug"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        }
+        "command": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+        "args": ["--build", "--preset", "debug"],
+        "options": { "cwd": "${workspaceFolder}" }
       }
     },
     {
@@ -79,30 +58,20 @@
       "group": "build",
       "problemMatcher": "$gcc",
       "windows": {
-        "command": "powershell",
-        "args": [
-          "-NoProfile",
-          "-ExecutionPolicy",
-          "Bypass",
-          "-File",
-          "${workspaceFolder}\\build.ps1",
-          "-Config",
-          "Release"
-        ],
-        "options": {
-          "cwd": "${workspaceFolder}"
-        }
+        "command": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+        "args": ["--build", "--preset", "release"],
+        "options": { "cwd": "${workspaceFolder}" }
       }
     },
     {
       "label": "Load And Build Project (Debug)",
-      "dependsOn": ["Load Project", "Build Project (Debug)"],
+      "dependsOn": ["Load Project (Debug)", "Build Project (Debug)"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     },
     {
       "label": "Load And Build Project (Release)",
-      "dependsOn": ["Load Project", "Build Project (Release)"],
+      "dependsOn": ["Load Project (Debug)", "Build Project (Release)"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     },
@@ -143,26 +112,28 @@
       }
     },
     {
-      "label": "Clean Project",
+      "label": "Clean Project (Debug)",
       "type": "shell",
-      "args": [
-        "-l",
-        "-c",
-        "cmake --build build/cmake-debug --target clean && cmake --build build/cmake-release --target clean"
-      ],
       "command": "bash",
+      "args": ["-l", "-c", "cmake --build build/cmake-debug --target clean"],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": "$gcc",
       "windows": {
-        "command": "powershell",
-        "args": [
-          "-NoProfile",
-          "-ExecutionPolicy",
-          "Bypass",
-          "-File",
-          "${workspaceFolder}\\build.ps1",
-          "-Clean"
-        ],
+        "command": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+        "args": ["--build", "--preset", "debug", "--target", "clean"],
+        "options": { "cwd": "${workspaceFolder}" }
+      }
+    },
+    {
+      "label": "Clean Project (Release)",
+      "type": "shell",
+      "command": "bash",
+      "args": ["-l", "-c", "cmake --build build/cmake-release --target clean"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": "$gcc",
+      "windows": {
+        "command": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+        "args": ["--build", "--preset", "release", "--target", "clean"],
         "options": { "cwd": "${workspaceFolder}" }
       }
     }
