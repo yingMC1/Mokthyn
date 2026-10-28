@@ -1,0 +1,37 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Mokthyn Debug (MinGW Makefiles)",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/cmake-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_MAKE_PROGRAM": "D:/mingw64/bin/mingw32-make.exe",
+        "CMAKE_CXX_COMPILER": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Mokthyn Release (MinGW Makefiles)",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/cmake-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_MAKE_PROGRAM": "D:/mingw64/bin/mingw32-make.exe",
+        "CMAKE_CXX_COMPILER": "D:/mingw64/bin/x86_64-w64-mingw32-g++.exe"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    }
+  ]
+}
