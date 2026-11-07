@@ -56,10 +56,7 @@ int main() {
                 } else if (designPointInRect(clickX, clickY, menuLeftButton(4))) {
                     if (!beginJoinNetwork()) setMessage(L"网络初始化失败");
                 } else if (hasSavedRun && designPointInRect(clickX, clickY, menuRightButton(0))) {
-                    resetRunProgress();
-                    screen = Screen::Playing;
-                    lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = nextPlayerShot =
-                        Clock::now();
+                    resumeSavedRun();
                     setMessage(L"已继续存档行动");
                 } else if (designPointInRect(clickX, clickY, menuRightButton(1)))
                     screen = Screen::Settings;
@@ -93,9 +90,7 @@ int main() {
                 english = !english;
                 saveArchive();
             } else if (keyPressed('6') && hasSavedRun) {
-                resetRunProgress();
-                screen = Screen::Playing;
-                lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = nextPlayerShot = Clock::now();
+                resumeSavedRun();
                 setMessage(L"已继续存档行动");
             } else if (newRunKeyPressed || enterPressed) {
                 startRun();
@@ -215,7 +210,7 @@ int main() {
                 int clickX = 0, clickY = 0;
                 if (pollMouseClick(clickX, clickY)) {
                     bool handled = false;
-                    for (int i = 0; i < 6 && !handled; ++i) {
+                    for (int i = 0; i < ShopItemCount && !handled; ++i) {
                         if (designPointInRect(clickX, clickY, shopItemRect(i))) {
                             shopSelection = i;
                             buySelectedItem();
@@ -307,7 +302,7 @@ int main() {
             int clickX = 0, clickY = 0;
             if (pollMouseClick(clickX, clickY)) {
                 bool handled = false;
-                for (int i = 0; i < 3 && !handled; ++i) {
+                for (int i = 0; i < SettingsItemCount && !handled; ++i) {
                     if (designPointInRect(clickX, clickY, settingsMinusButton(i))) {
                         settingsSelection = i;
                         handled = true;
@@ -338,9 +333,9 @@ int main() {
             if (escapePressed || enterPressed) {
                 screen = Screen::Menu;
             } else if (upPressed) {
-                settingsSelection = (settingsSelection + 2) % 3;
+                settingsSelection = (settingsSelection + SettingsItemCount - 1) % SettingsItemCount;
             } else if (downPressed) {
-                settingsSelection = (settingsSelection + 1) % 3;
+                settingsSelection = (settingsSelection + 1) % SettingsItemCount;
             } else if (leftPressed || rightPressed) {
                 adjustSetting(rightPressed ? 1 : -1);
             } else if (resetPressed) {

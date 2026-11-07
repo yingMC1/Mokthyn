@@ -6,6 +6,7 @@ namespace mokthyn {
 inline int randomInt(int low, int high);
 inline void setMessage(const std::wstring& text, int milliseconds = 1800);
 inline void resetRunProgress();
+inline void resumeSavedRun();
 inline void cancelExtraction();
 inline void advancePausedTimers(Clock::duration pausedFor);
 inline bool lineOfSight(int fromX, int fromY, int toX, int toY);
@@ -16,6 +17,7 @@ inline void startRun();
 inline void shoot(int dx, int dy);
 inline void meleeAttack();
 inline int takeDamage(int damage);
+inline void applyPeerDamage(int damage);
 inline void updateEnemies(Clock::time_point now);
 inline void collectPickup();
 inline void movePlayer(int dx, int dy);

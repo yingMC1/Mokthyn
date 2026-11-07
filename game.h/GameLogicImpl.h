@@ -37,6 +37,18 @@ void resetRunProgress() {
     pausedAt = {};
 }
 
+// 从主菜单继续存档：统一重置动作状态与敌人攻击计时。
+// 敌人的 nextAttack 还停在读档那一刻（可能已过去几分钟），不重置的话
+// 玩家一恢复行动就会被全图敌人同时开火
+void resumeSavedRun() {
+    const auto now = Clock::now();
+    for (Enemy& enemy : enemies) enemy.nextAttack = now;
+    resetRunProgress();
+    lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = nextPlayerShot = now;
+    nextMelee = {};
+    screen = Screen::Playing;
+}
+
 // 清除队友战斗状态（PVP 击败 / 队友死亡等场景复用，消除重复清零块）
 void resetPeerCombatState() {
     peerAmmo = 0;
@@ -211,7 +223,8 @@ void startRun() {
                                    runStarted + std::chrono::milliseconds(EnemyTurnIntervalMs)});
                 ++placedEnemies;
                 break;
-            }        }
+            }
+        }
     }
     for (int i = 0; i < bossCount; ++i) {
         for (int attempt = 0; attempt < 800; ++attempt) {
@@ -318,7 +331,7 @@ void shoot(int dx, int dy) {
             x == peerX && y == peerY) {
             --magazineAmmo;
             nextPlayerShot = now + std::chrono::milliseconds(ShotCooldownMs);
-            peerHealth = std::max(0, peerHealth - GunDamage);
+            applyPeerDamage(GunDamage);
             startAutoReloadIfEmpty(now);
             if (peerHealth == 0) {
                 resetPeerCombatState();
@@ -359,14 +372,18 @@ void meleeAttack() {
     const auto now = Clock::now();
     if (weaponMode != WeaponMode::Knife) return;
     if (now < nextMelee) return;
-    nextMelee = now + std::chrono::milliseconds(MeleeCooldownMs);
     if (networkActive && !networkHost) {
-        if (sendReliableNetworkPacket("MELEE"))
+        // 先确认可靠包发送成功再进冷却，与 shoot() 的客户端路径一致：
+        // 发送失败不应白白吃掉半秒冷却
+        if (sendReliableNetworkPacket("MELEE")) {
+            nextMelee = now + std::chrono::milliseconds(MeleeCooldownMs);
             setMessage(L"挥刀", 300);
-        else
+        } else {
             setMessage(L"挥刀请求发送失败");
+        }
         return;
     }
+    nextMelee = now + std::chrono::milliseconds(MeleeCooldownMs);
     bool hit = false;
     for (int dy = -MeleeRange; dy <= MeleeRange; ++dy) {
         for (int dx = -MeleeRange; dx <= MeleeRange; ++dx) {
@@ -377,7 +394,7 @@ void meleeAttack() {
             if (tx <= 0 || tx >= MapColumns - 1 || ty <= 0 || ty >= MapRows - 1) continue;
             if (gameMode == GameMode::Pvp && peerConnected && peerHealth > 0 &&
                 tx == peerX && ty == peerY) {
-                peerHealth = std::max(0, peerHealth - MeleeDamage);
+                applyPeerDamage(MeleeDamage);
                 hit = true;
                 if (peerHealth == 0) {
                     resetPeerCombatState();
@@ -394,7 +411,7 @@ void meleeAttack() {
                     if (enemy.hp <= 0) {
                         enemy.alive = false;
                         ++kills;
-                        money += enemy.boss ? 100 : 10;
+                        money += enemy.boss ? BossKillReward : EnemyKillReward;
                         setMessage(enemy.boss ? L"刀杀 Boss  +100 金币" : L"刀杀敌人  +10 金币");
                     }
                 }
@@ -416,6 +433,22 @@ int takeDamage(int damage) {
         setMessage(L"护甲已损坏", 2200);
     }
     return std::max(1, damage - reduction);
+}
+
+// 对队友/对手造成伤害：统一走“护甲减伤 + 耐久磨损”，
+// 与敌人攻击队友、主机结算队友受伤的路径共用同一套护甲规则
+void applyPeerDamage(int damage) {
+    if (peerArmorOn && peerArmorDurability > 0) {
+        damage = std::max(1, damage - ArmorReduction[std::clamp(
+                                     peerArmorTier, 0,
+                                     static_cast<int>(ArmorReduction.size()) - 1)]);
+        peerArmorDurability = std::max(0, peerArmorDurability - ArmorWearPerHit);
+        if (peerArmorDurability == 0) {
+            peerArmorOn = false;
+            peerArmorTier = 0;
+        }
+    }
+    peerHealth = std::max(0, peerHealth - damage);
 }
 
 void updateEnemies(Clock::time_point now) {
@@ -468,29 +501,18 @@ void updateEnemies(Clock::time_point now) {
             now >= enemy.nextAttack &&
             now >= (targetPeer ? nextPeerHit : nextPlayerHit)) {
             if (targetPeer) {
-                int damage = enemy.boss ? (bossEnraged ? BossEnragedDamage : BossDamage)
-                                        : EnemyDamage;
-                if (peerArmorOn && peerArmorDurability > 0) {
-                    damage = std::max(
-                        1, damage -
-                               ArmorReduction[std::clamp(
-                                   peerArmorTier, 0,
-                                   static_cast<int>(ArmorReduction.size()) - 1)]);
-                    peerArmorDurability = std::max(0, peerArmorDurability - ArmorWearPerHit);
-                    if (peerArmorDurability == 0) {
-                        peerArmorOn = false;
-                        peerArmorTier = 0;
-                    }
-                }
-                peerHealth = std::max(0, peerHealth - damage);
+                applyPeerDamage(enemy.boss ? (bossEnraged ? BossEnragedDamage : BossDamage)
+                                           : EnemyDamage);
                 if (peerHealth == 0) {
                     resetPeerCombatState();
                     won = (gameMode == GameMode::Pvp);
                     screen = Screen::Result;
                 }
             } else {
-                health -= takeDamage(enemy.boss ? (bossEnraged ? BossEnragedDamage : BossDamage)
-                                                : EnemyDamage);
+                health = std::max(0, health - takeDamage(
+                                              enemy.boss ? (bossEnraged ? BossEnragedDamage
+                                                                        : BossDamage)
+                                                         : EnemyDamage));
             }
             enemy.nextAttack = now + std::chrono::milliseconds(
                                          enemy.boss ? (bossEnraged ? BossEnragedCooldownMs
@@ -508,12 +530,15 @@ void updateEnemies(Clock::time_point now) {
                     peerExtractStarted = {};
                 }
             }
-            if (!targetPeer && (healing || extracting)) {
-                healing = false;
-                if (extracting) cancelExtraction();
-                setMessage(L"受到攻击，动作已中断");
-            } else {
-                setMessage(L"受到攻击");
+            if (!targetPeer) {
+                // 队友被咬只在 HUD 的队友血条上体现：主机不该收到虚假的“受到攻击”
+                if (healing || extracting) {
+                    healing = false;
+                    if (extracting) cancelExtraction();
+                    setMessage(L"受到攻击，动作已中断");
+                } else {
+                    setMessage(L"受到攻击");
+                }
             }
         }
     }

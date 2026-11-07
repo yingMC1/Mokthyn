@@ -409,7 +409,32 @@ std::wstring localize(const std::wstring& value) {
         {L"前往地图上的撤离点", L"Reach the extraction point on the map"},
         {L"撤离开始，保持位置 5 秒", L"Extraction started; hold position for 5 seconds"},
         {L"治疗中  ", L"Healing  "}, {L"撤离中  ", L"Extracting  "},
-        {L"下载：Mokthyn - Download", L"Download: Mokthyn - Download"}
+        {L"下载：Mokthyn - Download", L"Download: Mokthyn - Download"},
+        {L"WASD 移动    方向键射击/挥刀", L"WASD move    Arrow keys shoot / knife"},
+        {L"E 拾取   H 治疗   K 护甲   F 切武器", L"E loot   H heal   K armor   F weapon"},
+        {L"R 换弹   Q 撤离   P 暂停   ESC 菜单", L"R reload   Q extract   P pause   ESC menu"},
+        {L"换弹中...", L"Reloading..."},
+        {L"战术刀", L"Knife"}, {L"[F]切刀", L"[F] Knife"}, {L"[F]切枪", L"[F] Gun"},
+        {L"对手", L"Opponent"},
+        {L"目标：击倒对手", L"Objective: take down the opponent"},
+        {L"对手已被击倒", L"Opponent down"},
+        {L"等待对手加入", L"Waiting for the opponent"},
+        {L"等待对手加入后开始", L"Waiting for the opponent to join"},
+        {L"胜利", L"Victory"}, {L"失败", L"Defeat"},
+        {L"可用主机 IPv4 地址", L"Reachable host IPv4 addresses"},
+        {L"将队友可访问的地址发给同一局域网内的队友。",
+         L"Share this reachable address with a teammate on the same LAN."},
+        {L"主机暂停中  /  ESC 返回菜单", L"Host paused  /  ESC menu"},
+        {L"PVP 主机启动失败，检查 UDP 端口是否被占用",
+         L"Could not host PVP; check whether the UDP port is in use"},
+        {L"武器：枪械", L"Weapon: Gun"}, {L"武器：战术刀", L"Weapon: Knife"},
+        {L"治疗完成，等待主机确认", L"Healing finished; awaiting host confirmation"},
+        {L"消灭对方玩家！物资竞争，生死由命",
+         L"Take down the opposing player. Supplies are contested."},
+        {L"连接超时，请检查主机地址和防火墙",
+         L"Connection timed out; check the host address and firewall"},
+        {L"模式：PVP 对战（按 M 切换）", L"Mode: PVP battle (press M to switch)"},
+        {L"模式：合作 PVE（按 M 切换）", L"Mode: Co-op PVE (press M to switch)"}
     };
     const auto found = translations.find(value);
     if (found != translations.end()) return found->second;
@@ -429,6 +454,13 @@ std::wstring localize(const std::wstring& value) {
     }
     if (value.rfind(L"等级 ", 0) == 0) return L"Tier " + value.substr(3);
     if (value.rfind(L"队友 ", 0) == 0) return L"Ally " + value.substr(3);
+    if (value.rfind(L"备弹 ", 0) == 0) return L"Reserve " + value.substr(3);
+    if (value.rfind(L"范围 ", 0) == 0) {
+        const size_t damagePos = value.find(L"  伤害 ");
+        if (damagePos != std::wstring::npos)
+            return L"Range " + value.substr(3, damagePos - 3) + L"  Damage " +
+                   value.substr(damagePos + 5);
+    }
     if (value.rfind(L"治疗中  ", 0) == 0) {
         std::wstring seconds = value.substr(5);
         if (seconds.size() >= 2 && seconds.substr(seconds.size() - 2) == L" 秒")
@@ -734,7 +766,8 @@ void drawHud() {
                 ArmorDurability[armorTier], armorOn ? Cyan : Muted);
     drawText(x + padding, 516, L"金币", 17, Muted);
     drawText(x + 100, 514, std::to_wstring(money), 20, Yellow);
-    if (networkActive && peerConnected)
+    // PVP 里对手血量已在上方“对手”区块显示，这里只给合作模式画队友血条
+    if (networkActive && peerConnected && gameMode != GameMode::Pvp)
         drawText(x + std::max(200, width / 2), 514,
                  L"队友 " + std::to_wstring(peerHealth) + L" HP", 16,
                  peerHealth > 30 ? Cyan : Red);
@@ -1012,8 +1045,8 @@ void drawPlaying() {
             std::max(0, 5 - static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
                                                  Clock::now() - extractStarted)
                                                  .count()));
-            drawText(battleMapLeft() + 12, visibleDesignHeight() - 42,
-                     L"撤离中  " + std::to_wstring(seconds) + L" 秒", 18, Green);
+        drawText(battleMapLeft() + 12, visibleDesignHeight() - 42,
+                 L"撤离中  " + std::to_wstring(seconds) + L" 秒", 18, Green);
     }
 }
 

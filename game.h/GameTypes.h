@@ -102,6 +102,8 @@ inline constexpr int NetworkClientTimeoutMs = 2000;
 inline constexpr int ReliableMaxAttempts = 20;
 inline constexpr int MaxReliablePackets = 64;
 inline constexpr int MaxEnemyCount = 64;
+// 客户端刚发起治疗时，主机 STATE 里的 peerHealing 可能还没更新，给这段往返留出宽限期
+inline constexpr int HealAckGraceMs = 600;
 
 // ===== 渲染 / 难度 =====
 inline constexpr int DefaultUiScalePercent = 120;

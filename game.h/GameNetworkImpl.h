@@ -237,7 +237,8 @@ void sendNetworkState() {
            << networkMapRevision << ' ' << (includeMap ? 1 : 0) << ' ' << enemies.size() << ' '
            << (peerAmmoInitialized ? peerAmmo : -1) << ' '
            << (peerMagazineInitialized ? peerMagazineAmmo : -1) << ' '
-           << (peerReloading ? 1 : 0) << ' ';
+           << (peerReloading ? 1 : 0) << ' ' << (gameMode == GameMode::Pvp ? 1 : 0) << ' '
+           << (peerHealing ? 1 : 0) << ' ';
     for (const Enemy& enemy : enemies)
         packet << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
                << ' ' << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << ' ';
@@ -295,28 +296,40 @@ void processNetwork() {
             if (peerConnected && !samePeer) continue;
             if (!peerConnected) {
                 if (!createNetworkSessionToken(networkSessionToken)) continue;
+                const bool midRunReconnect =
+                    screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result;
                 peerAddress = sender;
                 peerConnected = true;
                 peerX = peerY = -1;
-                peerHealth = MaxHealth;
-                peerAmmo = 0;
-                peerAmmoInitialized = false;
-                peerMagazineAmmo = 0;
-                peerMagazineInitialized = false;
                 peerReloading = false;
                 peerNextMelee = {};
                 peerNextShot = now;
-                peerMedkits = 0;
-                peerMedkitsInitialized = false;
                 peerHealing = false;
                 peerHealStarted = {};
-                peerArmorTier = peerArmorDurability = 0;
-                peerArmorOn = false;
-                peerArmorInitialized = false;
                 peerExtracting = false;
                 receivedReliablePacketIds.clear();
                 receivedReliablePacketOrder.clear();
-                networkStatus = L"玩家已连接，按 ENTER 开始";
+                if (midRunReconnect) {
+                    // 对局中断线重连：保留 peerHealth 等战斗数值，只把弹药/弹匣/医疗包/护甲
+                    // 交给客户端下一次 POS 上报对齐，避免重连时被重置成满血满弹
+                    peerMedkitsInitialized = false;
+                    peerAmmoInitialized = false;
+                    peerMagazineInitialized = false;
+                    peerArmorInitialized = false;
+                    networkStatus = L"队友已重新连接";
+                } else {
+                    peerHealth = MaxHealth;
+                    peerAmmo = 0;
+                    peerAmmoInitialized = false;
+                    peerMagazineAmmo = 0;
+                    peerMagazineInitialized = false;
+                    peerMedkits = 0;
+                    peerMedkitsInitialized = false;
+                    peerArmorTier = peerArmorDurability = 0;
+                    peerArmorOn = false;
+                    peerArmorInitialized = false;
+                    networkStatus = L"玩家已连接，按 ENTER 开始";
+                }
             } else if (screen == Screen::Playing || screen == Screen::Paused ||
                        screen == Screen::Result) {
                 networkStatus = L"队友已重新连接";
@@ -461,8 +474,14 @@ void processNetwork() {
                     world[y][x] == Wall)
                     break;
                 if (gameMode == GameMode::Pvp && health > 0 && x == playerX && y == playerY) {
-                    health = std::max(0, health - GunDamage);
-                    if (health == 0) won = false;
+                    // 主机受伤同样要走 takeDamage，护甲减伤与耐久磨损才对主机生效
+                    health = std::max(0, health - takeDamage(GunDamage));
+                    if (health == 0) {
+                        // 之前只置 won = false 不切结算界面，0 血主机还能继续操控，对局无法结束
+                        resetPeerCombatState();
+                        won = false;
+                        screen = Screen::Result;
+                    }
                     hitEnemy = true;
                     break;
                 }
@@ -500,8 +519,12 @@ void processNetwork() {
                             continue;
                         if (gameMode == GameMode::Pvp && health > 0 &&
                             tx == playerX && ty == playerY) {
-                            health = std::max(0, health - MeleeDamage);
-                            if (health == 0) won = false;
+                            health = std::max(0, health - takeDamage(MeleeDamage));
+                            if (health == 0) {
+                                resetPeerCombatState();
+                                won = false;
+                                screen = Screen::Result;
+                            }
                         }
                         for (Enemy& enemy : enemies) {
                             if (enemy.alive && enemy.x == tx && enemy.y == ty) {
@@ -582,18 +605,21 @@ void processNetwork() {
             int clientArmorTier, clientArmorDurability, clientArmorOn;
             int syncedMedkits, syncedKills, syncedTotal, syncedMoney, hostEvacuating, peerEvacuating,
                 hostPaused, finished, result, mapIncluded, syncedPeerAmmo, syncedPeerMagazine,
-                syncedPeerReloading;
+                syncedPeerReloading, syncedMode, syncedClientHealing;
             unsigned int mapRevision;
             int enemyCount;
             if (!(input >> hostX >> hostY >> hostHp >> clientX >> clientY >> clientHp >>
                   clientArmorTier >> clientArmorDurability >> clientArmorOn >> syncedMedkits >> syncedKills >>
                   syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
                   finished >> result >> mapRevision >> mapIncluded >> enemyCount >>
-                  syncedPeerAmmo >> syncedPeerMagazine >> syncedPeerReloading) ||
+                  syncedPeerAmmo >> syncedPeerMagazine >> syncedPeerReloading >> syncedMode >>
+                  syncedClientHealing) ||
                   enemyCount < 0 || enemyCount > 200 ||
                   syncedPeerAmmo < -1 || syncedPeerAmmo > 100000 ||
                   syncedPeerMagazine < -1 || syncedPeerMagazine > MagazineSize ||
                   (syncedPeerReloading != 0 && syncedPeerReloading != 1) ||
+                  (syncedMode != 0 && syncedMode != 1) ||
+                  (syncedClientHealing != 0 && syncedClientHealing != 1) ||
                   (mapIncluded != 0 && mapIncluded != 1) ||
                   (hostEvacuating != 0 && hostEvacuating != 1) ||
                   (peerEvacuating != 0 && peerEvacuating != 1) ||
@@ -603,6 +629,9 @@ void processNetwork() {
                 continue;
             beginNetworkArchiveSession();
             pickupPending = false;
+            // 主机是模式的唯一权威：START 走不可靠 UDP，一旦丢包客户端就会留在 Coop，
+            // 生成无关敌人、允许撤离、结算方向也相反，所以每次 STATE 都重新对齐
+            gameMode = syncedMode != 0 ? GameMode::Pvp : GameMode::Coop;
             const bool awaitingStart =
                 screen == Screen::JoinLobby || screen == Screen::JoinIp;
             if (awaitingStart) startRun();
@@ -628,6 +657,12 @@ void processNetwork() {
             if (health < previousHealth && healing) {
                 healing = false;
                 sendReliableNetworkPacket("HEAL_CANCEL");
+            } else if (!syncedClientHealing && healing &&
+                       now - healStarted >= std::chrono::milliseconds(HealAckGraceMs)) {
+                // 主机侧的治疗已被打断（撤离、主动取消等），此时血量不会变化，
+                // 客户端必须静默停止，否则会继续显示“治疗中”并在 3 秒后发无效的 HEAL_DONE
+                healing = false;
+                healStarted = {};
             }
             armorTier = std::clamp(clientArmorTier, 0, 4);
             armorDurability = std::clamp(clientArmorDurability, 0, ArmorDurability[armorTier]);
@@ -764,21 +799,13 @@ void processNetwork() {
         (screen == Screen::Playing || screen == Screen::Paused) &&
         now - lastNetworkReceive > std::chrono::seconds(NetworkTimeoutSeconds)) {
         const bool wasPvp = gameMode == GameMode::Pvp;
+        // 只断开连接，保留血量/弹药/护甲等战斗数值：几秒内重新连上时按原状态继续，
+        // 若在这里清零，重连就等同于满血复活 + 白拿一弹匣，PVP 里可以直接刷血
         peerConnected = false;
         peerX = peerY = -1;
-        peerHealth = 0;
-        peerMedkits = 0;
-        peerAmmo = 0;
-        peerAmmoInitialized = false;
-        peerMagazineAmmo = 0;
-        peerMagazineInitialized = false;
         peerReloading = false;
-        peerMedkitsInitialized = false;
         peerHealing = false;
         peerHealStarted = {};
-        peerArmorTier = peerArmorDurability = 0;
-        peerArmorOn = false;
-        peerArmorInitialized = false;
         peerExtracting = false;
         receivedReliablePacketIds.clear();
         receivedReliablePacketOrder.clear();

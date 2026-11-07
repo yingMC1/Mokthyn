@@ -573,14 +573,20 @@ bool saveArchive() {
                                    &bytesWritten, nullptr) &&
                          bytesWritten == contents.size() && FlushFileBuffers(file);
     CloseHandle(file);
-    if (!writeOk ||
-        !MoveFileExW(temporaryPath.c_str(), path.c_str(),
+    if (!writeOk) {
+        DeleteFileW(temporaryPath.c_str());
+        archiveStatus = L"保存存档失败";
+        return false;
+    }
+    // 必须在覆盖主档之前备份：若在 MoveFile 之后复制，.bak 拿到的就是刚写入的新文件，
+    // 主档一旦写坏备份同样坏掉，备份形同虚设
+    CopyFileW(path.c_str(), (path + L".bak").c_str(), FALSE);
+    if (!MoveFileExW(temporaryPath.c_str(), path.c_str(),
                      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
         DeleteFileW(temporaryPath.c_str());
         archiveStatus = L"保存存档失败";
         return false;
     }
-    CopyFileW(path.c_str(), (path + L".bak").c_str(), FALSE);
     archiveStatus.clear();
     return true;
 }
