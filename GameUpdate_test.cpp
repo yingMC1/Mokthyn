@@ -45,9 +45,9 @@ int main() {
     longHtml.append(200, 'x');
     expectVersion(longHtml.c_str(), "", "long html not scanned");
 
-    expectNewer("0.1.4", true, "0.1.4 newer than 0.1.3");
-    expectNewer("0.1.3", false, "same version");
-    expectNewer("0.0.9", false, "older");
+    expectNewer("0.1.5", true, "0.1.5 newer than 0.1.4");
+    expectNewer("0.1.4", false, "same version");
+    expectNewer("0.1.3", false, "older");
     expectNewer("0.2.0", true, "minor bump");
     expectNewer("1.0.0", true, "major bump");
 

@@ -4,4 +4,4 @@
 header('Content-Type: text/plain; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
-echo '0.1.3';
+echo '0.1.4';
