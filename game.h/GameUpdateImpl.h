@@ -121,9 +121,8 @@ inline std::string readResponse(HINTERNET request) {
     return result;
 }
 
-// secure=true 走 443 的 HTTPS；失败时外层会再试一次 80 端口，
-// 因为免费主机常见"开了 HTTPS 但证书没配好"，此时不应让功能整体失效
-inline std::string fetchVersionText(bool secure) {
+// 拉取单个源的原始响应文本。secure=true 走 443 的 HTTPS，否则走 80 端口
+inline std::string fetchVersionTextFrom(const wchar_t* host, const wchar_t* path, bool secure) {
     std::string result;
     HINTERNET session = WinHttpOpen(L"MokthynUpdate/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                     WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
@@ -131,11 +130,10 @@ inline std::string fetchVersionText(bool secure) {
     WinHttpSetTimeouts(session, UpdateCheckTimeoutMs, UpdateCheckTimeoutMs, UpdateCheckTimeoutMs,
                        UpdateCheckTimeoutMs);
     HINTERNET connection =
-        WinHttpConnect(session, UpdateCheckHost,
-                       secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT, 0);
+        WinHttpConnect(session, host, secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT, 0);
     if (connection != nullptr) {
         HINTERNET request =
-            WinHttpOpenRequest(connection, L"GET", UpdateCheckPath, nullptr, WINHTTP_NO_REFERER,
+            WinHttpOpenRequest(connection, L"GET", path, nullptr, WINHTTP_NO_REFERER,
                                WINHTTP_DEFAULT_ACCEPT_TYPES, secure ? WINHTTP_FLAG_SECURE : 0);
         if (request != nullptr) {
             if (WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0,
@@ -157,14 +155,29 @@ inline std::string fetchVersionText(bool secure) {
     return result;
 }
 
-inline std::string fetchVersionText() {
-    std::string text = fetchVersionText(true);
-    if (text.empty()) text = fetchVersionText(false);
-    return text;
+// 依次尝试：主站 HTTPS → 主站 HTTP → 仓库镜像。某一源拿到响应但解析不出合规版本号
+// （典型是被免费主机的脚本校验页吞掉）就继续下一个源，全部失败才认为连不上
+inline std::string fetchRemoteVersion() {
+    static const struct {
+        const wchar_t* host;
+        const wchar_t* path;
+        bool secure;
+    } sources[] = {
+        {UpdateCheckHost, UpdateCheckPath, true},
+        {UpdateCheckHost, UpdateCheckPath, false},
+        {UpdateMirrorHost, UpdateMirrorPath, true},
+    };
+    for (const auto& source : sources) {
+        const std::string raw = fetchVersionTextFrom(source.host, source.path, source.secure);
+        if (raw.empty()) continue;
+        const std::string version = locateVersion(raw);
+        if (!version.empty()) return version;
+    }
+    return {};
 }
 
 inline unsigned __stdcall checkThread(void*) {
-    const std::string version = locateVersion(fetchVersionText());
+    const std::string version = fetchRemoteVersion();
     const bool found = !version.empty();
     const bool newer = found && newerThanCurrent(version);
     if (found) {

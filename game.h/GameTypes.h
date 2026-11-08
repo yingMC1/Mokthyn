@@ -35,10 +35,14 @@ inline constexpr int MedkitPickupCount = 14;
 inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
 // ===== 更新检查 =====
-// 发布新版本时只需要改这两处：这里的版本号，以及服务器上的 check_update.php
+// 发布新版本时只需要改三处：这里的版本号、仓库根目录的 version.txt、服务器上的 check_update.php
 inline constexpr wchar_t GameVersion[] = L"0.1.4";
 inline constexpr wchar_t UpdateCheckHost[] = L"mokthyn.rf.gd";
-inline constexpr wchar_t UpdateCheckPath[] = L"/check_update.php";
+// 免费主机在前面拦了一层浏览器脚本校验，?i=1 是它公开的绕过参数，不加就只能拿到验证页
+inline constexpr wchar_t UpdateCheckPath[] = L"/check_update.php?i=1";
+// 兜底源：主机的校验页会吞掉纯文本响应，这里用仓库里的 version.txt 保证功能一定可用
+inline constexpr wchar_t UpdateMirrorHost[] = L"raw.githubusercontent.com";
+inline constexpr wchar_t UpdateMirrorPath[] = L"/yingMC1/Mokthyn/main/version.txt";
 inline constexpr int UpdateCheckTimeoutMs = 4000;
 
 inline const ege::color_t Background = EGERGB(12, 18, 24);
