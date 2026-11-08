@@ -113,9 +113,11 @@ int textWidthEstimate(const std::wstring& value, int size) {
 
 void drawTextCentered(const MenuRect& rect, const std::wstring& value, int size,
                       ege::color_t color) {
-    const int textWidth = textWidthEstimate(value, size);
-    drawText((rect.left + rect.right) / 2 - textWidth / 2,
-             (rect.top + rect.bottom) / 2 - size * 3 / 4, value, size, color);
+    // 按本地化后的文本量宽：英文标签明显比中文原文长，用原文居中会整体偏左
+    const std::wstring& shown = localize(value);
+    const int textWidth = textWidthEstimate(shown, size);
+    drawTextLocalized((rect.left + rect.right) / 2 - textWidth / 2,
+                      (rect.top + rect.bottom) / 2 - size * 3 / 4, shown, size, color);
 }
 
 void drawButton(const MenuRect& rect, const std::wstring& label, int fontSize,
@@ -132,6 +134,12 @@ void drawButton(const MenuRect& rect, const std::wstring& label, int fontSize,
     const int bottom = scaledY(rect.bottom);
     setfillcolor(fillColor);
     fillroundrect(left, top, right, bottom, radius, radius);
+    // 宽按钮左侧一条强调条：不用读文字也能看出这个按钮属于哪类操作
+    if (enabled && rect.right - rect.left >= 200) {
+        setfillcolor(accent);
+        bar(scaledX(rect.left + 8), scaledY(rect.top + 11), scaledX(rect.left + 14),
+            scaledY(rect.bottom - 11));
+    }
     setlinecolor(borderColor);
     roundrect(left, top, right, bottom, radius, radius);
     drawTextCentered(rect, label, fontSize,
@@ -182,7 +190,7 @@ bool resizeGameWindow(int width, int height) {
     return true;
 }
 
-std::wstring localize(const std::wstring& value) {
+const std::wstring& localize(const std::wstring& value) {
     if (!english) return value;
     static const std::unordered_map<std::wstring, std::wstring> translations = {
         {L"无限枪洲", L"Mokthyn"},
@@ -436,47 +444,56 @@ std::wstring localize(const std::wstring& value) {
         {L"模式：PVP 对战（按 M 切换）", L"Mode: PVP battle (press M to switch)"},
         {L"模式：合作 PVE（按 M 切换）", L"Mode: Co-op PVE (press M to switch)"}
     };
+    // 动态文案（"备弹 12"、"治疗中  3 秒"…）内容随数值变化，拼好的结果缓存在这里，
+    // 避免每帧重复做前缀判断与字符串拼接（返回引用也省掉每次调用的 wstring 拷贝）
+    static std::unordered_map<std::wstring, std::wstring> derived;
     const auto found = translations.find(value);
     if (found != translations.end()) return found->second;
+    const auto cached = derived.find(value);
+    if (cached != derived.end()) return cached->second;
+
+    std::wstring result = value;
     const std::wstring ammoPrefix = L"拾取弹药  +";
-    if (value.rfind(ammoPrefix, 0) == 0)
-        return L"Ammo picked up  +" + value.substr(ammoPrefix.size());
     const std::wstring networkWaitPrefix = L"等待玩家连接 · UDP ";
-    if (value.rfind(networkWaitPrefix, 0) == 0)
-        return L"Waiting for players · UDP " + value.substr(networkWaitPrefix.size());
     const std::wstring networkHelpPrefix = L"联机使用 UDP ";
-    if (value.rfind(networkHelpPrefix, 0) == 0) {
+    if (value.rfind(ammoPrefix, 0) == 0) {
+        result = L"Ammo picked up  +" + value.substr(ammoPrefix.size());
+    } else if (value.rfind(networkWaitPrefix, 0) == 0) {
+        result = L"Waiting for players · UDP " + value.substr(networkWaitPrefix.size());
+    } else if (value.rfind(networkHelpPrefix, 0) == 0) {
         const size_t separator = value.find(L"；", networkHelpPrefix.size());
         if (separator != std::wstring::npos)
-            return L"Co-op uses UDP " +
-                   value.substr(networkHelpPrefix.size(), separator - networkHelpPrefix.size()) +
-                   L"; check firewall and router settings if connections fail.";
-    }
-    if (value.rfind(L"等级 ", 0) == 0) return L"Tier " + value.substr(3);
-    if (value.rfind(L"队友 ", 0) == 0) return L"Ally " + value.substr(3);
-    if (value.rfind(L"备弹 ", 0) == 0) return L"Reserve " + value.substr(3);
-    if (value.rfind(L"范围 ", 0) == 0) {
+            result =
+                L"Co-op uses UDP " +
+                value.substr(networkHelpPrefix.size(), separator - networkHelpPrefix.size()) +
+                L"; check firewall and router settings if connections fail.";
+    } else if (value.rfind(L"等级 ", 0) == 0) {
+        result = L"Tier " + value.substr(3);
+    } else if (value.rfind(L"队友 ", 0) == 0) {
+        result = L"Ally " + value.substr(3);
+    } else if (value.rfind(L"备弹 ", 0) == 0) {
+        result = L"Reserve " + value.substr(3);
+    } else if (value.rfind(L"范围 ", 0) == 0) {
         const size_t damagePos = value.find(L"  伤害 ");
         if (damagePos != std::wstring::npos)
-            return L"Range " + value.substr(3, damagePos - 3) + L"  Damage " +
-                   value.substr(damagePos + 5);
-    }
-    if (value.rfind(L"治疗中  ", 0) == 0) {
+            result = L"Range " + value.substr(3, damagePos - 3) + L"  Damage " +
+                     value.substr(damagePos + 5);
+    } else if (value.rfind(L"治疗中  ", 0) == 0) {
         std::wstring seconds = value.substr(5);
         if (seconds.size() >= 2 && seconds.substr(seconds.size() - 2) == L" 秒")
             seconds.resize(seconds.size() - 2);
-        return L"Healing  " + seconds + L" sec";
-    }
-    if (value.rfind(L"撤离中  ", 0) == 0) {
+        result = L"Healing  " + seconds + L" sec";
+    } else if (value.rfind(L"撤离中  ", 0) == 0) {
         std::wstring seconds = value.substr(5);
         if (seconds.size() >= 2 && seconds.substr(seconds.size() - 2) == L" 秒")
             seconds.resize(seconds.size() - 2);
-        return L"Extracting  " + seconds + L" sec";
+        result = L"Extracting  " + seconds + L" sec";
+    } else {
+        const size_t targetsSuffix = value.rfind(L"  目标");
+        if (targetsSuffix != std::wstring::npos && targetsSuffix + 4 == value.size())
+            result = value.substr(0, targetsSuffix) + L"  targets";
     }
-    const size_t targetsSuffix = value.rfind(L"  目标");
-    if (targetsSuffix != std::wstring::npos && targetsSuffix + 4 == value.size())
-        return value.substr(0, targetsSuffix) + L"  targets";
-    return value;
+    return derived.emplace(value, std::move(result)).first->second;
 }
 
 void fillRect(int left, int top, int right, int bottom, ege::color_t color) {
@@ -494,10 +511,15 @@ void fillCircle(int x, int y, int radius, ege::color_t color) {
     fillcircle(scaledX(x), scaledY(y), std::max(1, scaledLength(radius)));
 }
 
-void drawText(int x, int y, const std::wstring& value, int size, ege::color_t color) {
-    const std::wstring displayed = localize(value);
-    setbkmode(TRANSPARENT, frameBuffer);
-    setfontbkcolor(TRANSPARENT, frameBuffer);
+void drawTextLocalized(int x, int y, const std::wstring& displayed, int size,
+                       ege::color_t color) {
+    // 背景透明模式与字体只在目标画布/字号真正变化时重设，避免每段文字都调一次 GDI 状态
+    static PIMAGE backgroundTarget = nullptr;
+    if (backgroundTarget != frameBuffer) {
+        setbkmode(TRANSPARENT, frameBuffer);
+        setfontbkcolor(TRANSPARENT, frameBuffer);
+        backgroundTarget = frameBuffer;
+    }
     static PIMAGE fontTarget = nullptr;
     static int fontHeight = 0;
     static unsigned int fontGeneration = static_cast<unsigned int>(-1);
@@ -513,10 +535,26 @@ void drawText(int x, int y, const std::wstring& value, int size, ege::color_t co
     outtextxy(scaledX(x), scaledY(y), displayed.c_str());
 }
 
+void drawText(int x, int y, const std::wstring& value, int size, ege::color_t color) {
+    drawTextLocalized(x, y, localize(value), size, color);
+}
+
 void drawBar(int x, int y, int width, int height, int value, int maximum, ege::color_t color) {
-    fillRect(x, y, x + width, y + height, EGERGB(44, 57, 62));
+    const int radius = std::max(2, height / 2);
+    const int scaledRadius = scaledLength(radius);
+    // 深色轨道 + 圆角填充 + 1px 描边：比原来的纯方块更容易一眼读出剩余量
+    setfillcolor(EGERGB(38, 50, 55));
+    fillroundrect(scaledX(x), scaledY(y), scaledX(x + width), scaledY(y + height), scaledRadius,
+                  scaledRadius);
     const int filled = maximum > 0 ? width * std::clamp(value, 0, maximum) / maximum : 0;
-    if (filled > 0) fillRect(x, y, x + filled, y + height, color);
+    if (filled > 1) {
+        setfillcolor(color);
+        fillroundrect(scaledX(x), scaledY(y), scaledX(x + filled), scaledY(y + height),
+                      scaledRadius, scaledRadius);
+    }
+    setlinecolor(EGERGB(58, 73, 78));
+    roundrect(scaledX(x), scaledY(y), scaledX(x + width), scaledY(y + height), scaledRadius,
+              scaledRadius);
 }
 
 // 目标在当前视口外时，在战斗区边缘画一个指向它的方向标记
@@ -551,12 +589,13 @@ void drawOffscreenMarker(int targetX, int targetY, ege::color_t color, const wch
 
 void drawMap() {
     computeVisibility();
-    // 敌人位置索引：按格查找 O(1)，替代每格遍历全部敌人的 O(格数×敌人数)
-    std::unordered_map<long long, const Enemy*> enemyByTile;
+    // 敌人位置索引：静态查表 O(1)，替代每帧现建一张哈希表（60fps 下原本每秒要建 60 张）
+    static std::array<const Enemy*, static_cast<size_t>(MapColumns) * MapRows> enemyAtTile{};
+    std::fill(enemyAtTile.begin(), enemyAtTile.end(), nullptr);
     for (const Enemy& enemy : enemies) {
-        if (enemy.alive)
-            enemyByTile[(static_cast<long long>(enemy.y) << 32) |
-                        static_cast<unsigned int>(enemy.x)] = &enemy;
+        if (!enemy.alive) continue;
+        if (enemy.x < 0 || enemy.x >= MapColumns || enemy.y < 0 || enemy.y >= MapRows) continue;
+        enemyAtTile[static_cast<size_t>(enemy.y) * MapColumns + enemy.x] = &enemy;
     }
     const int tileSize = battleTileSize();
     const int areaLeft = battleMapLeft();
@@ -578,12 +617,12 @@ void drawMap() {
             const int top = areaTop + sy * tileSize;
             if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows) {
                 fillRect(left, top, left + tileSize - 1, top + tileSize - 1,
-                         EGERGB(16, 23, 28));
+                         EGERGB(13, 19, 23));
                 continue;
             }
             if (!visible[y][x]) {
                 fillRect(left, top, left + tileSize - 1, top + tileSize - 1,
-                         EGERGB(16, 23, 28));
+                         EGERGB(13, 19, 23));
                 continue;
             }
 
@@ -591,8 +630,6 @@ void drawMap() {
             if (world[y][x] == Wall) tileColor = EGERGB(67, 77, 75);
             if (world[y][x] == ExitTile) tileColor = EGERGB(34, 78, 63);
             fillRect(left, top, left + tileSize - 1, top + tileSize - 1, tileColor);
-            outlineRect(left, top, left + tileSize - 1, top + tileSize - 1,
-                        EGERGB(24, 35, 39));
 
             if (world[y][x] == AmmoPickup) {
                 fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize / 5, Yellow);
@@ -605,11 +642,9 @@ void drawMap() {
                 drawText(left + tileSize / 2 - 6, top + tileSize / 2 - 10, L"E", 19, Green);
             }
 
-            const auto enemyEntry =
-                enemyByTile.find((static_cast<long long>(y) << 32) |
-                                 static_cast<unsigned int>(x));
-            if (enemyEntry != enemyByTile.end()) {
-                const Enemy& enemy = *enemyEntry->second;
+            const Enemy* tileEnemy = enemyAtTile[static_cast<size_t>(y) * MapColumns + x];
+            if (tileEnemy != nullptr) {
+                const Enemy& enemy = *tileEnemy;
                 fillCircle(left + tileSize / 2, top + tileSize / 2,
                            enemy.boss ? tileSize * 2 / 5 : tileSize * 3 / 10,
                            enemy.boss
@@ -637,6 +672,18 @@ void drawMap() {
                 }
             }
         }
+    }
+
+    // 网格线一次画完：原来每格一次 outlineRect（约 600 次 GDI 调用/帧），
+    // 合并成 (tilesX+1)+(tilesY+1) 条约 50 次，网格也更整齐
+    setlinecolor(EGERGB(24, 35, 39));
+    for (int sx = 0; sx <= tilesX; ++sx) {
+        const int lineX = scaledX(areaLeft + sx * tileSize);
+        line(lineX, scaledY(areaTop), lineX, scaledY(areaTop + areaH - 1));
+    }
+    for (int sy = 0; sy <= tilesY; ++sy) {
+        const int lineY = scaledY(areaTop + sy * tileSize);
+        line(scaledX(areaLeft), lineY, scaledX(areaLeft + areaW - 1), lineY);
     }
 
     if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
@@ -676,6 +723,7 @@ void drawHud() {
 
     drawText(x + padding, 94, L"无限枪洲", 31, Text);
     drawText(x + padding, 139, L"FIELD OPERATION  /  01", 14, Muted);
+    fillRect(x + padding, 168, right - padding, 169, EGERGB(52, 65, 68));
     drawText(x + padding, 183, L"生命", 17, Muted);
     drawText(valueX, 181, std::to_wstring(health) + L" / " + std::to_wstring(MaxHealth), 18,
              health > 60 ? Green : (health > 30 ? Yellow : Red));
@@ -800,6 +848,11 @@ void drawMenu() {
 
     drawButton(menuLanguageButton(), L"语言 L", 18, Cyan, true, hoverX, hoverY);
 
+    // 左右两栏的分组标题与分栏线
+    drawText(440, 234, L"单人行动", 17, Muted);
+    drawText(820, 234, L"其他入口", 17, Muted);
+    fillRect(440, 260, 1160, 261, EGERGB(52, 65, 68));
+
     drawButton(menuLeftButton(0), L"开始行动", 23, Green, true, hoverX, hoverY);
     drawButton(menuLeftButton(1), L"黑市商店", 23, Yellow, true, hoverX, hoverY);
     drawButton(menuLeftButton(2), L"操作说明", 23, Cyan, true, hoverX, hoverY);
@@ -823,8 +876,13 @@ void drawMenu() {
     drawButton(menuBottomButton(1), L"切换语言 L", 19, Cyan, true, hoverX, hoverY);
     drawButton(menuBottomButton(2), L"退出", 19, Red, true, hoverX, hoverY);
 
-    if (!archiveStatus.empty()) drawText(430, 700, archiveStatus, 16, Yellow);
-    if (Clock::now() < messageUntil) drawText(430, 730, message, 16, Yellow);
+    // 状态/提示统一放进底部一条状态栏，避免文字散落在页面上
+    if (!archiveStatus.empty() || Clock::now() < messageUntil) {
+        fillRect(430, 690, 1170, 748, Panel);
+        outlineRect(430, 690, 1170, 748, EGERGB(52, 65, 68));
+    }
+    if (!archiveStatus.empty()) drawText(446, 700, archiveStatus, 16, Yellow);
+    if (Clock::now() < messageUntil) drawText(446, 726, message, 16, Yellow);
 }
 
 void drawNetworkLobby() {
@@ -973,6 +1031,12 @@ void drawSettings() {
         std::to_wstring(uiScalePercent) + L"%",
         std::to_wstring(windowWidth) + L" px",
         std::to_wstring(windowHeight) + L" px"};
+    const std::array<int, SettingsItemCount> currentValues = {uiScalePercent, windowWidth,
+                                                              windowHeight};
+    const std::array<int, SettingsItemCount> minValues = {MinUiScalePercent, MinWindowWidth,
+                                                         MinWindowHeight};
+    const std::array<int, SettingsItemCount> maxValues = {MaxUiScalePercent, MaxWindowWidth,
+                                                         MaxWindowHeight};
 
     int mouseX = 0, mouseY = 0;
     mousepos(&mouseX, &mouseY);
@@ -985,6 +1049,11 @@ void drawSettings() {
                    selected ? Green : Text, true, hoverX, hoverY);
         drawButton(settingsMinusButton(i), L"−", 24, Cyan, true, hoverX, hoverY);
         drawButton(settingsPlusButton(i), L"+", 24, Cyan, true, hoverX, hoverY);
+        // 行下方细条：当前值落在允许区间的什么位置，一眼看出还能往哪调
+        const MenuRect row = settingsRowRect(i);
+        drawBar(row.left + 12, row.bottom + 8, row.right - row.left - 24, 6,
+                currentValues[i] - minValues[i], maxValues[i] - minValues[i],
+                selected ? Green : Cyan);
     }
     drawButton(settingsResetButton(), L"恢复默认  0", 20, Yellow, true, hoverX, hoverY);
     drawButton(settingsBackButton(), L"返回  ENTER / ESC", 20, Green, true, hoverX, hoverY);
@@ -995,9 +1064,14 @@ void drawResult() {
     cleardevice();
     fillRect(250, 155, 1350, 755, Panel);
     const bool pvp = gameMode == GameMode::Pvp;
+    drawText(342, 190, L"OPERATION RESULT", 16, Muted);
     drawText(340, 230,
              pvp ? (won ? L"胜利" : L"失败") : (won ? L"撤离成功" : L"行动结束"), 58,
              won ? Green : Red);
+    fillRect(340, 302, 700, 305, won ? Green : Red);
+    // 数据三列之间加细竖线，读起来更清楚
+    fillRect(690, 322, 691, 420, EGERGB(52, 65, 68));
+    fillRect(1010, 322, 1011, 420, EGERGB(52, 65, 68));
     if (!pvp) {
         drawText(345, 332, L"本次击杀", 20, Muted);
         drawText(345, 370,
