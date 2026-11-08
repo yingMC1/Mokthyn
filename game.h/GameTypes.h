@@ -34,6 +34,13 @@ inline constexpr int AmmoPickupCount = 24;
 inline constexpr int MedkitPickupCount = 14;
 inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
+// ===== 更新检查 =====
+// 发布新版本时只需要改这两处：这里的版本号，以及服务器上的 check_update.php
+inline constexpr wchar_t GameVersion[] = L"0.1.3";
+inline constexpr wchar_t UpdateCheckHost[] = L"mokthyn.rf.gd";
+inline constexpr wchar_t UpdateCheckPath[] = L"/check_update.php";
+inline constexpr int UpdateCheckTimeoutMs = 4000;
+
 inline const ege::color_t Background = EGERGB(12, 18, 24);
 inline const ege::color_t Panel = EGERGB(21, 30, 37);
 inline const ege::color_t PanelLight = EGERGB(30, 42, 49);

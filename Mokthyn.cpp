@@ -11,12 +11,16 @@
 #include "game.h/GameNetwork.h"
 #include "game.h/GameNetworkImpl.h"
 #include "game.h/GameRender.h"
-#include "game.h/GameRenderImpl.h"
 #include "game.h/GameState.h"
 #include "game.h/GameTypes.h"
+#include "game.h/GameUpdate.h"
+#include "game.h/GameUpdateImpl.h"
+#include "game.h/GameRenderImpl.h"
 int main() {
     using namespace mokthyn;
     SetProcessDPIAware();
+    // 后台检查更新：不阻塞启动，发现新版本时在主菜单顶部提示
+    startUpdateCheck();
     loadArchive();
     setinitmode(INIT_DEFAULT);
     initgraph(windowWidth, windowHeight);
@@ -119,6 +123,8 @@ int main() {
                 setMessage(difficulty == Difficulty::Easy   ? L"难度：简单"
                            : difficulty == Difficulty::Normal ? L"难度：普通"
                                                               : L"难度：困难");
+            } else if (keyPressed('U')) {
+                if (!openUpdateDownloadPage()) setMessage(L"下载页面无法打开");
             } else if (keyPressed(VK_ESCAPE)) {
                 saveArchive();
                 settarget(nullptr);
@@ -258,7 +264,7 @@ int main() {
                 const bool enterPressed = keyPressed(VK_RETURN);
                 const bool nextPagePressed = keyPressed(VK_RIGHT) || keyPressed(VK_DOWN);
                 const bool previousPagePressed = keyPressed(VK_LEFT) || keyPressed(VK_UP);
-                const bool downloadPressed = keyPressed('D');
+                const bool downloadPressed = keyPressed('D') || keyPressed('U');
                 if (escapePressed || enterPressed) {
                     screen = Screen::Menu;
                 } else if (nextPagePressed) {
@@ -319,7 +325,9 @@ int main() {
                 if (!handled) {
                     if (designPointInRect(clickX, clickY, settingsResetButton()))
                         resetSettings();
-                    else if (designPointInRect(clickX, clickY, settingsBackButton()))
+                    else if (designPointInRect(clickX, clickY, settingsUpdateButton())) {
+                        if (!openUpdateDownloadPage()) setMessage(L"下载页面无法打开");
+                    } else if (designPointInRect(clickX, clickY, settingsBackButton()))
                         screen = Screen::Menu;
                 }
             }
@@ -340,6 +348,8 @@ int main() {
                 adjustSetting(rightPressed ? 1 : -1);
             } else if (resetPressed) {
                 resetSettings();
+            } else if (keyPressed('U')) {
+                if (!openUpdateDownloadPage()) setMessage(L"下载页面无法打开");
             }
             drawSettings();
             break;

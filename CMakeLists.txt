@@ -52,7 +52,7 @@ endif()
 target_include_directories(${MY_TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/ege/include)
 target_compile_features(${MY_TARGET_NAME} PRIVATE cxx_std_17)
 set_target_properties(${MY_TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
-target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32 shell32 crypt32 bcrypt)
+target_link_libraries(${MY_TARGET_NAME} PRIVATE ws2_32 shell32 crypt32 bcrypt winhttp)
 
 # 设置静态库搜索路径
 if(MSVC)

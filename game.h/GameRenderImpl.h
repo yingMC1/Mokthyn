@@ -4,6 +4,7 @@
 #include "GameRender.h"
 #include "GameState.h"
 #include "GameTypes.h"
+#include "GameUpdate.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -160,6 +161,7 @@ MenuRect settingsRowRect(int index) { return {130, 215 + index * 100, 1470, 265 
 MenuRect settingsMinusButton(int index) { return {1180, 215 + index * 100, 1300, 265 + index * 100}; }
 MenuRect settingsPlusButton(int index) { return {1330, 215 + index * 100, 1450, 265 + index * 100}; }
 MenuRect settingsResetButton() { return {1150, 540, 1420, 600}; }
+MenuRect settingsUpdateButton() { return {620, 540, 940, 600}; }
 MenuRect settingsBackButton() { return {130, 620, 420, 690}; }
 MenuRect pauseResumeButton() { return {620, 460, 840, 530}; }
 MenuRect pauseExitButton() { return {860, 460, 1080, 530}; }
@@ -844,6 +846,18 @@ void drawMenu() {
     // 标题 + 副标题 + 装饰线
     drawText(430, 78, L"无限枪洲", 72, Text);
     drawText(438, 158, L"FIELD OPERATION  /  01", 17, Muted);
+    // 顶部更新徽标：只有真的发现新版本才出现，正常启动路径完全不受影响
+    if (updateStatus() == UpdateStatus::Available) {
+        static bool cachedEnglish = false;
+        static std::wstring cachedLabel;
+        const std::wstring& latestVersion = updateLatestVersion();
+        if (cachedLabel.empty() || cachedEnglish != english) {
+            cachedEnglish = english;
+            cachedLabel = (english ? L"Update available  v" : L"发现新版本 v") + latestVersion +
+                          (english ? L"  ·  press U" : L"  ·  按 U 打开下载页");
+        }
+        drawText(440, 180, cachedLabel, 17, Green);
+    }
     fillRect(440, 208, 1160, 211, Green);
 
     drawButton(menuLanguageButton(), L"语言 L", 18, Cyan, true, hoverX, hoverY);
@@ -1056,7 +1070,30 @@ void drawSettings() {
                 selected ? Green : Cyan);
     }
     drawButton(settingsResetButton(), L"恢复默认  0", 20, Yellow, true, hoverX, hoverY);
+    drawButton(settingsUpdateButton(), L"检查更新  U", 20,
+               updateStatus() == UpdateStatus::Available ? Green : Cyan, true, hoverX, hoverY);
     drawButton(settingsBackButton(), L"返回  ENTER / ESC", 20, Green, true, hoverX, hoverY);
+    // 当前版本 + 后台检查结果
+    std::wstring versionText;
+    ege::color_t versionColor = Muted;
+    const std::wstring currentVersion(GameVersion);
+    switch (updateStatus()) {
+    case UpdateStatus::Checking:
+        versionText = english ? L"Checking for updates..." : L"正在检查更新...";
+        break;
+    case UpdateStatus::Available:
+        versionText = (english ? L"New version v" : L"发现新版本 v") + updateLatestVersion();
+        versionColor = Green;
+        break;
+    case UpdateStatus::UpToDate:
+        versionText = english ? L"Up to date (v" + currentVersion + L")"
+                              : L"已是最新版本 v" + currentVersion;
+        break;
+    default:
+        versionText = english ? L"Update server unreachable" : L"未连接到更新服务器";
+        break;
+    }
+    drawText(620, 606, versionText, 16, versionColor);
     if (!archiveStatus.empty()) drawText(130, 710, archiveStatus, 16, Yellow);
 }
 
