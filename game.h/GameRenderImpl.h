@@ -14,23 +14,43 @@
 #include <ws2tcpip.h>
 
 namespace mokthyn {
+// 设计画布到窗口的统一等比因子（百分比，取宽高里较小的那一边）
+// 旧实现里 scaledX 用 windowWidth、scaledY 用 windowHeight 各算各的，窗口比例偏离 16:9
+// 时界面会被横向拉宽、纵向压扁；而且两者都又乘一遍 uiScalePercent，
+// 界面缩放 110% 就等于内容比窗口大 10%，120% 大 20%，右下角按钮必然被窗口边缘切成一半。
+int uiFitPercent() {
+    return std::min(windowWidth * 100 / DesignWidth, windowHeight * 100 / DesignHeight);
+}
+
+// 等比缩放到窗口后剩余空间的一半，内容居中；两边留的是与背景同色的边，不会看到裁剪
+int uiOffsetX() {
+    return (windowWidth - DesignWidth * uiFitPercent() / 100) / 2;
+}
+
+int uiOffsetY() {
+    return (windowHeight - DesignHeight * uiFitPercent() / 100) / 2;
+}
+
+// 字号与圆角按「等比因子 × 界面缩放」走：界面缩放只让元素内部尺寸变大，
+// 不参与布局矩形的映射，所以放大字号也不会把按钮推出窗口
 int scaledLength(int value) {
-    const int scalePercent =
-        std::min(windowWidth * 100 / DesignWidth, windowHeight * 100 / DesignHeight);
-    return value * scalePercent * uiScalePercent / 10000;
+    return static_cast<int>(static_cast<long long>(value) * uiFitPercent() * uiScalePercent /
+                           10000);
 }
 
 int scaledX(int value) {
-    return value * windowWidth * uiScalePercent / (DesignWidth * 100);
+    return uiOffsetX() + static_cast<int>(static_cast<long long>(value) * uiFitPercent() / 100);
 }
 
 int scaledY(int value) {
-    return value * windowHeight * uiScalePercent / (DesignHeight * 100);
+    return uiOffsetY() + static_cast<int>(static_cast<long long>(value) * uiFitPercent() / 100);
 }
 
-int visibleDesignWidth() { return DesignWidth * 100 / uiScalePercent; }
+// 可见设计区域恒等于设计画布：所有布局（含战斗 HUD）都排在 1600×900 之内，
+// 等比缩放到窗口后必然完整可见
+int visibleDesignWidth() { return DesignWidth; }
 
-int visibleDesignHeight() { return DesignHeight * 100 / uiScalePercent; }
+int visibleDesignHeight() { return DesignHeight; }
 
 int battleMapLeft() { return 30; }
 
@@ -78,11 +98,15 @@ struct MenuRect {
 };
 
 bool mouseDesignPos(int px, int py, int& dx, int& dy) {
-    dx = static_cast<int>(static_cast<long long>(px) * DesignWidth * 100 /
-                          (windowWidth * uiScalePercent));
-    dy = static_cast<int>(static_cast<long long>(py) * DesignHeight * 100 /
-                          (windowHeight * uiScalePercent));
-    return dx >= 0 && dy >= 0;
+    // scaledX / scaledY 的逆运算：先减掉居中原点，再按同一个等比因子折回设计坐标。
+    // 旧实现把 uiScalePercent 也放在分母里，和绘制侧的映射不对称，缩放一调鼠标就偏。
+    const int fit = uiFitPercent();
+    const int originX = uiOffsetX();
+    const int originY = uiOffsetY();
+    if (fit <= 0 || px < originX || py < originY) return false;
+    dx = static_cast<int>(static_cast<long long>(px - originX) * 100 / fit);
+    dy = static_cast<int>(static_cast<long long>(py - originY) * 100 / fit);
+    return true;
 }
 
 bool designPointInRect(int dx, int dy, const MenuRect& rect) {
@@ -100,14 +124,17 @@ bool pollMouseClick(int& dx, int& dy) {
 }
 
 int textWidthEstimate(const std::wstring& value, int size) {
+    // 实际绘制字号是 scaledLength(size)（含界面缩放），换算回设计单位再估宽；
+    // 否则缩放 > 100% 时估算偏小，居中文字会整体偏左
+    const int effectiveSize = std::max(1, size * uiScalePercent / 100);
     int width = 0;
     for (const wchar_t character : value) {
         if (character >= 0x4E00 && character <= 0x9FFF)
-            width += size;
+            width += effectiveSize;
         else if (character == L' ')
-            width += size / 2;
+            width += effectiveSize / 2;
         else
-            width += size * 6 / 10;
+            width += effectiveSize * 6 / 10;
     }
     return width;
 }
@@ -117,8 +144,9 @@ void drawTextCentered(const MenuRect& rect, const std::wstring& value, int size,
     // 按本地化后的文本量宽：英文标签明显比中文原文长，用原文居中会整体偏左
     const std::wstring& shown = localize(value);
     const int textWidth = textWidthEstimate(shown, size);
+    const int effectiveSize = std::max(1, size * uiScalePercent / 100);
     drawTextLocalized((rect.left + rect.right) / 2 - textWidth / 2,
-                      (rect.top + rect.bottom) / 2 - size * 3 / 4, shown, size, color);
+                      (rect.top + rect.bottom) / 2 - effectiveSize * 3 / 4, shown, size, color);
 }
 
 void drawButton(const MenuRect& rect, const std::wstring& label, int fontSize,
