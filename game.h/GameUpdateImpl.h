@@ -155,17 +155,19 @@ inline std::string fetchVersionTextFrom(const wchar_t* host, const wchar_t* path
     return result;
 }
 
-// 依次尝试：主站 HTTPS → 主站 HTTP → 仓库镜像。某一源拿到响应但解析不出合规版本号
-// （典型是被免费主机的脚本校验页吞掉）就继续下一个源，全部失败才认为连不上
+// 依次尝试：Gitee raw（国内直连，实测可用）→ GitHub raw → 主站 HTTPS → 主站 HTTP。
+// 主站被免费主机的 aes.js 脚本校验挡在 PHP 之前，纯 HTTP 客户端拿不到正文，只留作换域名后的兜底；
+// 某一源拿到响应但解析不出合规版本号（典型就是那个 856 字节的验证页）就继续下一个源
 inline std::string fetchRemoteVersion() {
     static const struct {
         const wchar_t* host;
         const wchar_t* path;
         bool secure;
     } sources[] = {
+        {UpdateMirrorHostCn, UpdateMirrorPathCn, true},
+        {UpdateMirrorHost, UpdateMirrorPath, true},
         {UpdateCheckHost, UpdateCheckPath, true},
         {UpdateCheckHost, UpdateCheckPath, false},
-        {UpdateMirrorHost, UpdateMirrorPath, true},
     };
     for (const auto& source : sources) {
         const std::string raw = fetchVersionTextFrom(source.host, source.path, source.secure);
