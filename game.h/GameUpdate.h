@@ -9,7 +9,7 @@ enum class UpdateStatus : int { Idle, Checking, UpToDate, Available, Failed };
 
 inline UpdateStatus updateStatus();
 // 仓库源返回的最新版本号（Available / UpToDate 状态下有意义）
-inline const std::wstring& updateLatestVersion();
+inline const std::wstring &updateLatestVersion();
 // 发起一次后台检查。启动时调用一次，设置页「检查更新」可以反复调用；
 // 上一轮还没结束时本次请求会被忽略
 inline void startUpdateCheck();
@@ -18,4 +18,4 @@ inline void startUpdateCheck();
 inline bool consumeUpdateOpenRequest();
 // 用默认浏览器打开下载页，返回是否成功
 inline bool openUpdateDownloadPage();
-} // namespace mokthyn
+}    // namespace mokthyn

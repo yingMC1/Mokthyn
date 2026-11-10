@@ -21,7 +21,7 @@
                 "-static-libstdc++"
             ],
             "includePath": [
-                "${myDefaultIncludePath}"
+                "${systemIncludePath}"
             ],
             "configurationProvider": "ms-vscode.cmake-tools"
         },
@@ -40,7 +40,7 @@
                 "-static-libstdc++"
             ],
             "includePath": [
-                "${myDefaultIncludePath}"
+                "${systemIncludePath}"
             ],
             "configurationProvider": "ms-vscode.cmake-tools"
         },
@@ -55,7 +55,7 @@
                 "NOMINMAX=1"
             ],
             "includePath": [
-                "${myDefaultIncludePath}"
+                "${systemIncludePath}"
             ],
             "configurationProvider": "ms-vscode.cmake-tools"
         }

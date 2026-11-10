@@ -4,7 +4,7 @@
 
 namespace mokthyn {
 inline int randomInt(int low, int high);
-inline void setMessage(const std::wstring& text, int milliseconds = 1800);
+inline void setMessage(const std::wstring &text, int milliseconds = 1800);
 inline void resetRunProgress();
 inline void resumeSavedRun();
 inline void cancelExtraction();
@@ -24,4 +24,4 @@ inline void movePlayer(int dx, int dy);
 inline void buySelectedItem();
 inline bool keyPressed(int key);
 inline void updatePlaying();
-} // namespace mokthyn
+}    // namespace mokthyn

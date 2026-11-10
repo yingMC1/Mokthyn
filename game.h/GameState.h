@@ -2,9 +2,9 @@
 
 #include "GameTypes.h"
 #include <deque>
+#include <random>
 #include <unordered_map>
 #include <unordered_set>
-#include <random>
 #include <winsock2.h>
 
 namespace mokthyn {
@@ -104,14 +104,17 @@ inline Clock::time_point lastEvacSend{};
 inline Clock::time_point peerExtractStarted{};
 inline bool peerExtracting = false;
 inline unsigned int nextReliablePacketId = 1;
+
 struct PendingReliablePacket {
     std::string payload;
     Clock::time_point lastSent{};
     unsigned int attempts = 0;
 };
-inline std::unordered_map<unsigned int, PendingReliablePacket> pendingReliablePackets;
+
+inline std::unordered_map<unsigned int, PendingReliablePacket>
+    pendingReliablePackets;
 inline std::unordered_set<unsigned int> receivedReliablePacketIds;
 inline std::deque<unsigned int> receivedReliablePacketOrder;
 inline unsigned int networkMapRevision = 0;
 inline unsigned int peerMapRevision = 0;
-} // namespace mokthyn
+}    // namespace mokthyn

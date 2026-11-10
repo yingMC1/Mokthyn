@@ -35,12 +35,15 @@ inline constexpr int MedkitPickupCount = 14;
 inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
 // ===== 更新检查 =====
-// 发布新版本时只需要改两处：这里的版本号、仓库根目录的 version.txt（GitHub 与 Gitee 各一份）
+// 发布新版本时只需要改两处：这里的版本号、仓库根目录的 version.txt（GitHub 与 Gitee
+// 各一份）
 inline constexpr wchar_t GameVersion[] = L"0.1.4";
 // 版本源只认仓库：Gitee raw 国内直连（首选）→ GitHub raw 海外备用。
-// 主站 mokthyn.rf.gd 在 PHP 之前强制一层 aes.js 脚本校验，纯 HTTP 客户端拿不到正文，已不再请求
+// 主站 mokthyn.rf.gd 在 PHP 之前强制一层 aes.js 脚本校验，纯 HTTP
+// 客户端拿不到正文，已不再请求
 inline constexpr wchar_t UpdateMirrorHostCn[] = L"gitee.com";
-inline constexpr wchar_t UpdateMirrorPathCn[] = L"/yingMC/mokthyn/raw/main/version.txt";
+inline constexpr wchar_t UpdateMirrorPathCn[] =
+    L"/yingMC/mokthyn/raw/main/version.txt";
 inline constexpr wchar_t UpdateMirrorHost[] = L"raw.githubusercontent.com";
 inline constexpr wchar_t UpdateMirrorPath[] = L"/yingMC1/Mokthyn/main/version.txt";
 inline constexpr int UpdateCheckTimeoutMs = 4000;
@@ -60,7 +63,18 @@ inline const std::array<int, 5> ArmorDurability = {0, 50, 75, 100, 125};
 inline const std::array<int, 5> ArmorReduction = {0, 4, 7, 10, 13};
 
 enum Tile : int { Floor, Wall, AmmoPickup, ExitTile, MedkitPickup };
-enum class Screen { Menu, Shop, Help, Settings, Playing, Paused, Result, HostLobby, JoinIp, JoinLobby };
+enum class Screen {
+    Menu,
+    Shop,
+    Help,
+    Settings,
+    Playing,
+    Paused,
+    Result,
+    HostLobby,
+    JoinIp,
+    JoinLobby
+};
 enum class GameMode { Coop, Pvp };
 enum class Difficulty { Easy, Normal, Hard };
 enum class WeaponMode { Gun, Knife };
@@ -153,4 +167,4 @@ struct ArchiveSnapshot {
     bool armorOn = false;
     bool valid = false;
 };
-} // namespace mokthyn
+}    // namespace mokthyn

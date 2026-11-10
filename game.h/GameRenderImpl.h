@@ -15,11 +15,12 @@
 
 namespace mokthyn {
 // 设计画布到窗口的统一等比因子（百分比，取宽高里较小的那一边）
-// 旧实现里 scaledX 用 windowWidth、scaledY 用 windowHeight 各算各的，窗口比例偏离 16:9
-// 时界面会被横向拉宽、纵向压扁；而且两者都又乘一遍 uiScalePercent，
-// 界面缩放 110% 就等于内容比窗口大 10%，120% 大 20%，右下角按钮必然被窗口边缘切成一半。
+// 旧实现里 scaledX 用 windowWidth、scaledY 用 windowHeight 各算各的，窗口比例偏离
+// 16:9 时界面会被横向拉宽、纵向压扁；而且两者都又乘一遍 uiScalePercent， 界面缩放
+// 110% 就等于内容比窗口大 10%，120% 大 20%，右下角按钮必然被窗口边缘切成一半。
 int uiFitPercent() {
-    return std::min(windowWidth * 100 / DesignWidth, windowHeight * 100 / DesignHeight);
+    return std::min(windowWidth * 100 / DesignWidth,
+                    windowHeight * 100 / DesignHeight);
 }
 
 // 等比缩放到窗口后剩余空间的一半，内容居中；两边留的是与背景同色的边，不会看到裁剪
@@ -34,37 +35,57 @@ int uiOffsetY() {
 // 字号与圆角按「等比因子 × 界面缩放」走：界面缩放只让元素内部尺寸变大，
 // 不参与布局矩形的映射，所以放大字号也不会把按钮推出窗口
 int scaledLength(int value) {
-    return static_cast<int>(static_cast<long long>(value) * uiFitPercent() * uiScalePercent /
-                           10000);
+    return static_cast<int>(static_cast<long long>(value) * uiFitPercent() *
+                            uiScalePercent / 10000);
 }
 
 int scaledX(int value) {
-    return uiOffsetX() + static_cast<int>(static_cast<long long>(value) * uiFitPercent() / 100);
+    return uiOffsetX() +
+           static_cast<int>(static_cast<long long>(value) * uiFitPercent() / 100);
 }
 
 int scaledY(int value) {
-    return uiOffsetY() + static_cast<int>(static_cast<long long>(value) * uiFitPercent() / 100);
+    return uiOffsetY() +
+           static_cast<int>(static_cast<long long>(value) * uiFitPercent() / 100);
 }
 
 // 可见设计区域恒等于设计画布：所有布局（含战斗 HUD）都排在 1600×900 之内，
 // 等比缩放到窗口后必然完整可见
-int visibleDesignWidth() { return DesignWidth; }
+int visibleDesignWidth() {
+    return DesignWidth;
+}
 
-int visibleDesignHeight() { return DesignHeight; }
+int visibleDesignHeight() {
+    return DesignHeight;
+}
 
-int battleMapLeft() { return 30; }
+int battleMapLeft() {
+    return 30;
+}
 
-int battleMapTop() { return 90; }
+int battleMapTop() {
+    return 90;
+}
 
-int battleHudLeft() { return visibleDesignWidth() - 406; }
+int battleHudLeft() {
+    return visibleDesignWidth() - 406;
+}
 
-int battleHudRight() { return visibleDesignWidth() - 24; }
+int battleHudRight() {
+    return visibleDesignWidth() - 24;
+}
 
-int battleMapAreaWidth() { return battleHudLeft() - 24 - battleMapLeft(); }
+int battleMapAreaWidth() {
+    return battleHudLeft() - 24 - battleMapLeft();
+}
 
-int battleMapAreaHeight() { return visibleDesignHeight() - 50 - battleMapTop(); }
+int battleMapAreaHeight() {
+    return visibleDesignHeight() - 50 - battleMapTop();
+}
 
-int battleHudWidth() { return battleHudRight() - battleHudLeft(); }
+int battleHudWidth() {
+    return battleHudRight() - battleHudLeft();
+}
 
 int battleTileSize() {
     const int byWidth = battleMapAreaWidth() / BattleTilesX;
@@ -72,9 +93,13 @@ int battleTileSize() {
     return std::clamp(std::min(byWidth, byHeight), 18, 40);
 }
 
-int battleTilesX() { return battleMapAreaWidth() / battleTileSize(); }
+int battleTilesX() {
+    return battleMapAreaWidth() / battleTileSize();
+}
 
-int battleTilesY() { return battleMapAreaHeight() / battleTileSize(); }
+int battleTilesY() {
+    return battleMapAreaHeight() / battleTileSize();
+}
 
 int battleCameraX() {
     const int tx = battleTilesX();
@@ -88,16 +113,20 @@ int battleCameraY() {
     return std::clamp(playerY - ty / 2, 0, MapRows - ty);
 }
 
-int tileScreenX(int x) { return battleMapLeft() + (x - battleCameraX()) * battleTileSize(); }
+int tileScreenX(int x) {
+    return battleMapLeft() + (x - battleCameraX()) * battleTileSize();
+}
 
-int tileScreenY(int y) { return battleMapTop() + (y - battleCameraY()) * battleTileSize(); }
+int tileScreenY(int y) {
+    return battleMapTop() + (y - battleCameraY()) * battleTileSize();
+}
 
 // ===== 鼠标按钮化 UI 工具 =====
 struct MenuRect {
     int left, top, right, bottom;
 };
 
-bool mouseDesignPos(int px, int py, int& dx, int& dy) {
+bool mouseDesignPos(int px, int py, int &dx, int &dy) {
     // scaledX / scaledY 的逆运算：先减掉居中原点，再按同一个等比因子折回设计坐标。
     // 旧实现把 uiScalePercent 也放在分母里，和绘制侧的映射不对称，缩放一调鼠标就偏。
     const int fit = uiFitPercent();
@@ -109,11 +138,12 @@ bool mouseDesignPos(int px, int py, int& dx, int& dy) {
     return true;
 }
 
-bool designPointInRect(int dx, int dy, const MenuRect& rect) {
-    return dx >= rect.left && dx <= rect.right && dy >= rect.top && dy <= rect.bottom;
+bool designPointInRect(int dx, int dy, const MenuRect &rect) {
+    return dx >= rect.left && dx <= rect.right && dy >= rect.top &&
+           dy <= rect.bottom;
 }
 
-bool pollMouseClick(int& dx, int& dy) {
+bool pollMouseClick(int &dx, int &dy) {
     while (mousemsg()) {
         const mouse_msg message = getmouse();
         if (message.is_left() && message.is_down() &&
@@ -123,33 +153,31 @@ bool pollMouseClick(int& dx, int& dy) {
     return false;
 }
 
-int textWidthEstimate(const std::wstring& value, int size) {
+int textWidthEstimate(const std::wstring &value, int size) {
     // 实际绘制字号是 scaledLength(size)（含界面缩放），换算回设计单位再估宽；
     // 否则缩放 > 100% 时估算偏小，居中文字会整体偏左
     const int effectiveSize = std::max(1, size * uiScalePercent / 100);
     int width = 0;
     for (const wchar_t character : value) {
-        if (character >= 0x4E00 && character <= 0x9FFF)
-            width += effectiveSize;
-        else if (character == L' ')
-            width += effectiveSize / 2;
-        else
-            width += effectiveSize * 6 / 10;
+        if (character >= 0x4E00 && character <= 0x9FFF) width += effectiveSize;
+        else if (character == L' ') width += effectiveSize / 2;
+        else width += effectiveSize * 6 / 10;
     }
     return width;
 }
 
-void drawTextCentered(const MenuRect& rect, const std::wstring& value, int size,
+void drawTextCentered(const MenuRect &rect, const std::wstring &value, int size,
                       ege::color_t color) {
     // 按本地化后的文本量宽：英文标签明显比中文原文长，用原文居中会整体偏左
-    const std::wstring& shown = localize(value);
+    const std::wstring &shown = localize(value);
     const int textWidth = textWidthEstimate(shown, size);
     const int effectiveSize = std::max(1, size * uiScalePercent / 100);
     drawTextLocalized((rect.left + rect.right) / 2 - textWidth / 2,
-                      (rect.top + rect.bottom) / 2 - effectiveSize * 3 / 4, shown, size, color);
+                      (rect.top + rect.bottom) / 2 - effectiveSize * 3 / 4, shown,
+                      size, color);
 }
 
-void drawButton(const MenuRect& rect, const std::wstring& label, int fontSize,
+void drawButton(const MenuRect &rect, const std::wstring &label, int fontSize,
                 ege::color_t accent, bool enabled, int hoverX, int hoverY) {
     const bool hovered = enabled && designPointInRect(hoverX, hoverY, rect);
     const ege::color_t fillColor =
@@ -176,26 +204,85 @@ void drawButton(const MenuRect& rect, const std::wstring& label, int fontSize,
 }
 
 // ===== 界面按钮布局（设计坐标系 1600×900）=====
-MenuRect menuLeftButton(int index) { return {440, 268 + index * 88, 780, 334 + index * 88}; }
-MenuRect menuRightButton(int index) { return {820, 268 + index * 88, 1160, 334 + index * 88}; }
-MenuRect menuBottomButton(int index) { return {450 + index * 320, 760, 700 + index * 320, 830}; }
-MenuRect menuLanguageButton() { return {1420, 140, 1560, 200}; }
-MenuRect shopItemRect(int index) { return {155, 240 + index * 74, 1440, 296 + index * 74}; }
-MenuRect shopBackButton() { return {155, 700, 430, 766}; }
-MenuRect helpPrevButton() { return {150, 655, 330, 720}; }
-MenuRect helpNextButton() { return {390, 655, 570, 720}; }
-MenuRect helpBackButton() { return {620, 655, 880, 720}; }
-MenuRect settingsRowRect(int index) { return {130, 215 + index * 100, 1470, 265 + index * 100}; }
-MenuRect settingsMinusButton(int index) { return {1180, 215 + index * 100, 1300, 265 + index * 100}; }
-MenuRect settingsPlusButton(int index) { return {1330, 215 + index * 100, 1450, 265 + index * 100}; }
-MenuRect settingsResetButton() { return {1150, 540, 1420, 600}; }
-MenuRect settingsUpdateButton() { return {620, 540, 940, 600}; }
-MenuRect settingsBackButton() { return {130, 620, 420, 690}; }
-MenuRect pauseResumeButton() { return {620, 460, 840, 530}; }
-MenuRect pauseExitButton() { return {860, 460, 1080, 530}; }
-MenuRect resultBackButton() { return {620, 520, 980, 590}; }
-MenuRect lobbyStartButton() { return {620, 600, 980, 670}; }
-MenuRect lobbyBackButton() { return {180, 680, 460, 750}; }
+MenuRect menuLeftButton(int index) {
+    return {440, 268 + index * 88, 780, 334 + index * 88};
+}
+
+MenuRect menuRightButton(int index) {
+    return {820, 268 + index * 88, 1160, 334 + index * 88};
+}
+
+MenuRect menuBottomButton(int index) {
+    return {450 + index * 320, 760, 700 + index * 320, 830};
+}
+
+MenuRect menuLanguageButton() {
+    return {1420, 140, 1560, 200};
+}
+
+MenuRect shopItemRect(int index) {
+    return {155, 240 + index * 74, 1440, 296 + index * 74};
+}
+
+MenuRect shopBackButton() {
+    return {155, 700, 430, 766};
+}
+
+MenuRect helpPrevButton() {
+    return {150, 655, 330, 720};
+}
+
+MenuRect helpNextButton() {
+    return {390, 655, 570, 720};
+}
+
+MenuRect helpBackButton() {
+    return {620, 655, 880, 720};
+}
+
+MenuRect settingsRowRect(int index) {
+    return {130, 215 + index * 100, 1470, 265 + index * 100};
+}
+
+MenuRect settingsMinusButton(int index) {
+    return {1180, 215 + index * 100, 1300, 265 + index * 100};
+}
+
+MenuRect settingsPlusButton(int index) {
+    return {1330, 215 + index * 100, 1450, 265 + index * 100};
+}
+
+MenuRect settingsResetButton() {
+    return {1150, 540, 1420, 600};
+}
+
+MenuRect settingsUpdateButton() {
+    return {620, 540, 940, 600};
+}
+
+MenuRect settingsBackButton() {
+    return {130, 620, 420, 690};
+}
+
+MenuRect pauseResumeButton() {
+    return {620, 460, 840, 530};
+}
+
+MenuRect pauseExitButton() {
+    return {860, 460, 1080, 530};
+}
+
+MenuRect resultBackButton() {
+    return {620, 520, 980, 590};
+}
+
+MenuRect lobbyStartButton() {
+    return {620, 600, 980, 670};
+}
+
+MenuRect lobbyBackButton() {
+    return {180, 680, 460, 750};
+}
 
 bool resizeGameWindow(int width, int height) {
     if (width == windowWidth && height == windowHeight) return true;
@@ -220,25 +307,35 @@ bool resizeGameWindow(int width, int height) {
     return true;
 }
 
-const std::wstring& localize(const std::wstring& value) {
+const std::wstring &localize(const std::wstring &value) {
     if (!english) return value;
     static const std::unordered_map<std::wstring, std::wstring> translations = {
         {L"无限枪洲", L"Mokthyn"},
         {L"FIELD OPERATION  /  01", L"FIELD OPERATION  /  01"},
-        {L"生命", L"Health"}, {L"弹药", L"Ammo"}, {L"发", L"rounds"},
-        {L"医疗包", L"Medkits"}, {L"任务进度", L"Mission progress"},
-        {L"目标", L"targets"}, {L"护甲", L"Armor"}, {L"未装备", L"Not equipped"},
+        {L"生命", L"Health"},
+        {L"弹药", L"Ammo"},
+        {L"发", L"rounds"},
+        {L"医疗包", L"Medkits"},
+        {L"任务进度", L"Mission progress"},
+        {L"目标", L"targets"},
+        {L"护甲", L"Armor"},
+        {L"未装备", L"Not equipped"},
         {L"无", L"None"},
-        {L"等级 ", L"Tier "}, {L"金币", L"Coins"}, {L"队友 ", L"Ally "},
+        {L"等级 ", L"Tier "},
+        {L"金币", L"Coins"},
+        {L"队友 ", L"Ally "},
         {L" WASD 移动    方向键射击", L" WASD move    Arrow keys shoot"},
         {L"WASD 移动    方向键射击", L"WASD move    Arrow keys shoot"},
         {L"E 拾取   H 治疗   K 护甲", L"E loot   H heal   K armor"},
         {L"Q 撤离   P 暂停   ESC 菜单", L"Q extract   P pause   ESC menu"},
         {L"深入失控区域，清除目标并带着物资撤离。",
          L"Enter the hostile zone, eliminate targets, and extract with your loot."},
-        {L"开始行动", L"Start a new run"}, {L"黑市商店", L"Black market"},
-        {L"操作说明", L"Field manual"}, {L"创建联机主机", L"Host a co-op game"},
-        {L"加入局域网游戏", L"Join a LAN game"}, {L"退出", L"Quit"},
+        {L"开始行动", L"Start a new run"},
+        {L"黑市商店", L"Black market"},
+        {L"操作说明", L"Field manual"},
+        {L"创建联机主机", L"Host a co-op game"},
+        {L"加入局域网游戏", L"Join a LAN game"},
+        {L"退出", L"Quit"},
         {L"1  开始行动", L"1  Start a new run"},
         {L"2  黑市商店", L"2  Black market"},
         {L"3  操作说明", L"3  Field manual"},
@@ -247,7 +344,8 @@ const std::wstring& localize(const std::wstring& value) {
         {L"6  继续存档", L"6  Resume saved run"},
         {L"7  设置", L"7  Settings"},
         {L"ESC  退出", L"ESC  Quit"},
-        {L"设置", L"Settings"}, {L"界面缩放", L"Interface scale"},
+        {L"设置", L"Settings"},
+        {L"界面缩放", L"Interface scale"},
         {L"左右方向键调整比例", L"Use LEFT / RIGHT to adjust"},
         {L"按 0 恢复默认比例", L"Press 0 to restore the default"},
         {L"按 ENTER / ESC 返回主菜单", L"Press ENTER / ESC to return"},
@@ -262,21 +360,27 @@ const std::wstring& localize(const std::wstring& value) {
         {L"存档中的窗口尺寸无效", L"Invalid window dimensions in save file"},
         {L"存档中的界面比例无效", L"Invalid interface scale in save file"},
         {L"存档解密失败，文件可能已损坏或由其他 Windows 用户创建",
-         L"Could not decrypt save; it may be damaged or belong to another Windows user"},
+         L"Could not decrypt save; it may be damaged or belong to another Windows "
+         L"user"},
         {L"存档加密失败", L"Could not encrypt save file"},
         {L"网络消息确认超时", L"Network message acknowledgement timed out"},
         {L"可靠网络消息队列已满", L"Reliable network message queue is full"},
         {L"命中确认中", L"Hit sent; awaiting confirmation"},
         {L"射击确认中", L"Shot sent; awaiting confirmation"},
-        {L"弹药库存", L"Ammo reserve"}, {L"持有金币", L"Coins"},
+        {L"弹药库存", L"Ammo reserve"},
+        {L"持有金币", L"Coins"},
         {L"高清战术视图   /   EGE GRAPHICS", L"TACTICAL VIEW   /   EGE GRAPHICS"},
-        {L"继续存档", L"Resume saved run"}, {L"切换语言：L", L"Language: L"},
+        {L"继续存档", L"Resume saved run"},
+        {L"切换语言：L", L"Language: L"},
         {L"存档已载入，可按 6 继续行动", L"Saved run available: press 6 to resume"},
         {L"已继续存档行动", L"Saved run resumed"},
         {L"存档格式无效，已使用默认数据", L"Invalid save file; using default data"},
-        {L"存档地图数据无效，已使用默认数据", L"Invalid save map; using default data"},
-        {L"存档敌人数据无效，已使用默认数据", L"Invalid saved enemy data; using default data"},
-        {L"存档文件大小无效，已使用默认数据", L"Invalid save size; using default data"},
+        {L"存档地图数据无效，已使用默认数据",
+         L"Invalid save map; using default data"},
+        {L"存档敌人数据无效，已使用默认数据",
+         L"Invalid saved enemy data; using default data"},
+        {L"存档文件大小无效，已使用默认数据",
+         L"Invalid save size; using default data"},
         {L"读取存档失败", L"Could not read save file"},
         {L"存档设置区块无效", L"Invalid save settings block"},
         {L"存档显示设置有损坏，已保留未损坏的设置",
@@ -294,7 +398,8 @@ const std::wstring& localize(const std::wstring& value) {
         {L"存档敌人数据无效，已保留显示设置",
          L"Invalid enemy data; display settings were preserved"},
         {L"存档已读取，但自动加密迁移失败，下次启动将重试",
-         L"Save loaded, but encryption migration failed; it will be retried next launch"},
+         L"Save loaded, but encryption migration failed; it will be retried next "
+         L"launch"},
         {L"保存存档失败", L"Could not save game"},
         {L"无法创建存档目录", L"Could not create save directory"},
         {L"无法写入存档文件", L"Could not write save file"},
@@ -307,7 +412,8 @@ const std::wstring& localize(const std::wstring& value) {
         {L"下载地址：Mokthyn - Download", L"Download: Mokthyn - Download"},
         {L"等待主机开始", L"Waiting for host"},
         {L"主机 IPv4 地址", L"Host IPv4 address"},
-        {L"将此地址发给同一局域网内的队友。", L"Share this address with a teammate on the same LAN."},
+        {L"将此地址发给同一局域网内的队友。",
+         L"Share this address with a teammate on the same LAN."},
         {L"按 ENTER 开始合作行动", L"Press ENTER to start the co-op run"},
         {L"输入主机的局域网 IPv4 地址", L"Enter the host's LAN IPv4 address"},
         {L"请使用 ipconfig 查看本机 IP", L"Run ipconfig to find this computer's IP"},
@@ -320,17 +426,27 @@ const std::wstring& localize(const std::wstring& value) {
         {L"对手已断开连接", L"Opponent disconnected"},
         {L"主存档损坏，已从备份恢复", L"Main save corrupted; recovered from backup"},
         {L"生命危险，尽快治疗！", L"CRITICAL health; heal now!"},
-        {L"PVP 模式下战斗至最后一人，无法撤离", L"PVP: fight to the last player; extraction disabled"},
-        {L"对局未完成直接退出，已按失败结算", L"Run exited unfinished; scored as a loss"},
-        {L"难度：简单", L"Difficulty: Easy"}, {L"难度：普通", L"Difficulty: Normal"},
-        {L"难度：困难", L"Difficulty: Hard"}, {L"快速开始", L"Quick start"},
-        {L"PVP 对战", L"PVP battle"}, {L"语言 L", L"Language L"},
+        {L"PVP 模式下战斗至最后一人，无法撤离",
+         L"PVP: fight to the last player; extraction disabled"},
+        {L"对局未完成直接退出，已按失败结算",
+         L"Run exited unfinished; scored as a loss"},
+        {L"难度：简单", L"Difficulty: Easy"},
+        {L"难度：普通", L"Difficulty: Normal"},
+        {L"难度：困难", L"Difficulty: Hard"},
+        {L"快速开始", L"Quick start"},
+        {L"PVP 对战", L"PVP battle"},
+        {L"语言 L", L"Language L"},
         {L"切换语言 L", L"Toggle language L"},
-        {L"开始行动  ENTER", L"Start run  ENTER"}, {L"返回  ESC", L"Back  ESC"},
-        {L"返回  0", L"Back  0"}, {L"← 上一页", L"← Prev page"},
-        {L"下一页 →", L"Next page →"}, {L"返回  ENTER / ESC", L"Back  ENTER / ESC"},
-        {L"恢复默认  0", L"Restore defaults  0"}, {L"继续  P", L"Resume  P"},
-        {L"返回菜单  ESC", L"Exit to menu  ESC"}, {L"返回主菜单  ENTER", L"Back to menu  ENTER"},
+        {L"开始行动  ENTER", L"Start run  ENTER"},
+        {L"返回  ESC", L"Back  ESC"},
+        {L"返回  0", L"Back  0"},
+        {L"← 上一页", L"← Prev page"},
+        {L"下一页 →", L"Next page →"},
+        {L"返回  ENTER / ESC", L"Back  ENTER / ESC"},
+        {L"恢复默认  0", L"Restore defaults  0"},
+        {L"继续  P", L"Resume  P"},
+        {L"返回菜单  ESC", L"Exit to menu  ESC"},
+        {L"返回主菜单  ENTER", L"Back to menu  ENTER"},
         {L"换弹完成", L"Reload complete"},
         {L"备弹不足", L"Out of reserve ammo"},
         {L"弹匣已空，开始换弹", L"Magazine empty; reloading"},
@@ -346,22 +462,30 @@ const std::wstring& localize(const std::wstring& value) {
         {L"换弹请求发送失败", L"Reload request failed"},
         {L"治疗请求发送失败", L"Heal request failed"},
         {L"治疗确认发送失败", L"Heal confirmation failed"},
-        {L"正在请求主机确认弹药拾取", L"Requesting host confirmation for ammo pickup"},
+        {L"正在请求主机确认弹药拾取",
+         L"Requesting host confirmation for ammo pickup"},
         {L"弹药拾取请求发送失败", L"Ammo pickup request failed"},
-        {L"正在请求主机确认医疗包拾取", L"Requesting host confirmation for medkit pickup"},
+        {L"正在请求主机确认医疗包拾取",
+         L"Requesting host confirmation for medkit pickup"},
         {L"医疗包拾取请求发送失败", L"Medkit pickup request failed"},
         {L"联机行动由主机控制暂停", L"Host controls pause in co-op"},
         {L"主机连接中断", L"Connection to host lost"},
         {L"正在连接主机...", L"Connecting to host..."},
-        {L"IP 格式无效，请输入 IPv4 地址", L"Invalid IP format; enter an IPv4 address"},
+        {L"IP 格式无效，请输入 IPv4 地址",
+         L"Invalid IP format; enter an IPv4 address"},
         {L"输入主机 IPv4 地址...", L"Enter host IPv4 address..."},
         {L"输入 IP 后按 ENTER 连接，BACKSPACE 删除，ESC 返回。",
-         L"Enter the IP and press ENTER to connect. BACKSPACE deletes; ESC returns."},
+         L"Enter the IP and press ENTER to connect. BACKSPACE deletes; ESC "
+         L"returns."},
         {L"双方需在同一局域网，并允许程序通过 Windows 防火墙。",
-         L"Both players must share a LAN and allow the game through Windows Firewall."},
-        {L"连接成功。等待主机创建地图并开始行动。", L"Connected. Waiting for the host to start the run."},
-        {L"ESC 取消连接并返回主菜单。", L"Press ESC to cancel and return to the main menu."},
-        {L"黑市", L"Black Market"}, {L"补充装备，为下一次行动做好准备",
+         L"Both players must share a LAN and allow the game through Windows "
+         L"Firewall."},
+        {L"连接成功。等待主机创建地图并开始行动。",
+         L"Connected. Waiting for the host to start the run."},
+        {L"ESC 取消连接并返回主菜单。",
+         L"Press ESC to cancel and return to the main menu."},
+        {L"黑市", L"Black Market"},
+        {L"补充装备，为下一次行动做好准备",
          L"Stock up and prepare for your next run"},
         {L"一级护甲       耐久 50 / 减伤 4       100 金",
          L"Tier 1 armor     50 durability / -4 damage     100 coins"},
@@ -371,9 +495,12 @@ const std::wstring& localize(const std::wstring& value) {
          L"Tier 3 armor     100 durability / -10 damage   350 coins"},
         {L"四级护甲       耐久 125 / 减伤 13     550 金",
          L"Tier 4 armor     125 durability / -13 damage   550 coins"},
-        {L"弹药补给       +10 发                 5 金", L"Ammo refill     +10 rounds                 5 coins"},
-        {L"医疗包         +1 个                  20 金", L"Medkit          +1                         20 coins"},
-        {L"↑ / ↓ 选择     ENTER 购买     0 返回", L"↑ / ↓ Select     ENTER Buy     0 Return"},
+        {L"弹药补给       +10 发                 5 金",
+         L"Ammo refill     +10 rounds                 5 coins"},
+        {L"医疗包         +1 个                  20 金",
+         L"Medkit          +1                         20 coins"},
+        {L"↑ / ↓ 选择     ENTER 购买     0 返回",
+         L"↑ / ↓ Select     ENTER Buy     0 Return"},
         {L"护甲升级会替换当前护甲。", L"Buying armor replaces your current armor."},
         {L"行动简报", L"Field Manual"},
         {L"行动简报 · 操作与战斗", L"Field Manual · Controls and Combat"},
@@ -382,48 +509,66 @@ const std::wstring& localize(const std::wstring& value) {
         {L"W A S D        在地图中移动", L"W A S D        Move around the map"},
         {L"方向键          朝对应方向射击；子弹遇墙会停止",
          L"Arrow keys      Shoot that way; bullets stop at walls"},
-        {L"E               拾取脚下的弹药或医疗包", L"E               Pick up ammo or a medkit underfoot"},
+        {L"E               拾取脚下的弹药或医疗包",
+         L"E               Pick up ammo or a medkit underfoot"},
         {L"H               消耗医疗包；安全等待 3 秒恢复 20 点生命",
-         L"H               Use a medkit; stay safe for 3 seconds to restore 20 health"},
-        {L"K               穿上或脱下已购买的护甲", L"K               Equip or unequip purchased armor"},
+         L"H               Use a medkit; stay safe for 3 seconds to restore 20 "
+         L"health"},
+        {L"K               穿上或脱下已购买的护甲",
+         L"K               Equip or unequip purchased armor"},
         {L"Q               到达撤离点后即可开始撤离",
          L"Q               Start extracting once you reach the extraction point"},
-        {L"P / ESC         暂停行动 / 返回主菜单", L"P / ESC         Pause / return to the main menu"},
+        {L"P / ESC         暂停行动 / 返回主菜单",
+         L"P / ESC         Pause / return to the main menu"},
         {L"敌人靠近或进入视线后会苏醒并追击你。",
          L"Enemies wake up and pursue you when nearby or in sight."},
-        {L"视野以外的地图区域会变暗。", L"Areas outside your line of sight are darkened."},
+        {L"视野以外的地图区域会变暗。",
+         L"Areas outside your line of sight are darkened."},
         {L"按 ← → 或 ↑ ↓ 翻页", L"Use ← → or ↑ ↓ to change pages"},
         {L"按 D 打开下载页面", L"Press D to open the download page"},
         {L"击败右下区域的 Boss，再前往地图右下角的绿色撤离点。",
-         L"Defeat the area boss, then reach the green extraction point in the bottom-right."},
+         L"Defeat the area boss, then reach the green extraction point in the "
+         L"bottom-right."},
         {L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
-         L"Press Q at the extraction point. Hold for 5 seconds without moving or taking damage."},
+         L"Press Q at the extraction point. Hold for 5 seconds without moving or "
+         L"taking damage."},
         {L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后会进入狂暴阶段。",
-         L"Regular enemies reward 10 coins; the boss rewards 100 and enrages below half health."},
+         L"Regular enemies reward 10 coins; the boss rewards 100 and enrages below "
+         L"half health."},
         {L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
          L"Arrow keys fire (1 round each); hold WASD to keep moving."},
         {L"护甲可减伤并消耗耐久；K 可暂时脱下以保留耐久。",
-         L"Armor reduces damage and loses durability; press K to unequip it temporarily."},
+         L"Armor reduces damage and loses durability; press K to unequip it "
+         L"temporarily."},
         {L"被击中会打断治疗和撤离；移动也会取消正在进行的动作。",
-         L"Damage interrupts healing and extraction; moving also cancels these actions."},
+         L"Damage interrupts healing and extraction; moving also cancels these "
+         L"actions."},
         {L"生命归零时行动失败；撤离成功会保留当前携带物资。",
          L"Your run fails at zero health; extracted supplies are kept."},
         {L"主菜单按 2 打开黑市：1–4 购买护甲，5 补弹，6 购买医疗包。",
-         L"Press 2 for the market: 1–4 buy armor, 5 buys ammo, and 6 buys a medkit."},
+         L"Press 2 for the market: 1–4 buy armor, 5 buys ammo, and 6 buys a "
+         L"medkit."},
         {L"商店购买会立即保存；行动进度会自动存入 %APPDATA%\\mokthyn\\save.dat。",
-         L"Shop purchases save immediately; run progress autosaves to %APPDATA%\\mokthyn\\save.dat."},
+         L"Shop purchases save immediately; run progress autosaves to "
+         L"%APPDATA%\\mokthyn\\save.dat."},
         {L"重新启动游戏后，主菜单按 6 继续最近的单人行动；按 1 开始新行动。",
-         L"After restarting, press 6 to resume the last solo run or 1 to start a new run."},
+         L"After restarting, press 6 to resume the last solo run or 1 to start a "
+         L"new run."},
         {L"按 L 切换语言；主菜单按 7 调整并保存界面缩放比例。",
-         L"Press L to switch language; press 7 on the main menu to adjust and save interface scale."},
+         L"Press L to switch language; press 7 on the main menu to adjust and save "
+         L"interface scale."},
         {L"联机：主机按 4，队友按 5 并输入主机 IPv4；双方需在同一局域网。",
-         L"Co-op: host presses 4; teammate presses 5 and enters the host IPv4. Same LAN required."},
+         L"Co-op: host presses 4; teammate presses 5 and enters the host IPv4. Same "
+         L"LAN required."},
         {L"按 ← → 或 ↑ ↓ 翻页    按 D 打开下载页面    ENTER / ESC 返回",
          L"← → or ↑ ↓ pages    D opens download    ENTER / ESC returns"},
-        {L"撤离成功", L"Extraction Successful"}, {L"行动结束", L"Run Over"},
-        {L"本次击杀", L"Kills this run"}, {L"剩余弹药", L"Ammo remaining"},
+        {L"撤离成功", L"Extraction Successful"},
+        {L"行动结束", L"Run Over"},
+        {L"本次击杀", L"Kills this run"},
+        {L"剩余弹药", L"Ammo remaining"},
         {L"按 ENTER 返回主菜单", L"Press ENTER to return to the main menu"},
-        {L"已暂停", L"Paused"}, {L"按 P 继续  /  ESC 返回菜单", L"P resume  /  ESC menu"},
+        {L"已暂停", L"Paused"},
+        {L"按 P 继续  /  ESC 返回菜单", L"P resume  /  ESC menu"},
         {L"清除敌人并击败区域 Boss，然后前往撤离点",
          L"Clear the enemies and defeat the area boss, then extract"},
         {L"击败区域 Boss 后才能撤离", L"Defeat the area boss before extracting"},
@@ -432,48 +577,61 @@ const std::wstring& localize(const std::wstring& value) {
         {L"Boss 已击败", L"Boss defeated"},
         {L"区域 Boss 已击败  +100 金币", L"Area boss defeated  +100 coins"},
         {L"弹药不足，寻找弹药箱", L"Out of ammo; find an ammo cache"},
-        {L"命中目标", L"Target hit"}, {L"未命中", L"Miss"},
-        {L"护甲已损坏", L"Armor broken"}, {L"受到攻击，动作已中断", L"Hit taken; action interrupted"},
+        {L"命中目标", L"Target hit"},
+        {L"未命中", L"Miss"},
+        {L"护甲已损坏", L"Armor broken"},
+        {L"受到攻击，动作已中断", L"Hit taken; action interrupted"},
         {L"受到攻击", L"Under attack"},
         {L"拾取医疗包  +1", L"Medkit picked up  +1"},
         {L"这里没有可拾取的物资", L"No supplies to pick up here"},
-        {L"动作已取消", L"Action cancelled"}, {L"金币不足", L"Not enough coins"},
-        {L"护甲已装备", L"Armor equipped"}, {L"弹药补给完成", L"Ammo refilled"},
-        {L"医疗包已补充", L"Medkit purchased"}, {L"没有可用护甲", L"No usable armor"},
-        {L"护甲已穿上", L"Armor equipped"}, {L"护甲已脱下", L"Armor unequipped"},
+        {L"动作已取消", L"Action cancelled"},
+        {L"金币不足", L"Not enough coins"},
+        {L"护甲已装备", L"Armor equipped"},
+        {L"弹药补给完成", L"Ammo refilled"},
+        {L"医疗包已补充", L"Medkit purchased"},
+        {L"没有可用护甲", L"No usable armor"},
+        {L"护甲已穿上", L"Armor equipped"},
+        {L"护甲已脱下", L"Armor unequipped"},
         {L"治疗中，请保持安全", L"Healing; stay safe"},
         {L"现在无法治疗", L"Cannot heal right now"},
         {L"治疗完成  +20 生命", L"Healing complete  +20 health"},
         {L"前往地图上的撤离点", L"Reach the extraction point on the map"},
-        {L"撤离开始，保持位置 5 秒", L"Extraction started; hold position for 5 seconds"},
-        {L"治疗中  ", L"Healing  "}, {L"撤离中  ", L"Extracting  "},
+        {L"撤离开始，保持位置 5 秒",
+         L"Extraction started; hold position for 5 seconds"},
+        {L"治疗中  ", L"Healing  "},
+        {L"撤离中  ", L"Extracting  "},
         {L"下载：Mokthyn - Download", L"Download: Mokthyn - Download"},
         {L"WASD 移动    方向键射击/挥刀", L"WASD move    Arrow keys shoot / knife"},
-        {L"E 拾取   H 治疗   K 护甲   F 切武器", L"E loot   H heal   K armor   F weapon"},
-        {L"R 换弹   Q 撤离   P 暂停   ESC 菜单", L"R reload   Q extract   P pause   ESC menu"},
+        {L"E 拾取   H 治疗   K 护甲   F 切武器",
+         L"E loot   H heal   K armor   F weapon"},
+        {L"R 换弹   Q 撤离   P 暂停   ESC 菜单",
+         L"R reload   Q extract   P pause   ESC menu"},
         {L"换弹中...", L"Reloading..."},
-        {L"战术刀", L"Knife"}, {L"[F]切刀", L"[F] Knife"}, {L"[F]切枪", L"[F] Gun"},
+        {L"战术刀", L"Knife"},
+        {L"[F]切刀", L"[F] Knife"},
+        {L"[F]切枪", L"[F] Gun"},
         {L"对手", L"Opponent"},
         {L"目标：击倒对手", L"Objective: take down the opponent"},
         {L"对手已被击倒", L"Opponent down"},
         {L"等待对手加入", L"Waiting for the opponent"},
         {L"等待对手加入后开始", L"Waiting for the opponent to join"},
-        {L"胜利", L"Victory"}, {L"失败", L"Defeat"},
+        {L"胜利", L"Victory"},
+        {L"失败", L"Defeat"},
         {L"可用主机 IPv4 地址", L"Reachable host IPv4 addresses"},
         {L"将队友可访问的地址发给同一局域网内的队友。",
          L"Share this reachable address with a teammate on the same LAN."},
         {L"主机暂停中  /  ESC 返回菜单", L"Host paused  /  ESC menu"},
         {L"PVP 主机启动失败，检查 UDP 端口是否被占用",
          L"Could not host PVP; check whether the UDP port is in use"},
-        {L"武器：枪械", L"Weapon: Gun"}, {L"武器：战术刀", L"Weapon: Knife"},
+        {L"武器：枪械", L"Weapon: Gun"},
+        {L"武器：战术刀", L"Weapon: Knife"},
         {L"治疗完成，等待主机确认", L"Healing finished; awaiting host confirmation"},
         {L"消灭对方玩家！物资竞争，生死由命",
          L"Take down the opposing player. Supplies are contested."},
         {L"连接超时，请检查主机地址和防火墙",
          L"Connection timed out; check the host address and firewall"},
         {L"模式：PVP 对战（按 M 切换）", L"Mode: PVP battle (press M to switch)"},
-        {L"模式：合作 PVE（按 M 切换）", L"Mode: Co-op PVE (press M to switch)"}
-    };
+        {L"模式：合作 PVE（按 M 切换）", L"Mode: Co-op PVE (press M to switch)"}};
     // 动态文案（"备弹 12"、"治疗中  3 秒"…）内容随数值变化，拼好的结果缓存在这里，
     // 避免每帧重复做前缀判断与字符串拼接（返回引用也省掉每次调用的 wstring 拷贝）
     static std::unordered_map<std::wstring, std::wstring> derived;
@@ -489,14 +647,15 @@ const std::wstring& localize(const std::wstring& value) {
     if (value.rfind(ammoPrefix, 0) == 0) {
         result = L"Ammo picked up  +" + value.substr(ammoPrefix.size());
     } else if (value.rfind(networkWaitPrefix, 0) == 0) {
-        result = L"Waiting for players · UDP " + value.substr(networkWaitPrefix.size());
+        result =
+            L"Waiting for players · UDP " + value.substr(networkWaitPrefix.size());
     } else if (value.rfind(networkHelpPrefix, 0) == 0) {
         const size_t separator = value.find(L"；", networkHelpPrefix.size());
         if (separator != std::wstring::npos)
-            result =
-                L"Co-op uses UDP " +
-                value.substr(networkHelpPrefix.size(), separator - networkHelpPrefix.size()) +
-                L"; check firewall and router settings if connections fail.";
+            result = L"Co-op uses UDP " +
+                     value.substr(networkHelpPrefix.size(),
+                                  separator - networkHelpPrefix.size()) +
+                     L"; check firewall and router settings if connections fail.";
     } else if (value.rfind(L"等级 ", 0) == 0) {
         result = L"Tier " + value.substr(3);
     } else if (value.rfind(L"队友 ", 0) == 0) {
@@ -541,9 +700,10 @@ void fillCircle(int x, int y, int radius, ege::color_t color) {
     fillcircle(scaledX(x), scaledY(y), std::max(1, scaledLength(radius)));
 }
 
-void drawTextLocalized(int x, int y, const std::wstring& displayed, int size,
+void drawTextLocalized(int x, int y, const std::wstring &displayed, int size,
                        ege::color_t color) {
-    // 背景透明模式与字体只在目标画布/字号真正变化时重设，避免每段文字都调一次 GDI 状态
+    // 背景透明模式与字体只在目标画布/字号真正变化时重设，避免每段文字都调一次 GDI
+    // 状态
     static PIMAGE backgroundTarget = nullptr;
     if (backgroundTarget != frameBuffer) {
         setbkmode(TRANSPARENT, frameBuffer);
@@ -565,30 +725,34 @@ void drawTextLocalized(int x, int y, const std::wstring& displayed, int size,
     outtextxy(scaledX(x), scaledY(y), displayed.c_str());
 }
 
-void drawText(int x, int y, const std::wstring& value, int size, ege::color_t color) {
+void drawText(int x, int y, const std::wstring &value, int size,
+              ege::color_t color) {
     drawTextLocalized(x, y, localize(value), size, color);
 }
 
-void drawBar(int x, int y, int width, int height, int value, int maximum, ege::color_t color) {
+void drawBar(int x, int y, int width, int height, int value, int maximum,
+             ege::color_t color) {
     const int radius = std::max(2, height / 2);
     const int scaledRadius = scaledLength(radius);
     // 深色轨道 + 圆角填充 + 1px 描边：比原来的纯方块更容易一眼读出剩余量
     setfillcolor(EGERGB(38, 50, 55));
-    fillroundrect(scaledX(x), scaledY(y), scaledX(x + width), scaledY(y + height), scaledRadius,
-                  scaledRadius);
-    const int filled = maximum > 0 ? width * std::clamp(value, 0, maximum) / maximum : 0;
+    fillroundrect(scaledX(x), scaledY(y), scaledX(x + width), scaledY(y + height),
+                  scaledRadius, scaledRadius);
+    const int filled =
+        maximum > 0 ? width * std::clamp(value, 0, maximum) / maximum : 0;
     if (filled > 1) {
         setfillcolor(color);
-        fillroundrect(scaledX(x), scaledY(y), scaledX(x + filled), scaledY(y + height),
-                      scaledRadius, scaledRadius);
+        fillroundrect(scaledX(x), scaledY(y), scaledX(x + filled),
+                      scaledY(y + height), scaledRadius, scaledRadius);
     }
     setlinecolor(EGERGB(58, 73, 78));
-    roundrect(scaledX(x), scaledY(y), scaledX(x + width), scaledY(y + height), scaledRadius,
-              scaledRadius);
+    roundrect(scaledX(x), scaledY(y), scaledX(x + width), scaledY(y + height),
+              scaledRadius, scaledRadius);
 }
 
 // 目标在当前视口外时，在战斗区边缘画一个指向它的方向标记
-void drawOffscreenMarker(int targetX, int targetY, ege::color_t color, const wchar_t* label) {
+void drawOffscreenMarker(int targetX, int targetY, ege::color_t color,
+                         const wchar_t *label) {
     const int ts = battleTileSize();
     const int sx = tileScreenX(targetX) + ts / 2;
     const int sy = tileScreenY(targetY) + ts / 2;
@@ -619,12 +783,16 @@ void drawOffscreenMarker(int targetX, int targetY, ege::color_t color, const wch
 
 void drawMap() {
     computeVisibility();
-    // 敌人位置索引：静态查表 O(1)，替代每帧现建一张哈希表（60fps 下原本每秒要建 60 张）
-    static std::array<const Enemy*, static_cast<size_t>(MapColumns) * MapRows> enemyAtTile{};
+    // 敌人位置索引：静态查表 O(1)，替代每帧现建一张哈希表（60fps 下原本每秒要建 60
+    // 张）
+    static std::array<const Enemy *, static_cast<size_t>(MapColumns) * MapRows>
+        enemyAtTile{};
     std::fill(enemyAtTile.begin(), enemyAtTile.end(), nullptr);
-    for (const Enemy& enemy : enemies) {
+    for (const Enemy &enemy : enemies) {
         if (!enemy.alive) continue;
-        if (enemy.x < 0 || enemy.x >= MapColumns || enemy.y < 0 || enemy.y >= MapRows) continue;
+        if (enemy.x < 0 || enemy.x >= MapColumns || enemy.y < 0 ||
+            enemy.y >= MapRows)
+            continue;
         enemyAtTile[static_cast<size_t>(enemy.y) * MapColumns + enemy.x] = &enemy;
     }
     const int tileSize = battleTileSize();
@@ -662,30 +830,37 @@ void drawMap() {
             fillRect(left, top, left + tileSize - 1, top + tileSize - 1, tileColor);
 
             if (world[y][x] == AmmoPickup) {
-                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize / 5, Yellow);
-                drawText(left + tileSize / 2 - 7, top + tileSize / 2 - 10, L"+", 19, Background);
+                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize / 5,
+                           Yellow);
+                drawText(left + tileSize / 2 - 7, top + tileSize / 2 - 10, L"+", 19,
+                         Background);
             } else if (world[y][x] == MedkitPickup) {
-                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize / 5, Cyan);
-                drawText(left + tileSize / 2 - 7, top + tileSize / 2 - 10, L"+", 20, Background);
+                fillCircle(left + tileSize / 2, top + tileSize / 2, tileSize / 5,
+                           Cyan);
+                drawText(left + tileSize / 2 - 7, top + tileSize / 2 - 10, L"+", 20,
+                         Background);
             } else if (world[y][x] == ExitTile) {
-                outlineRect(left + 8, top + 8, left + tileSize - 9, top + tileSize - 9, Green);
-                drawText(left + tileSize / 2 - 6, top + tileSize / 2 - 10, L"E", 19, Green);
+                outlineRect(left + 8, top + 8, left + tileSize - 9,
+                            top + tileSize - 9, Green);
+                drawText(left + tileSize / 2 - 6, top + tileSize / 2 - 10, L"E", 19,
+                         Green);
             }
 
-            const Enemy* tileEnemy = enemyAtTile[static_cast<size_t>(y) * MapColumns + x];
+            const Enemy *tileEnemy =
+                enemyAtTile[static_cast<size_t>(y) * MapColumns + x];
             if (tileEnemy != nullptr) {
-                const Enemy& enemy = *tileEnemy;
+                const Enemy &enemy = *tileEnemy;
                 fillCircle(left + tileSize / 2, top + tileSize / 2,
                            enemy.boss ? tileSize * 2 / 5 : tileSize * 3 / 10,
                            enemy.boss
                                ? (enemy.hp <= BossHealth / 2 ? EGERGB(255, 101, 55)
-                                                            : EGERGB(185, 54, 73))
+                                                             : EGERGB(185, 54, 73))
                                : Red);
-                fillCircle(left + tileSize / 2 - 3, top + tileSize / 2 - 3, tileSize / 12,
-                           EGERGB(255, 174, 137));
+                fillCircle(left + tileSize / 2 - 3, top + tileSize / 2 - 3,
+                           tileSize / 12, EGERGB(255, 174, 137));
                 if (enemy.boss)
-                    outlineRect(left + 2, top + 2, left + tileSize - 3, top + tileSize - 3,
-                                Yellow);
+                    outlineRect(left + 2, top + 2, left + tileSize - 3,
+                                top + tileSize - 3, Yellow);
                 // 受伤敌人迷你血条
                 const int fullHp = enemy.boss ? BossHealth : EnemyHealth;
                 if (enemy.hp < fullHp) {
@@ -695,10 +870,11 @@ void drawMap() {
                     const int barTop = top + 2;
                     fillRect(barLeft, barTop, barLeft + barWidth, barTop + barHeight,
                              EGERGB(20, 26, 30));
-                    const int filled = barWidth * std::clamp(enemy.hp, 0, fullHp) / fullHp;
+                    const int filled =
+                        barWidth * std::clamp(enemy.hp, 0, fullHp) / fullHp;
                     if (filled > 0)
-                        fillRect(barLeft, barTop, barLeft + filled, barTop + barHeight,
-                                 enemy.boss ? Yellow : Green);
+                        fillRect(barLeft, barTop, barLeft + filled,
+                                 barTop + barHeight, enemy.boss ? Yellow : Green);
                 }
             }
         }
@@ -716,8 +892,8 @@ void drawMap() {
         line(scaledX(areaLeft), lineY, scaledX(areaLeft + areaW - 1), lineY);
     }
 
-    if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
-        peerY < MapRows - 1 && visible[peerY][peerX]) {
+    if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 &&
+        peerY > 0 && peerY < MapRows - 1 && visible[peerY][peerX]) {
         const int peerCenterX = tileScreenX(peerX) + tileSize / 2;
         const int peerCenterY = tileScreenY(peerY) + tileSize / 2;
         fillCircle(peerCenterX, peerCenterY, tileSize * 2 / 5, EGERGB(37, 55, 76));
@@ -733,12 +909,15 @@ void drawMap() {
     // 视口外的撤离点、队友和存活 Boss 方向标记（PVP 不显示对手位置，避免透视）
     if (gameMode != GameMode::Pvp) {
         drawOffscreenMarker(MapColumns - 2, MapRows - 2, Green, L"E");
-        const auto boss = std::find_if(enemies.begin(), enemies.end(),
-                                       [](const Enemy& enemy) { return enemy.boss && enemy.alive; });
-        if (boss != enemies.end()) drawOffscreenMarker(boss->x, boss->y, Yellow, L"B");
+        const auto boss =
+            std::find_if(enemies.begin(), enemies.end(), [](const Enemy &enemy) {
+                return enemy.boss && enemy.alive;
+            });
+        if (boss != enemies.end())
+            drawOffscreenMarker(boss->x, boss->y, Yellow, L"B");
     }
-    if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
-        peerY < MapRows - 1 && gameMode != GameMode::Pvp)
+    if (networkActive && peerConnected && peerX > 0 && peerX < MapColumns - 1 &&
+        peerY > 0 && peerY < MapRows - 1 && gameMode != GameMode::Pvp)
         drawOffscreenMarker(peerX, peerY, Cyan, L"P");
 }
 
@@ -755,7 +934,8 @@ void drawHud() {
     drawText(x + padding, 139, L"FIELD OPERATION  /  01", 14, Muted);
     fillRect(x + padding, 168, right - padding, 169, EGERGB(52, 65, 68));
     drawText(x + padding, 183, L"生命", 17, Muted);
-    drawText(valueX, 181, std::to_wstring(health) + L" / " + std::to_wstring(MaxHealth), 18,
+    drawText(valueX, 181,
+             std::to_wstring(health) + L" / " + std::to_wstring(MaxHealth), 18,
              health > 60 ? Green : (health > 30 ? Yellow : Red));
     drawBar(x + padding, 211, width - padding * 2, 12, health, MaxHealth,
             health > 30 ? Green : Red);
@@ -770,56 +950,68 @@ void drawHud() {
 
     drawText(x + padding, 245, L"弹药", 17, Muted);
     if (weaponMode == WeaponMode::Gun) {
-        drawText(x + padding, 270, std::to_wstring(magazineAmmo) + L" / " +
-                                       std::to_wstring(MagazineSize),
+        drawText(x + padding, 270,
+                 std::to_wstring(magazineAmmo) + L" / " +
+                     std::to_wstring(MagazineSize),
                  30, reloading ? Muted : Yellow);
         drawText(x + 160, 282, L"备弹 " + std::to_wstring(ammo), 16, Muted);
         if (reloading) {
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                     Clock::now() - reloadStarted)
-                                     .count();
-            const int pct = std::clamp(static_cast<int>(elapsed * 100 / ReloadDurationMs), 0, 100);
+            const auto elapsed =
+                std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() -
+                                                                      reloadStarted)
+                    .count();
+            const int pct = std::clamp(
+                static_cast<int>(elapsed * 100 / ReloadDurationMs), 0, 100);
             drawBar(x + padding, 305, width - padding * 2, 6, pct, 100, Cyan);
             drawText(x + padding, 312, L"换弹中...", 13, Cyan);
         }
     } else {
         drawText(x + padding, 270, L"战术刀", 30, Green);
-        drawText(x + 160, 282, L"范围 " + std::to_wstring(MeleeRange) + L"  伤害 " +
-                                   std::to_wstring(MeleeDamage),
+        drawText(x + 160, 282,
+                 L"范围 " + std::to_wstring(MeleeRange) + L"  伤害 " +
+                     std::to_wstring(MeleeDamage),
                  16, Muted);
     }
     drawText(x + std::max(220, width / 2), 245, L"医疗包", 17, Muted);
     drawText(x + std::max(220, width / 2), 270, std::to_wstring(medkits), 34, Cyan);
-    drawText(right - padding - 80, 250, weaponMode == WeaponMode::Gun ? L"[F]切刀" : L"[F]切枪",
-             14, Muted);
+    drawText(right - padding - 80, 250,
+             weaponMode == WeaponMode::Gun ? L"[F]切刀" : L"[F]切枪", 14, Muted);
 
     fillRect(x + padding, 324, right - padding, 325, EGERGB(52, 65, 68));
     if (gameMode == GameMode::Pvp) {
         drawText(x + padding, 344, L"对手", 17, Muted);
         const bool opponentConnected = networkActive && peerConnected;
-        const int opponentHp = opponentConnected ? std::clamp(peerHealth, 0, MaxHealth) : MaxHealth;
+        const int opponentHp =
+            opponentConnected ? std::clamp(peerHealth, 0, MaxHealth) : MaxHealth;
         drawText(x + padding, 373,
                  opponentConnected ? std::to_wstring(opponentHp) + L" / " +
-                                        std::to_wstring(MaxHealth)
+                                         std::to_wstring(MaxHealth)
                                    : (english ? L"Waiting..." : L"等待对手加入"),
                  21, opponentHp > 30 ? Red : Yellow);
-        drawBar(x + padding, 410, width - padding * 2, 8, opponentHp, MaxHealth, Red);
+        drawBar(x + padding, 410, width - padding * 2, 8, opponentHp, MaxHealth,
+                Red);
         drawText(x + padding, 426,
-                 opponentConnected ? (peerHealth > 0 ? L"目标：击倒对手" : L"对手已被击倒")
-                                   : L"等待对手加入后开始",
+                 opponentConnected
+                     ? (peerHealth > 0 ? L"目标：击倒对手" : L"对手已被击倒")
+                     : L"等待对手加入后开始",
                  16, opponentConnected ? Yellow : Muted);
     } else {
         drawText(x + padding, 344, L"任务进度", 17, Muted);
         drawText(x + padding, 373,
-                 std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies) + L"  目标", 21,
-                 Text);
-        drawBar(x + padding, 410, width - padding * 2, 8, kills, totalEnemies, Green);
+                 std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies) +
+                     L"  目标",
+                 21, Text);
+        drawBar(x + padding, 410, width - padding * 2, 8, kills, totalEnemies,
+                Green);
 
-        const auto boss = std::find_if(enemies.begin(), enemies.end(),
-                                       [](const Enemy& enemy) { return enemy.boss && enemy.alive; });
+        const auto boss =
+            std::find_if(enemies.begin(), enemies.end(), [](const Enemy &enemy) {
+                return enemy.boss && enemy.alive;
+            });
         if (boss != enemies.end()) {
             const bool bossEnraged = boss->hp <= BossHealth / 2;
-            drawText(x + padding, 426, bossEnraged ? L"区域 Boss · 狂暴" : L"区域 Boss", 16,
+            drawText(x + padding, 426,
+                     bossEnraged ? L"区域 Boss · 狂暴" : L"区域 Boss", 16,
                      bossEnraged ? Yellow : Red);
             drawText(right - padding - 55, 426,
                      std::to_wstring(std::max(0, boss->hp)) + L" / " +
@@ -878,10 +1070,11 @@ void drawMenu() {
     if (updateStatus() == UpdateStatus::Available) {
         static bool cachedEnglish = false;
         static std::wstring cachedLabel;
-        const std::wstring& latestVersion = updateLatestVersion();
+        const std::wstring &latestVersion = updateLatestVersion();
         if (cachedLabel.empty() || cachedEnglish != english) {
             cachedEnglish = english;
-            cachedLabel = (english ? L"Update available  v" : L"发现新版本 v") + latestVersion +
+            cachedLabel = (english ? L"Update available  v" : L"发现新版本 v") +
+                          latestVersion +
                           (english ? L"  ·  press U" : L"  ·  按 U 打开下载页");
         }
         drawText(440, 180, cachedLabel, 17, Green);
@@ -901,17 +1094,17 @@ void drawMenu() {
     drawButton(menuLeftButton(3), L"创建联机主机", 21, Text, true, hoverX, hoverY);
     drawButton(menuLeftButton(4), L"加入局域网游戏", 21, Text, true, hoverX, hoverY);
 
-    if (hasSavedRun) drawButton(menuRightButton(0), L"继续存档", 23, Cyan, true, hoverX, hoverY);
+    if (hasSavedRun)
+        drawButton(menuRightButton(0), L"继续存档", 23, Cyan, true, hoverX, hoverY);
     drawButton(menuRightButton(1), L"设置", 23, Cyan, true, hoverX, hoverY);
     drawButton(menuRightButton(2), L"快速开始", 23, Green, true, hoverX, hoverY);
     drawButton(menuRightButton(3), L"PVP 对战", 23, Red, true, hoverX, hoverY);
 
-    const std::wstring diffText =
-        difficulty == Difficulty::Easy   ? L"难度：简单"
-        : difficulty == Difficulty::Normal ? L"难度：普通"
-                                           : L"难度：困难";
+    const std::wstring diffText = difficulty == Difficulty::Easy     ? L"难度：简单"
+                                  : difficulty == Difficulty::Normal ? L"难度：普通"
+                                                                     : L"难度：困难";
     drawButton(menuBottomButton(0), diffText, 19,
-               difficulty == Difficulty::Easy   ? Green
+               difficulty == Difficulty::Easy     ? Green
                : difficulty == Difficulty::Normal ? Yellow
                                                   : Red,
                true, hoverX, hoverY);
@@ -947,21 +1140,24 @@ void drawNetworkLobby() {
         drawText(225, 372, localIp, 34, Cyan);
         drawText(225, 470, L"将队友可访问的地址发给同一局域网内的队友。", 20, Text);
         drawText(225, 520,
-                 peerConnected ? L"玩家已连接，按 ENTER 开始"
-                               : L"等待玩家连接 · UDP " + std::to_wstring(NetworkPort),
-                 20,
-                 peerConnected ? Green : Yellow);
+                 peerConnected
+                     ? L"玩家已连接，按 ENTER 开始"
+                     : L"等待玩家连接 · UDP " + std::to_wstring(NetworkPort),
+                 20, peerConnected ? Green : Yellow);
         drawButton(lobbyStartButton(), L"开始行动  ENTER", 22,
                    peerConnected ? Green : Muted, peerConnected, hoverX, hoverY);
         drawButton(lobbyBackButton(), L"返回  ESC", 20, Cyan, true, hoverX, hoverY);
     } else if (screen == Screen::JoinIp) {
         fillRect(220, 355, 1120, 425, PanelLight);
         drawText(245, 370,
-                 hostIpInput.empty() ? L"输入主机 IPv4 地址..."
-                                     : std::wstring(hostIpInput.begin(), hostIpInput.end()),
+                 hostIpInput.empty()
+                     ? L"输入主机 IPv4 地址..."
+                     : std::wstring(hostIpInput.begin(), hostIpInput.end()),
                  28, Text);
-        drawText(225, 490, L"输入 IP 后按 ENTER 连接，BACKSPACE 删除，ESC 返回。", 18, Muted);
-        drawText(225, 545, L"双方需在同一局域网，并允许程序通过 Windows 防火墙。", 18, Muted);
+        drawText(225, 490, L"输入 IP 后按 ENTER 连接，BACKSPACE 删除，ESC 返回。",
+                 18, Muted);
+        drawText(225, 545, L"双方需在同一局域网，并允许程序通过 Windows 防火墙。",
+                 18, Muted);
         drawButton(lobbyBackButton(), L"返回  ESC", 20, Cyan, true, hoverX, hoverY);
     } else {
         drawText(225, 365, L"连接成功。等待主机创建地图并开始行动。", 22, Text);
@@ -978,8 +1174,8 @@ void drawShop() {
     drawText(1175, 135, L"持有金币", 17, Muted);
     drawText(1320, 127, std::to_wstring(money), 32, Yellow);
 
-    const std::array<std::wstring, 4> armorNames = {L"一级护甲", L"二级护甲", L"三级护甲",
-                                                    L"四级护甲"};
+    const std::array<std::wstring, 4> armorNames = {L"一级护甲", L"二级护甲",
+                                                    L"三级护甲", L"四级护甲"};
     std::array<std::wstring, 6> labels{};
     for (int tier = 1; tier <= 4; ++tier) {
         if (english) {
@@ -989,16 +1185,16 @@ void drawShop() {
                 std::to_wstring(ArmorReduction[tier]) + L"    " +
                 std::to_wstring(ArmorPrices[tier]) + L" coins";
         } else {
-            labels[tier - 1] =
-                armorNames[tier - 1] + L"       耐久 " +
-                std::to_wstring(ArmorDurability[tier]) + L" / 减伤 " +
-                std::to_wstring(ArmorReduction[tier]) + L"       " +
-                std::to_wstring(ArmorPrices[tier]) + L" 金";
+            labels[tier - 1] = armorNames[tier - 1] + L"       耐久 " +
+                               std::to_wstring(ArmorDurability[tier]) + L" / 减伤 " +
+                               std::to_wstring(ArmorReduction[tier]) + L"       " +
+                               std::to_wstring(ArmorPrices[tier]) + L" 金";
         }
     }
     labels[4] = english ? L"Ammo supply       +10 rounds       5 coins"
                         : L"弹药补给       +10 发       5 金";
-    labels[5] = english ? L"Medkit       +1       20 coins" : L"医疗包         +1 个       20 金";
+    labels[5] = english ? L"Medkit       +1       20 coins"
+                        : L"医疗包         +1 个       20 金";
 
     int mouseX = 0, mouseY = 0;
     mousepos(&mouseX, &mouseY);
@@ -1016,33 +1212,34 @@ void drawShop() {
 void drawHelp() {
     cleardevice();
     fillRect(0, 0, visibleDesignWidth(), visibleDesignHeight(), Panel);
-    const std::array<std::array<std::wstring, 8>, 3> pages = {{
-        {{L"行动简报 · 操作与战斗", L"W A S D        在地图中移动",
-          L"方向键          朝对应方向射击；子弹遇墙会停止",
-          L"E               拾取脚下的弹药或医疗包",
-          L"H               消耗医疗包；安全等待 3 秒恢复 20 点生命",
-          L"K               穿上或脱下已购买的护甲",
-          L"敌人靠近或进入视线后会苏醒并追击你。",
-          L"视野以外的地图区域会变暗。"}},
-        {{L"行动简报 · 目标与物资", L"击败右下区域的 Boss，再前往地图右下角的绿色撤离点。",
-          L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
-          L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后会进入狂暴阶段。",
-          L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
-          L"护甲可减伤并消耗耐久；K 可暂时脱下以保留耐久。",
-          L"被击中会打断治疗和撤离；移动也会取消正在进行的动作。",
-          L"生命归零时行动失败；撤离成功会保留当前携带物资。"}},
-        {{L"行动简报 · 商店、存档与联机", L"主菜单按 2 打开黑市：1–4 购买护甲，5 补弹，6 购买医疗包。",
-          L"商店购买会立即保存；行动进度会自动存入 %APPDATA%\\mokthyn\\save.dat。",
-          L"重新启动游戏后，主菜单按 6 继续最近的单人行动；按 1 开始新行动。",
-          L"按 L 切换语言；主菜单按 7 调整并保存界面缩放比例。",
-          L"联机：主机按 4，队友按 5 并输入主机 IPv4；双方需在同一局域网。",
-          L"联机使用 UDP " + std::to_wstring(NetworkPort) +
-              L"；若无法连接，请检查防火墙和路由器设置。",
-          L"下载：Mokthyn - Download"}}
-    }};
+    const std::array<std::array<std::wstring, 8>, 3> pages = {
+        {{{L"行动简报 · 操作与战斗", L"W A S D        在地图中移动",
+           L"方向键          朝对应方向射击；子弹遇墙会停止",
+           L"E               拾取脚下的弹药或医疗包",
+           L"H               消耗医疗包；安全等待 3 秒恢复 20 点生命",
+           L"K               穿上或脱下已购买的护甲",
+           L"敌人靠近或进入视线后会苏醒并追击你。", L"视野以外的地图区域会变暗。"}},
+         {{L"行动简报 · 目标与物资",
+           L"击败右下区域的 Boss，再前往地图右下角的绿色撤离点。",
+           L"站在撤离点上按 Q，保持 5 秒不移动且不受攻击即可撤离。",
+           L"普通敌人奖励 10 金币，Boss 奖励 100；Boss 半血后会进入狂暴阶段。",
+           L"方向键射击，每发消耗 1 弹；按住 WASD 可连续移动。",
+           L"护甲可减伤并消耗耐久；K 可暂时脱下以保留耐久。",
+           L"被击中会打断治疗和撤离；移动也会取消正在进行的动作。",
+           L"生命归零时行动失败；撤离成功会保留当前携带物资。"}},
+         {{L"行动简报 · 商店、存档与联机",
+           L"主菜单按 2 打开黑市：1–4 购买护甲，5 补弹，6 购买医疗包。",
+           L"商店购买会立即保存；行动进度会自动存入 %APPDATA%\\mokthyn\\save.dat。",
+           L"重新启动游戏后，主菜单按 6 继续最近的单人行动；按 1 开始新行动。",
+           L"按 L 切换语言；主菜单按 7 调整并保存界面缩放比例。",
+           L"联机：主机按 4，队友按 5 并输入主机 IPv4；双方需在同一局域网。",
+           L"联机使用 UDP " + std::to_wstring(NetworkPort) +
+               L"；若无法连接，请检查防火墙和路由器设置。",
+           L"下载：Mokthyn - Download"}}}};
     drawText(150, 110, pages[helpPage][0], 46, Text);
     for (int i = 1; i < 8; ++i)
-        drawText(160, 180 + (i - 1) * 54, pages[helpPage][i], 26, i == 7 ? Green : Text);
+        drawText(160, 180 + (i - 1) * 54, pages[helpPage][i], 26,
+                 i == 7 ? Green : Text);
     drawText(160, 580, L"下载地址：Mokthyn - Download", 19, Cyan);
     drawText(160, 612, DownloadUrl, 19, Cyan);
 
@@ -1051,13 +1248,16 @@ void drawHelp() {
     int hoverX = 0, hoverY = 0;
     mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
 
-    drawButton(helpPrevButton(), L"← 上一页", 19, Cyan, helpPage > 0, hoverX, hoverY);
-    drawButton(helpNextButton(), L"下一页 →", 19, Cyan, helpPage < 2, hoverX, hoverY);
-    drawButton(helpBackButton(), L"返回  ENTER / ESC", 19, Green, true, hoverX, hoverY);
+    drawButton(helpPrevButton(), L"← 上一页", 19, Cyan, helpPage > 0, hoverX,
+               hoverY);
+    drawButton(helpNextButton(), L"下一页 →", 19, Cyan, helpPage < 2, hoverX,
+               hoverY);
+    drawButton(helpBackButton(), L"返回  ENTER / ESC", 19, Green, true, hoverX,
+               hoverY);
     drawText(960, 690, L"按 D 打开下载页面", 18, Muted);
     if (Clock::now() < messageUntil) drawText(160, 730, message, 18, Yellow);
-    drawText(visibleDesignWidth() - 110, 115, std::to_wstring(helpPage + 1) + L" / 3", 22,
-             Green);
+    drawText(visibleDesignWidth() - 110, 115,
+             std::to_wstring(helpPage + 1) + L" / 3", 22, Green);
 }
 
 void drawSettings() {
@@ -1067,18 +1267,18 @@ void drawSettings() {
     fillRect(80, 80, visibleDesignWidth() - 80, visibleDesignHeight() - 80, Panel);
     drawText(130, 115, L"设置", 42, Text);
 
-    const std::array<std::wstring, 3> labels = {
-        L"界面缩放", L"窗口宽度", L"窗口高度"};
+    const std::array<std::wstring, 3> labels = {L"界面缩放", L"窗口宽度",
+                                                L"窗口高度"};
     const std::array<std::wstring, 3> values = {
         std::to_wstring(uiScalePercent) + L"%",
         std::to_wstring(windowWidth) + L" px",
         std::to_wstring(windowHeight) + L" px"};
-    const std::array<int, SettingsItemCount> currentValues = {uiScalePercent, windowWidth,
-                                                              windowHeight};
-    const std::array<int, SettingsItemCount> minValues = {MinUiScalePercent, MinWindowWidth,
-                                                         MinWindowHeight};
-    const std::array<int, SettingsItemCount> maxValues = {MaxUiScalePercent, MaxWindowWidth,
-                                                         MaxWindowHeight};
+    const std::array<int, SettingsItemCount> currentValues = {
+        uiScalePercent, windowWidth, windowHeight};
+    const std::array<int, SettingsItemCount> minValues = {
+        MinUiScalePercent, MinWindowWidth, MinWindowHeight};
+    const std::array<int, SettingsItemCount> maxValues = {
+        MaxUiScalePercent, MaxWindowWidth, MaxWindowHeight};
 
     int mouseX = 0, mouseY = 0;
     mousepos(&mouseX, &mouseY);
@@ -1097,10 +1297,13 @@ void drawSettings() {
                 currentValues[i] - minValues[i], maxValues[i] - minValues[i],
                 selected ? Green : Cyan);
     }
-    drawButton(settingsResetButton(), L"恢复默认  0", 20, Yellow, true, hoverX, hoverY);
+    drawButton(settingsResetButton(), L"恢复默认  0", 20, Yellow, true, hoverX,
+               hoverY);
     drawButton(settingsUpdateButton(), L"检查更新  U", 20,
-               updateStatus() == UpdateStatus::Available ? Green : Cyan, true, hoverX, hoverY);
-    drawButton(settingsBackButton(), L"返回  ENTER / ESC", 20, Green, true, hoverX, hoverY);
+               updateStatus() == UpdateStatus::Available ? Green : Cyan, true,
+               hoverX, hoverY);
+    drawButton(settingsBackButton(), L"返回  ENTER / ESC", 20, Green, true, hoverX,
+               hoverY);
     // 当前版本 + 后台检查结果
     std::wstring versionText;
     ege::color_t versionColor = Muted;
@@ -1110,8 +1313,10 @@ void drawSettings() {
         versionText = english ? L"Checking for updates..." : L"正在检查更新...";
         break;
     case UpdateStatus::Available:
-        versionText = ((english ? L"New version v" : L"发现新版本 v") + updateLatestVersion()) +
-                      (english ? L"  ·  download page opened" : L"  ·  已自动打开下载页");
+        versionText =
+            ((english ? L"New version v" : L"发现新版本 v") +
+             updateLatestVersion()) +
+            (english ? L"  ·  download page opened" : L"  ·  已自动打开下载页");
         versionColor = Green;
         break;
     case UpdateStatus::UpToDate:
@@ -1141,7 +1346,8 @@ void drawResult() {
     if (!pvp) {
         drawText(345, 332, L"本次击杀", 20, Muted);
         drawText(345, 370,
-                 std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies), 38, Text);
+                 std::to_wstring(kills) + L" / " + std::to_wstring(totalEnemies), 38,
+                 Text);
     }
     drawText(720, 332, L"剩余弹药", 20, Muted);
     drawText(720, 370, std::to_wstring(ammo + magazineAmmo), 38, Yellow);
@@ -1150,11 +1356,13 @@ void drawResult() {
     drawText(345, 500, L"护甲", 20, Muted);
     const bool hasArmor = armorTier > 0 && armorDurability > 0;
     const std::wstring armorDescription =
-        hasArmor ? (english ? L"Tier " : L"等级 ") + std::to_wstring(armorTier) +
-                       (english ? L"  ·  " : L"  ·  ") + std::to_wstring(armorDurability) +
-                       L" / " + std::to_wstring(ArmorDurability[armorTier]) +
-                       (armorOn ? L"" : (english ? L"  (unequipped)" : L"  （已脱下）"))
-                 : (english ? L"Not equipped" : L"未装备");
+        hasArmor
+            ? (english ? L"Tier " : L"等级 ") + std::to_wstring(armorTier) +
+                  (english ? L"  ·  " : L"  ·  ") +
+                  std::to_wstring(armorDurability) + L" / " +
+                  std::to_wstring(ArmorDurability[armorTier]) +
+                  (armorOn ? L"" : (english ? L"  (unequipped)" : L"  （已脱下）"))
+            : (english ? L"Not equipped" : L"未装备");
     drawText(440, 440, armorDescription, 20, hasArmor ? Cyan : Muted);
 
     int mouseX = 0, mouseY = 0;
@@ -1162,7 +1370,8 @@ void drawResult() {
     int hoverX = 0, hoverY = 0;
     mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
 
-    drawButton(resultBackButton(), L"返回主菜单  ENTER", 22, Green, true, hoverX, hoverY);
+    drawButton(resultBackButton(), L"返回主菜单  ENTER", 22, Green, true, hoverX,
+               hoverY);
     if (!networkStatus.empty()) drawText(345, 610, networkStatus, 18, Yellow);
 }
 
@@ -1174,20 +1383,20 @@ void drawPlaying() {
     drawMap();
     drawHud();
     if (healing) {
-        const int seconds =
-            std::max(0, 3 - static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
-                                                 Clock::now() - healStarted)
-                                                 .count()));
+        const int seconds = std::max(
+            0, 3 - static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
+                                        Clock::now() - healStarted)
+                                        .count()));
         drawText(battleMapLeft() + 12, visibleDesignHeight() - 42,
                  L"治疗中  " + std::to_wstring(seconds) + L" 秒", 18, Cyan);
     } else if (extracting) {
-        const int seconds =
-            std::max(0, 5 - static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
-                                                 Clock::now() - extractStarted)
-                                                 .count()));
+        const int seconds = std::max(
+            0, 5 - static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(
+                                        Clock::now() - extractStarted)
+                                        .count()));
         drawText(battleMapLeft() + 12, visibleDesignHeight() - 42,
                  L"撤离中  " + std::to_wstring(seconds) + L" 秒", 18, Green);
     }
 }
 
-} // namespace mokthyn
+}    // namespace mokthyn

@@ -1,25 +1,26 @@
 #pragma once
 #include "GameArchive.h"
-#include "GameTypes.h"
-#include "GameState.h"
 #include "GameLogic.h"
 #include "GameNetwork.h"
 #include "GameRender.h"
+#include "GameState.h"
+#include "GameTypes.h"
 #include <algorithm>
 #include <array>
+#include <bcrypt.h>
 #include <chrono>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <bcrypt.h>
 #include <ws2tcpip.h>
 
 namespace mokthyn {
 namespace {
-bool createNetworkSessionToken(std::string& token) {
+bool createNetworkSessionToken(std::string &token) {
     std::array<unsigned char, 16> randomBytes{};
-    if (BCryptGenRandom(nullptr, randomBytes.data(), static_cast<ULONG>(randomBytes.size()),
+    if (BCryptGenRandom(nullptr, randomBytes.data(),
+                        static_cast<ULONG>(randomBytes.size()),
                         BCRYPT_USE_SYSTEM_PREFERRED_RNG) != 0)
         return false;
     std::ostringstream output;
@@ -29,7 +30,7 @@ bool createNetworkSessionToken(std::string& token) {
     token = output.str();
     return true;
 }
-} // namespace
+}    // namespace
 
 void closeNetwork() {
     if (networkSocket != INVALID_SOCKET) {
@@ -85,7 +86,7 @@ bool initializeNetwork() {
     }
     BOOL reuseAddress = TRUE;
     if (setsockopt(networkSocket, SOL_SOCKET, SO_REUSEADDR,
-                   reinterpret_cast<const char*>(&reuseAddress),
+                   reinterpret_cast<const char *>(&reuseAddress),
                    sizeof(reuseAddress)) == SOCKET_ERROR) {
         closeNetwork();
         return false;
@@ -111,7 +112,8 @@ bool beginHostNetwork() {
     local.sin_family = AF_INET;
     local.sin_port = htons(NetworkPort);
     local.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(networkSocket, reinterpret_cast<sockaddr*>(&local), sizeof(local)) == SOCKET_ERROR) {
+    if (bind(networkSocket, reinterpret_cast<sockaddr *>(&local), sizeof(local)) ==
+        SOCKET_ERROR) {
         closeNetwork();
         return false;
     }
@@ -139,7 +141,8 @@ bool beginJoinNetwork() {
     local.sin_family = AF_INET;
     local.sin_port = 0;
     local.sin_addr.s_addr = htonl(INADDR_ANY);
-    if (bind(networkSocket, reinterpret_cast<sockaddr*>(&local), sizeof(local)) == SOCKET_ERROR) {
+    if (bind(networkSocket, reinterpret_cast<sockaddr *>(&local), sizeof(local)) ==
+        SOCKET_ERROR) {
         closeNetwork();
         return false;
     }
@@ -153,24 +156,25 @@ bool beginJoinNetwork() {
     lastNetworkSend = {};
     lastNetworkReceive = {};
     hostIpInput.clear();
-    networkStatus = archiveSaved ? L"输入主机的局域网 IPv4 地址"
-                                 : L"存档失败：" + archiveError;
+    networkStatus =
+        archiveSaved ? L"输入主机的局域网 IPv4 地址" : L"存档失败：" + archiveError;
     screen = Screen::JoinIp;
     return true;
 }
 
-bool sendNetworkPacket(const std::string& packet) {
+bool sendNetworkPacket(const std::string &packet) {
     if (networkSocket == INVALID_SOCKET || !peerConnected) return false;
     const std::string framed = networkSessionToken.empty()
                                    ? packet
                                    : "AUTH " + networkSessionToken + " " + packet;
     return sendto(networkSocket, framed.c_str(), static_cast<int>(framed.size()), 0,
-                  reinterpret_cast<const sockaddr*>(&peerAddress), sizeof(peerAddress)) !=
-           SOCKET_ERROR;
+                  reinterpret_cast<const sockaddr *>(&peerAddress),
+                  sizeof(peerAddress)) != SOCKET_ERROR;
 }
 
-bool sendReliableNetworkPacket(const std::string& packet) {
-    if (networkHost || !networkActive || !peerConnected || networkSocket == INVALID_SOCKET)
+bool sendReliableNetworkPacket(const std::string &packet) {
+    if (networkHost || !networkActive || !peerConnected ||
+        networkSocket == INVALID_SOCKET)
         return false;
     if (pendingReliablePackets.size() >= MaxReliablePackets) {
         networkStatus = L"可靠网络消息队列已满";
@@ -180,8 +184,8 @@ bool sendReliableNetworkPacket(const std::string& packet) {
     const unsigned int packetId = nextReliablePacketId++;
     const std::string framed = "REL " + std::to_string(packetId) + " " + packet;
     if (!sendNetworkPacket(framed)) return false;
-    pendingReliablePackets.emplace(
-        packetId, PendingReliablePacket{framed, Clock::now(), 1});
+    pendingReliablePackets.emplace(packetId,
+                                   PendingReliablePacket{framed, Clock::now(), 1});
     return true;
 }
 
@@ -198,20 +202,19 @@ std::wstring getLocalIPv4() {
         return cachedAddress;
     };
     char hostName[256]{};
-    if (gethostname(hostName, sizeof(hostName)) == SOCKET_ERROR)
-        return fallback();
+    if (gethostname(hostName, sizeof(hostName)) == SOCKET_ERROR) return fallback();
     addrinfo hints{};
     hints.ai_family = AF_INET;
-    addrinfo* addresses = nullptr;
-    if (getaddrinfo(hostName, nullptr, &hints, &addresses) != 0)
-        return fallback();
+    addrinfo *addresses = nullptr;
+    if (getaddrinfo(hostName, nullptr, &hints, &addresses) != 0) return fallback();
     std::wstring result;
-    for (addrinfo* entry = addresses; entry != nullptr; entry = entry->ai_next) {
-        const auto* address = reinterpret_cast<const sockaddr_in*>(entry->ai_addr);
+    for (addrinfo *entry = addresses; entry != nullptr; entry = entry->ai_next) {
+        const auto *address = reinterpret_cast<const sockaddr_in *>(entry->ai_addr);
         const unsigned long hostOrder = ntohl(address->sin_addr.s_addr);
         if ((hostOrder >> 24) == 127 || (hostOrder >> 16) == 0xA9FE) continue;
         wchar_t text[INET_ADDRSTRLEN]{};
-        if (InetNtopW(AF_INET, const_cast<in_addr*>(&address->sin_addr), text, INET_ADDRSTRLEN)) {
+        if (InetNtopW(AF_INET, const_cast<in_addr *>(&address->sin_addr), text,
+                      INET_ADDRSTRLEN)) {
             if (!result.empty()) result += L"  |  ";
             result += text;
         }
@@ -223,30 +226,31 @@ std::wstring getLocalIPv4() {
 }
 
 void sendNetworkState() {
-    if (!networkActive || !networkHost || !peerConnected || networkSocket == INVALID_SOCKET) return;
+    if (!networkActive || !networkHost || !peerConnected ||
+        networkSocket == INVALID_SOCKET)
+        return;
     std::ostringstream packet;
     const bool includeMap = peerMapRevision != networkMapRevision;
-    packet << "STATE " << playerX << ' ' << playerY << ' ' << health << ' ' << peerX << ' ' << peerY
-           << ' ' << peerHealth << ' ' << peerArmorTier << ' ' << peerArmorDurability << ' '
-           << (peerArmorOn ? 1 : 0) << ' '
-           << (peerMedkitsInitialized ? peerMedkits : -1) << ' ' << kills << ' ' << totalEnemies
-           << ' ' << money << ' '
-           << (extracting ? 1 : 0) << ' ' << (peerExtracting ? 1 : 0) << ' '
-           << (screen == Screen::Paused ? 1 : 0) << ' '
-           << (screen == Screen::Result ? 1 : 0) << ' ' << (won ? 1 : 0) << ' '
-           << networkMapRevision << ' ' << (includeMap ? 1 : 0) << ' ' << enemies.size() << ' '
-           << (peerAmmoInitialized ? peerAmmo : -1) << ' '
+    packet << "STATE " << playerX << ' ' << playerY << ' ' << health << ' ' << peerX
+           << ' ' << peerY << ' ' << peerHealth << ' ' << peerArmorTier << ' '
+           << peerArmorDurability << ' ' << (peerArmorOn ? 1 : 0) << ' '
+           << (peerMedkitsInitialized ? peerMedkits : -1) << ' ' << kills << ' '
+           << totalEnemies << ' ' << money << ' ' << (extracting ? 1 : 0) << ' '
+           << (peerExtracting ? 1 : 0) << ' ' << (screen == Screen::Paused ? 1 : 0)
+           << ' ' << (screen == Screen::Result ? 1 : 0) << ' ' << (won ? 1 : 0)
+           << ' ' << networkMapRevision << ' ' << (includeMap ? 1 : 0) << ' '
+           << enemies.size() << ' ' << (peerAmmoInitialized ? peerAmmo : -1) << ' '
            << (peerMagazineInitialized ? peerMagazineAmmo : -1) << ' '
-           << (peerReloading ? 1 : 0) << ' ' << (gameMode == GameMode::Pvp ? 1 : 0) << ' '
-           << (peerHealing ? 1 : 0) << ' ';
-    for (const Enemy& enemy : enemies)
-        packet << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' ' << (enemy.alive ? 1 : 0)
-               << ' ' << (enemy.awake ? 1 : 0) << ' ' << (enemy.boss ? 1 : 0) << ' ';
+           << (peerReloading ? 1 : 0) << ' ' << (gameMode == GameMode::Pvp ? 1 : 0)
+           << ' ' << (peerHealing ? 1 : 0) << ' ';
+    for (const Enemy &enemy : enemies)
+        packet << enemy.x << ' ' << enemy.y << ' ' << enemy.hp << ' '
+               << (enemy.alive ? 1 : 0) << ' ' << (enemy.awake ? 1 : 0) << ' '
+               << (enemy.boss ? 1 : 0) << ' ';
     if (includeMap) {
         packet << "MAP ";
-        for (const auto& row : world)
-            for (int tile : row)
-                packet << tile << ' ';
+        for (const auto &row : world)
+            for (int tile : row) packet << tile << ' ';
     }
     sendNetworkPacket(packet.str());
     lastNetworkSend = Clock::now();
@@ -264,10 +268,10 @@ void processNetwork() {
         peerReloading = false;
     }
     if (!networkHost && (!peerConnected || screen == Screen::JoinLobby) &&
-        peerAddress.sin_addr.s_addr != 0 &&
-        peerAddress.sin_port != 0 &&
+        peerAddress.sin_addr.s_addr != 0 && peerAddress.sin_port != 0 &&
         now - lastConnectAttempt >= std::chrono::milliseconds(500)) {
-        sendto(networkSocket, "CONNECT", 7, 0, reinterpret_cast<const sockaddr*>(&peerAddress),
+        sendto(networkSocket, "CONNECT", 7, 0,
+               reinterpret_cast<const sockaddr *>(&peerAddress),
                sizeof(peerAddress));
         lastConnectAttempt = now;
     }
@@ -276,8 +280,9 @@ void processNetwork() {
     sockaddr_in sender{};
     for (int packetsProcessed = 0; packetsProcessed < 32; ++packetsProcessed) {
         int senderLength = sizeof(sender);
-        const int received = recvfrom(networkSocket, buffer, sizeof(buffer) - 1, 0,
-                                      reinterpret_cast<sockaddr*>(&sender), &senderLength);
+        const int received =
+            recvfrom(networkSocket, buffer, sizeof(buffer) - 1, 0,
+                     reinterpret_cast<sockaddr *>(&sender), &senderLength);
         if (received == SOCKET_ERROR) {
             const int socketError = WSAGetLastError();
             if (socketError == WSAECONNRESET) continue;
@@ -287,17 +292,20 @@ void processNetwork() {
         if (received >= static_cast<int>(sizeof(buffer) - 1)) continue;
         buffer[received] = '\0';
         std::string data(buffer);
-        const bool fromPeer = sender.sin_addr.s_addr == peerAddress.sin_addr.s_addr &&
-                              sender.sin_port == peerAddress.sin_port;
+        const bool fromPeer =
+            sender.sin_addr.s_addr == peerAddress.sin_addr.s_addr &&
+            sender.sin_port == peerAddress.sin_port;
 
         if (networkHost && data == "CONNECT") {
-            const bool samePeer = peerAddress.sin_addr.s_addr == sender.sin_addr.s_addr &&
-                                  peerAddress.sin_port == sender.sin_port;
+            const bool samePeer =
+                peerAddress.sin_addr.s_addr == sender.sin_addr.s_addr &&
+                peerAddress.sin_port == sender.sin_port;
             if (peerConnected && !samePeer) continue;
             if (!peerConnected) {
                 if (!createNetworkSessionToken(networkSessionToken)) continue;
-                const bool midRunReconnect =
-                    screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result;
+                const bool midRunReconnect = screen == Screen::Playing ||
+                                             screen == Screen::Paused ||
+                                             screen == Screen::Result;
                 peerAddress = sender;
                 peerConnected = true;
                 peerX = peerY = -1;
@@ -310,8 +318,9 @@ void processNetwork() {
                 receivedReliablePacketIds.clear();
                 receivedReliablePacketOrder.clear();
                 if (midRunReconnect) {
-                    // 对局中断线重连：保留 peerHealth 等战斗数值，只把弹药/弹匣/医疗包/护甲
-                    // 交给客户端下一次 POS 上报对齐，避免重连时被重置成满血满弹
+                    // 对局中断线重连：保留 peerHealth
+                    // 等战斗数值，只把弹药/弹匣/医疗包/护甲 交给客户端下一次 POS
+                    // 上报对齐，避免重连时被重置成满血满弹
                     peerMedkitsInitialized = false;
                     peerAmmoInitialized = false;
                     peerMagazineInitialized = false;
@@ -337,18 +346,22 @@ void processNetwork() {
             const std::string acknowledgment = "ACK " + networkSessionToken;
             sendto(networkSocket, acknowledgment.c_str(),
                    static_cast<int>(acknowledgment.size()), 0,
-                   reinterpret_cast<const sockaddr*>(&peerAddress), sizeof(peerAddress));
+                   reinterpret_cast<const sockaddr *>(&peerAddress),
+                   sizeof(peerAddress));
             lastNetworkReceive = now;
             continue;
         }
-        if (!networkHost && data.rfind("ACK ", 0) == 0 && peerAddress.sin_addr.s_addr != 0 &&
+        if (!networkHost && data.rfind("ACK ", 0) == 0 &&
+            peerAddress.sin_addr.s_addr != 0 &&
             sender.sin_addr.s_addr == peerAddress.sin_addr.s_addr &&
             sender.sin_port == htons(NetworkPort)) {
             const std::string receivedToken = data.substr(4);
             if (receivedToken.size() != 32 ||
-                !std::all_of(receivedToken.begin(), receivedToken.end(), [](unsigned char ch) {
-                    return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f');
-                }))
+                !std::all_of(receivedToken.begin(), receivedToken.end(),
+                             [](unsigned char ch) {
+                                 return (ch >= '0' && ch <= '9') ||
+                                        (ch >= 'a' && ch <= 'f');
+                             }))
                 continue;
             networkSessionToken = receivedToken;
             peerAddress = sender;
@@ -388,8 +401,9 @@ void processNetwork() {
         if (command == "POS" && networkHost) {
             int x, y, tier, durability, armorEnabled, reportedMedkits, reportedAmmo;
             int reportedMagazine = 0, reportedReloading = 0;
-            if (input >> x >> y >> tier >> durability >> armorEnabled >> reportedMedkits >>
-                    reportedAmmo >> reportedMagazine >> reportedReloading &&
+            if (input >> x >> y >> tier >> durability >> armorEnabled >>
+                    reportedMedkits >> reportedAmmo >> reportedMagazine >>
+                    reportedReloading &&
                 x > 0 && x < MapColumns - 1 && y > 0 && y < MapRows - 1 &&
                 world[y][x] != Wall && !hasEnemyAt(x, y) &&
                 (peerX < 0 ||
@@ -427,18 +441,20 @@ void processNetwork() {
                     peerArmorTier = reportedTier;
                     peerArmorDurability = reportedDurability;
                 } else {
-                    peerArmorDurability = std::min(peerArmorDurability, reportedDurability);
+                    peerArmorDurability =
+                        std::min(peerArmorDurability, reportedDurability);
                 }
-                peerArmorOn =
-                    armorEnabled != 0 && peerArmorTier > 0 && peerArmorDurability > 0;
+                peerArmorOn = armorEnabled != 0 && peerArmorTier > 0 &&
+                              peerArmorDurability > 0;
                 if (peerExtracting && world[peerY][peerX] != ExitTile) {
                     peerExtracting = false;
                     peerExtractStarted = {};
                 }
             }
         } else if (command == "HEAL_START" && networkHost) {
-            if (screen == Screen::Playing && peerHealth > 0 && peerHealth < MaxHealth &&
-                peerMedkits > 0 && !peerHealing && !peerExtracting) {
+            if (screen == Screen::Playing && peerHealth > 0 &&
+                peerHealth < MaxHealth && peerMedkits > 0 && !peerHealing &&
+                !peerExtracting) {
                 --peerMedkits;
                 peerHealing = true;
                 peerHealStarted = now;
@@ -458,7 +474,8 @@ void processNetwork() {
             if (!(input >> dx >> dy) ||
                 !((dx == 0 && (dy == 1 || dy == -1)) ||
                   (dy == 0 && (dx == 1 || dx == -1))) ||
-                peerX <= 0 || peerY <= 0 || peerMagazineAmmo <= 0 || now < peerNextShot)
+                peerX <= 0 || peerY <= 0 || peerMagazineAmmo <= 0 ||
+                now < peerNextShot)
                 continue;
             --peerMagazineAmmo;
             if (peerMagazineAmmo == 0 && peerAmmo > 0 && !peerReloading) {
@@ -473,11 +490,13 @@ void processNetwork() {
                 if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows ||
                     world[y][x] == Wall)
                     break;
-                if (gameMode == GameMode::Pvp && health > 0 && x == playerX && y == playerY) {
+                if (gameMode == GameMode::Pvp && health > 0 && x == playerX &&
+                    y == playerY) {
                     // 主机受伤同样要走 takeDamage，护甲减伤与耐久磨损才对主机生效
                     health = std::max(0, health - takeDamage(GunDamage));
                     if (health == 0) {
-                        // 之前只置 won = false 不切结算界面，0 血主机还能继续操控，对局无法结束
+                        // 之前只置 won = false 不切结算界面，0
+                        // 血主机还能继续操控，对局无法结束
                         resetPeerCombatState();
                         won = false;
                         screen = Screen::Result;
@@ -485,7 +504,7 @@ void processNetwork() {
                     hitEnemy = true;
                     break;
                 }
-                for (Enemy& enemy : enemies) {
+                for (Enemy &enemy : enemies) {
                     if (enemy.alive && enemy.x == x && enemy.y == y) {
                         enemy.hp -= GunDamage;
                         enemy.awake = true;
@@ -515,7 +534,8 @@ void processNetwork() {
                         if (std::abs(mdx) + std::abs(mdy) > MeleeRange) continue;
                         const int tx = peerX + mdx;
                         const int ty = peerY + mdy;
-                        if (tx <= 0 || tx >= MapColumns - 1 || ty <= 0 || ty >= MapRows - 1)
+                        if (tx <= 0 || tx >= MapColumns - 1 || ty <= 0 ||
+                            ty >= MapRows - 1)
                             continue;
                         if (gameMode == GameMode::Pvp && health > 0 &&
                             tx == playerX && ty == playerY) {
@@ -526,14 +546,15 @@ void processNetwork() {
                                 screen = Screen::Result;
                             }
                         }
-                        for (Enemy& enemy : enemies) {
+                        for (Enemy &enemy : enemies) {
                             if (enemy.alive && enemy.x == tx && enemy.y == ty) {
                                 enemy.hp -= MeleeDamage;
                                 enemy.awake = true;
                                 if (enemy.hp <= 0) {
                                     enemy.alive = false;
                                     ++kills;
-                                    money += enemy.boss ? BossKillReward : EnemyKillReward;
+                                    money += enemy.boss ? BossKillReward
+                                                        : EnemyKillReward;
                                 }
                             }
                         }
@@ -545,12 +566,14 @@ void processNetwork() {
             if (input >> x >> y >> type && peerX > 0 && peerY > 0 &&
                 std::abs(x - peerX) + std::abs(y - peerY) <= 1 && x >= 0 &&
                 x < MapColumns && y >= 0 && y < MapRows &&
-                (type == AmmoPickup || type == MedkitPickup) && world[y][x] == type) {
+                (type == AmmoPickup || type == MedkitPickup) &&
+                world[y][x] == type) {
                 world[y][x] = Floor;
                 if (type == MedkitPickup)
                     peerMedkits = std::min(10000, peerMedkits + 1);
                 else
-                    peerAmmo = std::min(100000, peerAmmo + randomInt(PickupAmmoMin, PickupAmmoMax));
+                    peerAmmo = std::min(
+                        100000, peerAmmo + randomInt(PickupAmmoMin, PickupAmmoMax));
                 ++networkMapRevision;
             }
         } else if (command == "MAP_ACK" && networkHost) {
@@ -561,12 +584,13 @@ void processNetwork() {
             int status;
             if (input >> status && (status == 0 || status == 1)) {
                 const bool requested =
-                    gameMode == GameMode::Coop &&
-                    status == 1 && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
-                    peerY < MapRows - 1 && world[peerY][peerX] == ExitTile && peerHealth > 0 &&
-                    std::none_of(enemies.begin(), enemies.end(), [](const Enemy& enemy) {
-                        return enemy.boss && enemy.alive;
-                    });
+                    gameMode == GameMode::Coop && status == 1 && peerX > 0 &&
+                    peerX < MapColumns - 1 && peerY > 0 && peerY < MapRows - 1 &&
+                    world[peerY][peerX] == ExitTile && peerHealth > 0 &&
+                    std::none_of(enemies.begin(), enemies.end(),
+                                 [](const Enemy &enemy) {
+                                     return enemy.boss && enemy.alive;
+                                 });
                 if (requested && !peerExtracting) peerExtractStarted = now;
                 peerExtracting = requested;
                 if (peerExtracting) {
@@ -595,7 +619,8 @@ void processNetwork() {
             receivedReliablePacketIds.clear();
             receivedReliablePacketOrder.clear();
             networkStatus = L"队友已离开";
-        } else if (command == "START" && !networkHost && screen == Screen::JoinLobby) {
+        } else if (command == "START" && !networkHost &&
+                   screen == Screen::JoinLobby) {
             std::string modeTag;
             if (input >> modeTag && modeTag == "PVP") gameMode = GameMode::Pvp;
             else gameMode = GameMode::Coop;
@@ -603,34 +628,36 @@ void processNetwork() {
         } else if (command == "STATE" && !networkHost) {
             int hostX, hostY, hostHp, clientX, clientY, clientHp;
             int clientArmorTier, clientArmorDurability, clientArmorOn;
-            int syncedMedkits, syncedKills, syncedTotal, syncedMoney, hostEvacuating, peerEvacuating,
-                hostPaused, finished, result, mapIncluded, syncedPeerAmmo, syncedPeerMagazine,
-                syncedPeerReloading, syncedMode, syncedClientHealing;
+            int syncedMedkits, syncedKills, syncedTotal, syncedMoney, hostEvacuating,
+                peerEvacuating, hostPaused, finished, result, mapIncluded,
+                syncedPeerAmmo, syncedPeerMagazine, syncedPeerReloading, syncedMode,
+                syncedClientHealing;
             unsigned int mapRevision;
             int enemyCount;
-            if (!(input >> hostX >> hostY >> hostHp >> clientX >> clientY >> clientHp >>
-                  clientArmorTier >> clientArmorDurability >> clientArmorOn >> syncedMedkits >> syncedKills >>
-                  syncedTotal >> syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
+            if (!(input >> hostX >> hostY >> hostHp >> clientX >> clientY >>
+                  clientHp >> clientArmorTier >> clientArmorDurability >>
+                  clientArmorOn >> syncedMedkits >> syncedKills >> syncedTotal >>
+                  syncedMoney >> hostEvacuating >> peerEvacuating >> hostPaused >>
                   finished >> result >> mapRevision >> mapIncluded >> enemyCount >>
-                  syncedPeerAmmo >> syncedPeerMagazine >> syncedPeerReloading >> syncedMode >>
-                  syncedClientHealing) ||
-                  enemyCount < 0 || enemyCount > 200 ||
-                  syncedPeerAmmo < -1 || syncedPeerAmmo > 100000 ||
-                  syncedPeerMagazine < -1 || syncedPeerMagazine > MagazineSize ||
-                  (syncedPeerReloading != 0 && syncedPeerReloading != 1) ||
-                  (syncedMode != 0 && syncedMode != 1) ||
-                  (syncedClientHealing != 0 && syncedClientHealing != 1) ||
-                  (mapIncluded != 0 && mapIncluded != 1) ||
-                  (hostEvacuating != 0 && hostEvacuating != 1) ||
-                  (peerEvacuating != 0 && peerEvacuating != 1) ||
-                  (hostPaused != 0 && hostPaused != 1) ||
-                  (finished != 0 && finished != 1) ||
-                  (result != 0 && result != 1))
+                  syncedPeerAmmo >> syncedPeerMagazine >> syncedPeerReloading >>
+                  syncedMode >> syncedClientHealing) ||
+                enemyCount < 0 || enemyCount > 200 || syncedPeerAmmo < -1 ||
+                syncedPeerAmmo > 100000 || syncedPeerMagazine < -1 ||
+                syncedPeerMagazine > MagazineSize ||
+                (syncedPeerReloading != 0 && syncedPeerReloading != 1) ||
+                (syncedMode != 0 && syncedMode != 1) ||
+                (syncedClientHealing != 0 && syncedClientHealing != 1) ||
+                (mapIncluded != 0 && mapIncluded != 1) ||
+                (hostEvacuating != 0 && hostEvacuating != 1) ||
+                (peerEvacuating != 0 && peerEvacuating != 1) ||
+                (hostPaused != 0 && hostPaused != 1) ||
+                (finished != 0 && finished != 1) || (result != 0 && result != 1))
                 continue;
             beginNetworkArchiveSession();
             pickupPending = false;
-            // 主机是模式的唯一权威：START 走不可靠 UDP，一旦丢包客户端就会留在 Coop，
-            // 生成无关敌人、允许撤离、结算方向也相反，所以每次 STATE 都重新对齐
+            // 主机是模式的唯一权威：START 走不可靠 UDP，一旦丢包客户端就会留在
+            // Coop， 生成无关敌人、允许撤离、结算方向也相反，所以每次 STATE
+            // 都重新对齐
             gameMode = syncedMode != 0 ? GameMode::Pvp : GameMode::Coop;
             const bool awaitingStart =
                 screen == Screen::JoinLobby || screen == Screen::JoinIp;
@@ -658,14 +685,17 @@ void processNetwork() {
                 healing = false;
                 sendReliableNetworkPacket("HEAL_CANCEL");
             } else if (!syncedClientHealing && healing &&
-                       now - healStarted >= std::chrono::milliseconds(HealAckGraceMs)) {
+                       now - healStarted >=
+                           std::chrono::milliseconds(HealAckGraceMs)) {
                 // 主机侧的治疗已被打断（撤离、主动取消等），此时血量不会变化，
-                // 客户端必须静默停止，否则会继续显示“治疗中”并在 3 秒后发无效的 HEAL_DONE
+                // 客户端必须静默停止，否则会继续显示“治疗中”并在 3 秒后发无效的
+                // HEAL_DONE
                 healing = false;
                 healStarted = {};
             }
             armorTier = std::clamp(clientArmorTier, 0, 4);
-            armorDurability = std::clamp(clientArmorDurability, 0, ArmorDurability[armorTier]);
+            armorDurability =
+                std::clamp(clientArmorDurability, 0, ArmorDurability[armorTier]);
             armorOn = clientArmorOn != 0 && armorTier > 0 && armorDurability > 0;
             kills = std::clamp(syncedKills, 0, 100000);
             totalEnemies = std::clamp(syncedTotal, 0, 100000);
@@ -695,7 +725,8 @@ void processNetwork() {
             for (int i = 0; i < enemyCount; ++i) {
                 Enemy enemy;
                 int alive, awake, boss;
-                if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake >> boss)) {
+                if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake >>
+                      boss)) {
                     enemiesComplete = false;
                     break;
                 }
@@ -704,18 +735,17 @@ void processNetwork() {
                     enemy.hp <= (boss != 0 ? BossHealth : EnemyHealth) &&
                     (alive == 0 || alive == 1) && (awake == 0 || awake == 1) &&
                     (boss == 0 || boss == 1))
-                    syncedEnemies.push_back(
-                        {enemy.x, enemy.y, enemy.hp, alive != 0, awake != 0, boss != 0, now});
-                else
-                    enemiesComplete = false;
+                    syncedEnemies.push_back({enemy.x, enemy.y, enemy.hp, alive != 0,
+                                             awake != 0, boss != 0, now});
+                else enemiesComplete = false;
             }
             if (mapIncluded != 0) {
                 std::string mapMarker;
                 if (!(input >> mapMarker) || mapMarker != "MAP") continue;
                 bool validMap = true;
                 std::array<std::array<int, MapColumns>, MapRows> syncedWorld{};
-                for (auto& row : syncedWorld)
-                    for (int& tile : row) {
+                for (auto &row : syncedWorld)
+                    for (int &tile : row) {
                         if (!(input >> tile) || tile < Floor || tile > MedkitPickup)
                             validMap = false;
                     }
@@ -730,7 +760,8 @@ void processNetwork() {
             {
                 // 仅在敌人列表完整解析时才整体替换，避免损坏包导致敌人凭空消失
                 if (enemiesComplete) enemies = std::move(syncedEnemies);
-                totalEnemies = std::max(totalEnemies, static_cast<int>(enemies.size()));
+                totalEnemies =
+                    std::max(totalEnemies, static_cast<int>(enemies.size()));
             }
             if (finished != 0) {
                 won = gameMode == GameMode::Pvp ? (result == 0) : (result != 0);
@@ -750,7 +781,7 @@ void processNetwork() {
 
     for (auto pending = pendingReliablePackets.begin();
          pending != pendingReliablePackets.end();) {
-        auto& packet = pending->second;
+        auto &packet = pending->second;
         if (packet.attempts >= ReliableMaxAttempts) {
             networkStatus = L"网络消息确认超时";
             setMessage(networkStatus);
@@ -766,16 +797,17 @@ void processNetwork() {
     }
 
     if (networkHost && peerConnected &&
-        (screen == Screen::Playing || screen == Screen::Paused || screen == Screen::Result) &&
+        (screen == Screen::Playing || screen == Screen::Paused ||
+         screen == Screen::Result) &&
         now - lastNetworkSend >= std::chrono::milliseconds(NetworkSendIntervalMs))
         sendNetworkState();
     if (!networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused) &&
         now - lastNetworkSend >= std::chrono::milliseconds(100)) {
         std::ostringstream packet;
-        packet << "POS " << playerX << ' ' << playerY << ' ' << armorTier << ' ' << armorDurability
-               << ' ' << (armorOn ? 1 : 0) << ' ' << medkits << ' ' << ammo << ' '
-               << magazineAmmo << ' ' << (reloading ? 1 : 0);
+        packet << "POS " << playerX << ' ' << playerY << ' ' << armorTier << ' '
+               << armorDurability << ' ' << (armorOn ? 1 : 0) << ' ' << medkits
+               << ' ' << ammo << ' ' << magazineAmmo << ' ' << (reloading ? 1 : 0);
         sendNetworkPacket(packet.str());
         lastNetworkSend = now;
     }
@@ -786,10 +818,9 @@ void processNetwork() {
     }
     if (networkHost && peerExtracting && screen == Screen::Playing &&
         gameMode == GameMode::Coop &&
-        now - peerExtractStarted >= std::chrono::milliseconds(ExtractDurationMs) && health > 0 &&
-        peerX > 0 &&
-        peerX < MapColumns - 1 && peerY > 0 && peerY < MapRows - 1 &&
-        world[peerY][peerX] == ExitTile && peerHealth > 0) {
+        now - peerExtractStarted >= std::chrono::milliseconds(ExtractDurationMs) &&
+        health > 0 && peerX > 0 && peerX < MapColumns - 1 && peerY > 0 &&
+        peerY < MapRows - 1 && world[peerY][peerX] == ExitTile && peerHealth > 0) {
         won = true;
         screen = Screen::Result;
         peerExtracting = false;
@@ -820,9 +851,11 @@ void processNetwork() {
     if (!networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused) &&
         peerAddress.sin_addr.s_addr != 0 && peerAddress.sin_port != 0 &&
-        now - lastNetworkReceive >= std::chrono::milliseconds(NetworkClientTimeoutMs)) {
+        now - lastNetworkReceive >=
+            std::chrono::milliseconds(NetworkClientTimeoutMs)) {
         sendto(networkSocket, "CONNECT", 7, 0,
-               reinterpret_cast<const sockaddr*>(&peerAddress), sizeof(peerAddress));
+               reinterpret_cast<const sockaddr *>(&peerAddress),
+               sizeof(peerAddress));
         lastConnectAttempt = now;
     }
     if (!networkHost && !peerConnected && screen == Screen::JoinLobby &&
@@ -844,4 +877,4 @@ void processNetwork() {
     }
 }
 
-}
+}    // namespace mokthyn

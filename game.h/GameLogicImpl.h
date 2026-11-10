@@ -17,7 +17,7 @@ int randomInt(int low, int high) {
     return std::uniform_int_distribution<int>(low, high)(randomEngine);
 }
 
-void setMessage(const std::wstring& text, int milliseconds) {
+void setMessage(const std::wstring &text, int milliseconds) {
     message = text;
     messageUntil = Clock::now() + std::chrono::milliseconds(milliseconds);
 }
@@ -42,7 +42,7 @@ void resetRunProgress() {
 // 玩家一恢复行动就会被全图敌人同时开火
 void resumeSavedRun() {
     const auto now = Clock::now();
-    for (Enemy& enemy : enemies) enemy.nextAttack = now;
+    for (Enemy &enemy : enemies) enemy.nextAttack = now;
     resetRunProgress();
     lastMove = lastEnemyTurn = nextPlayerHit = nextPeerHit = nextPlayerShot = now;
     nextMelee = {};
@@ -143,7 +143,7 @@ void computeVisibility() {
 }
 
 bool hasEnemyAt(int x, int y) {
-    return std::any_of(enemies.begin(), enemies.end(), [=](const Enemy& enemy) {
+    return std::any_of(enemies.begin(), enemies.end(), [=](const Enemy &enemy) {
         return enemy.alive && enemy.x == x && enemy.y == y;
     });
 }
@@ -170,12 +170,9 @@ void startRun() {
         hasSavedRun = true;
         gameMode = GameMode::Coop;
     }
-    for (auto& row : world)
-        row.fill(Floor);
-    for (int x = 0; x < MapColumns; ++x)
-        world[0][x] = world[MapRows - 1][x] = Wall;
-    for (int y = 0; y < MapRows; ++y)
-        world[y][0] = world[y][MapColumns - 1] = Wall;
+    for (auto &row : world) row.fill(Floor);
+    for (int x = 0; x < MapColumns; ++x) world[0][x] = world[MapRows - 1][x] = Wall;
+    for (int y = 0; y < MapRows; ++y) world[y][0] = world[y][MapColumns - 1] = Wall;
 
     const bool pvp = gameMode == GameMode::Pvp;
     if (pvp && networkActive) {
@@ -193,15 +190,15 @@ void startRun() {
         const int top = randomInt(2, MapRows - height - 2);
         if (std::abs(left - playerX) + std::abs(top - playerY) < 6) continue;
         for (int y = top; y < top + height; ++y)
-            for (int x = left; x < left + width; ++x)
-                world[y][x] = Wall;
+            for (int x = left; x < left + width; ++x) world[y][x] = Wall;
         world[top + height / 2][left + width / 2] = Floor;
     }
 
     world[MapRows - 2][MapColumns - 2] = ExitTile;
     for (int y = playerY - 2; y <= playerY + 2; ++y)
         for (int x = playerX - 2; x <= playerX + 2; ++x)
-            if (x > 0 && y > 0 && x < MapColumns - 1 && y < MapRows - 1) world[y][x] = Floor;
+            if (x > 0 && y > 0 && x < MapColumns - 1 && y < MapRows - 1)
+                world[y][x] = Floor;
 
     enemies.clear();
     const auto runStarted = Clock::now();
@@ -218,9 +215,11 @@ void startRun() {
             const int x = randomInt(1, MapColumns - 2);
             const int y = randomInt(1, MapRows - 2);
             if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
-                std::abs(x - playerX) + std::abs(y - playerY) >= EnemySpawnMinDistance) {
-                enemies.push_back({x, y, EnemyHealth, true, false, false,
-                                   runStarted + std::chrono::milliseconds(EnemyTurnIntervalMs)});
+                std::abs(x - playerX) + std::abs(y - playerY) >=
+                    EnemySpawnMinDistance) {
+                enemies.push_back(
+                    {x, y, EnemyHealth, true, false, false,
+                     runStarted + std::chrono::milliseconds(EnemyTurnIntervalMs)});
                 ++placedEnemies;
                 break;
             }
@@ -231,9 +230,11 @@ void startRun() {
             const int x = randomInt(3, MapColumns - 4);
             const int y = randomInt(3, MapRows - 4);
             if (world[y][x] == Floor && !hasEnemyAt(x, y) &&
-                std::abs(x - playerX) + std::abs(y - playerY) >= BossSpawnMinDistance) {
-                enemies.push_back({x, y, BossHealth, true, false, true,
-                                   runStarted + std::chrono::milliseconds(EnemyTurnIntervalMs)});
+                std::abs(x - playerX) + std::abs(y - playerY) >=
+                    BossSpawnMinDistance) {
+                enemies.push_back(
+                    {x, y, BossHealth, true, false, true,
+                     runStarted + std::chrono::milliseconds(EnemyTurnIntervalMs)});
                 break;
             }
         }
@@ -242,8 +243,10 @@ void startRun() {
     totalEnemies = static_cast<int>(enemies.size());
     int missingPickups = 0;
     const double pickupScale = pvp ? 1.0 : enemyScale;
-    const int ammoCount = std::max(8, static_cast<int>(AmmoPickupCount * pickupScale));
-    const int medkitCount = std::max(4, static_cast<int>(MedkitPickupCount * pickupScale));
+    const int ammoCount =
+        std::max(8, static_cast<int>(AmmoPickupCount * pickupScale));
+    const int medkitCount =
+        std::max(4, static_cast<int>(MedkitPickupCount * pickupScale));
     for (int i = 0; i < ammoCount; ++i)
         if (!placePickup(AmmoPickup, AmmoPickupMinDistance)) ++missingPickups;
     for (int i = 0; i < medkitCount; ++i)
@@ -271,8 +274,9 @@ void startRun() {
     std::wstring startMessage = pvp ? L"消灭对方玩家！物资竞争，生死由命"
                                     : L"清除敌人并击败区域 Boss，然后前往撤离点";
     if (placedEnemies < regularCount || missingPickups > 0)
-        startMessage += L"（地图空间不足：敌人 " + std::to_wstring(regularCount - placedEnemies) +
-                        L"、物资 " + std::to_wstring(missingPickups) + L" 未生成）";
+        startMessage += L"（地图空间不足：敌人 " +
+                        std::to_wstring(regularCount - placedEnemies) + L"、物资 " +
+                        std::to_wstring(missingPickups) + L" 未生成）";
     setMessage(startMessage);
     saveArchive();
     if (networkActive && networkHost && peerConnected) {
@@ -282,7 +286,8 @@ void startRun() {
         peerArmorInitialized = false;
         peerReloading = false;
         peerNextMelee = {};
-        sendNetworkPacket("START " + std::string(gameMode == GameMode::Pvp ? "PVP" : "COOP"));
+        sendNetworkPacket("START " +
+                          std::string(gameMode == GameMode::Pvp ? "PVP" : "COOP"));
         sendNetworkState();
     }
 }
@@ -313,7 +318,8 @@ void shoot(int dx, int dy) {
         }
         --magazineAmmo;
         nextPlayerShot = now + std::chrono::milliseconds(ShotCooldownMs);
-        // 弹匣打空自动换弹必须通知主机，否则主机侧弹匣计数停留在 0，后续射击会被主机拒绝
+        // 弹匣打空自动换弹必须通知主机，否则主机侧弹匣计数停留在
+        // 0，后续射击会被主机拒绝
         if (magazineAmmo == 0 && ammo > 0) {
             if (sendReliableNetworkPacket("RELOAD")) {
                 reloading = true;
@@ -326,7 +332,8 @@ void shoot(int dx, int dy) {
     for (int step = 1; step <= GunRange; ++step) {
         const int x = playerX + dx * step;
         const int y = playerY + dy * step;
-        if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows || world[y][x] == Wall) break;
+        if (x < 0 || x >= MapColumns || y < 0 || y >= MapRows || world[y][x] == Wall)
+            break;
         if (gameMode == GameMode::Pvp && peerConnected && peerHealth > 0 &&
             x == peerX && y == peerY) {
             --magazineAmmo;
@@ -342,9 +349,10 @@ void shoot(int dx, int dy) {
             }
             return;
         }
-        auto found = std::find_if(enemies.begin(), enemies.end(), [=](const Enemy& enemy) {
-            return enemy.alive && enemy.x == x && enemy.y == y;
-        });
+        auto found =
+            std::find_if(enemies.begin(), enemies.end(), [=](const Enemy &enemy) {
+                return enemy.alive && enemy.x == x && enemy.y == y;
+            });
         if (found != enemies.end()) {
             --magazineAmmo;
             nextPlayerShot = now + std::chrono::milliseconds(ShotCooldownMs);
@@ -355,7 +363,8 @@ void shoot(int dx, int dy) {
                 found->alive = false;
                 ++kills;
                 money += found->boss ? BossKillReward : EnemyKillReward;
-                setMessage(found->boss ? L"区域 Boss 已击败  +100 金币" : L"目标消灭  +10 金币");
+                setMessage(found->boss ? L"区域 Boss 已击败  +100 金币"
+                                       : L"目标消灭  +10 金币");
             } else {
                 setMessage(L"命中目标");
             }
@@ -391,7 +400,8 @@ void meleeAttack() {
             if (std::abs(dx) + std::abs(dy) > MeleeRange) continue;
             const int tx = playerX + dx;
             const int ty = playerY + dy;
-            if (tx <= 0 || tx >= MapColumns - 1 || ty <= 0 || ty >= MapRows - 1) continue;
+            if (tx <= 0 || tx >= MapColumns - 1 || ty <= 0 || ty >= MapRows - 1)
+                continue;
             if (gameMode == GameMode::Pvp && peerConnected && peerHealth > 0 &&
                 tx == peerX && ty == peerY) {
                 applyPeerDamage(MeleeDamage);
@@ -403,7 +413,7 @@ void meleeAttack() {
                     return;
                 }
             }
-            for (Enemy& enemy : enemies) {
+            for (Enemy &enemy : enemies) {
                 if (enemy.alive && enemy.x == tx && enemy.y == ty) {
                     enemy.hp -= MeleeDamage;
                     enemy.awake = true;
@@ -412,7 +422,8 @@ void meleeAttack() {
                         enemy.alive = false;
                         ++kills;
                         money += enemy.boss ? BossKillReward : EnemyKillReward;
-                        setMessage(enemy.boss ? L"刀杀 Boss  +100 金币" : L"刀杀敌人  +10 金币");
+                        setMessage(enemy.boss ? L"刀杀 Boss  +100 金币"
+                                              : L"刀杀敌人  +10 金币");
                     }
                 }
             }
@@ -423,8 +434,8 @@ void meleeAttack() {
 
 int takeDamage(int damage) {
     if (!armorOn || armorDurability <= 0) return damage;
-    const int reduction =
-        ArmorReduction[std::clamp(armorTier, 0, static_cast<int>(ArmorReduction.size()) - 1)];
+    const int reduction = ArmorReduction[std::clamp(
+        armorTier, 0, static_cast<int>(ArmorReduction.size()) - 1)];
     // 护甲磨损与队友路径一致（固定 ArmorWearPerHit），避免主客玩家磨损不对称
     armorDurability = std::max(0, armorDurability - ArmorWearPerHit);
     if (armorDurability == 0) {
@@ -439,9 +450,11 @@ int takeDamage(int damage) {
 // 与敌人攻击队友、主机结算队友受伤的路径共用同一套护甲规则
 void applyPeerDamage(int damage) {
     if (peerArmorOn && peerArmorDurability > 0) {
-        damage = std::max(1, damage - ArmorReduction[std::clamp(
-                                     peerArmorTier, 0,
-                                     static_cast<int>(ArmorReduction.size()) - 1)]);
+        damage = std::max(
+            1,
+            damage -
+                ArmorReduction[std::clamp(
+                    peerArmorTier, 0, static_cast<int>(ArmorReduction.size()) - 1)]);
         peerArmorDurability = std::max(0, peerArmorDurability - ArmorWearPerHit);
         if (peerArmorDurability == 0) {
             peerArmorOn = false;
@@ -456,37 +469,42 @@ void updateEnemies(Clock::time_point now) {
     if (now - lastEnemyTurn < std::chrono::milliseconds(EnemyTurnIntervalMs)) return;
     lastEnemyTurn = now;
 
-    for (Enemy& enemy : enemies) {
+    for (Enemy &enemy : enemies) {
         if (!enemy.alive) continue;
         int targetX = playerX;
         int targetY = playerY;
         bool targetPeer = false;
-        if (networkActive && networkHost && peerConnected && peerHealth > 0 && peerX > 0 &&
-            peerY > 0 &&
+        if (networkActive && networkHost && peerConnected && peerHealth > 0 &&
+            peerX > 0 && peerY > 0 &&
             std::abs(enemy.x - peerX) + std::abs(enemy.y - peerY) <
                 std::abs(enemy.x - playerX) + std::abs(enemy.y - playerY)) {
             targetX = peerX;
             targetY = peerY;
             targetPeer = true;
         }
-        const int distance = std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
+        const int distance =
+            std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
         if (!enemy.awake && distance <= EnemyAwakeDistance &&
             lineOfSight(enemy.x, enemy.y, targetX, targetY))
             enemy.awake = true;
 
         const bool bossEnraged = enemy.boss && enemy.hp <= BossHealth / 2;
         const int attackRange =
-            enemy.boss ? (bossEnraged ? BossEnragedAttackRange : BossAttackRange) : 1;
+            enemy.boss ? (bossEnraged ? BossEnragedAttackRange : BossAttackRange)
+                       : 1;
         if (enemy.awake && distance > attackRange) {
             const int dx = (targetX > enemy.x) - (targetX < enemy.x);
             const int dy = (targetY > enemy.y) - (targetY < enemy.y);
-            const std::array<std::array<int, 2>, 3> directions = {{{dx, 0}, {0, dy}, {0, 0}}};
-            for (const auto& direction : directions) {
+            const std::array<std::array<int, 2>, 3> directions = {
+                {{dx, 0}, {0, dy}, {0, 0}}};
+            for (const auto &direction : directions) {
                 const int nextX = enemy.x + direction[0];
                 const int nextY = enemy.y + direction[1];
-                if (nextX > 0 && nextX < MapColumns - 1 && nextY > 0 && nextY < MapRows - 1 &&
-                    world[nextY][nextX] == Floor && !hasEnemyAt(nextX, nextY) &&
-                    (nextX != playerX || nextY != playerY) && (nextX != peerX || nextY != peerY)) {
+                if (nextX > 0 && nextX < MapColumns - 1 && nextY > 0 &&
+                    nextY < MapRows - 1 && world[nextY][nextX] == Floor &&
+                    !hasEnemyAt(nextX, nextY) &&
+                    (nextX != playerX || nextY != playerY) &&
+                    (nextX != peerX || nextY != peerY)) {
                     enemy.x = nextX;
                     enemy.y = nextY;
                     break;
@@ -494,34 +512,37 @@ void updateEnemies(Clock::time_point now) {
             }
         }
 
-        const int currentDistance = std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
+        const int currentDistance =
+            std::abs(enemy.x - targetX) + std::abs(enemy.y - targetY);
         const bool bossCanSeeTarget =
             !enemy.boss || lineOfSight(enemy.x, enemy.y, targetX, targetY);
         if (currentDistance <= attackRange && bossCanSeeTarget &&
             now >= enemy.nextAttack &&
             now >= (targetPeer ? nextPeerHit : nextPlayerHit)) {
             if (targetPeer) {
-                applyPeerDamage(enemy.boss ? (bossEnraged ? BossEnragedDamage : BossDamage)
-                                           : EnemyDamage);
+                applyPeerDamage(enemy.boss
+                                    ? (bossEnraged ? BossEnragedDamage : BossDamage)
+                                    : EnemyDamage);
                 if (peerHealth == 0) {
                     resetPeerCombatState();
                     won = (gameMode == GameMode::Pvp);
                     screen = Screen::Result;
                 }
             } else {
-                health = std::max(0, health - takeDamage(
-                                              enemy.boss ? (bossEnraged ? BossEnragedDamage
-                                                                        : BossDamage)
-                                                         : EnemyDamage));
+                health = std::max(
+                    0,
+                    health - takeDamage(enemy.boss ? (bossEnraged ? BossEnragedDamage
+                                                                  : BossDamage)
+                                                   : EnemyDamage));
             }
-            enemy.nextAttack = now + std::chrono::milliseconds(
-                                         enemy.boss ? (bossEnraged ? BossEnragedCooldownMs
-                                                                   : BossAttackCooldownMs)
-                                                    : EnemyAttackIntervalMs);
+            enemy.nextAttack =
+                now + std::chrono::milliseconds(
+                          enemy.boss ? (bossEnraged ? BossEnragedCooldownMs
+                                                    : BossAttackCooldownMs)
+                                     : EnemyAttackIntervalMs);
             if (targetPeer)
                 nextPeerHit = now + std::chrono::milliseconds(HitCooldownMs);
-            else
-                nextPlayerHit = now + std::chrono::milliseconds(HitCooldownMs);
+            else nextPlayerHit = now + std::chrono::milliseconds(HitCooldownMs);
             if (targetPeer) {
                 peerHealing = false;
                 peerHealStarted = {};
@@ -545,7 +566,7 @@ void updateEnemies(Clock::time_point now) {
 }
 
 void collectPickup() {
-    int& tile = world[playerY][playerX];
+    int &tile = world[playerY][playerX];
     if (tile == AmmoPickup) {
         const int pickupX = playerX;
         const int pickupY = playerY;
@@ -593,8 +614,9 @@ void collectPickup() {
 void movePlayer(int dx, int dy) {
     const int nextX = playerX + dx;
     const int nextY = playerY + dy;
-    if (nextX <= 0 || nextX >= MapColumns - 1 || nextY <= 0 || nextY >= MapRows - 1 ||
-        world[nextY][nextX] == Wall || hasEnemyAt(nextX, nextY) ||
+    if (nextX <= 0 || nextX >= MapColumns - 1 || nextY <= 0 ||
+        nextY >= MapRows - 1 || world[nextY][nextX] == Wall ||
+        hasEnemyAt(nextX, nextY) ||
         (dx != 0 && dy != 0 &&
          (world[playerY][nextX] == Wall || world[nextY][playerX] == Wall ||
           hasEnemyAt(nextX, playerY) || hasEnemyAt(playerX, nextY))))
@@ -637,7 +659,9 @@ void buySelectedItem() {
     saveArchive();
 }
 
-bool keyPressed(int key) { return keypress(key) > 0; }
+bool keyPressed(int key) {
+    return keypress(key) > 0;
+}
 
 void updatePlaying() {
     const auto now = Clock::now();
@@ -646,8 +670,7 @@ void updatePlaying() {
             sendNetworkPacket("LEAVE");
             closeNetwork();
         }
-        if (networkRun)
-            restoreNetworkArchiveSession();
+        if (networkRun) restoreNetworkArchiveSession();
         else {
             resetRunProgress();
             screen = Screen::Menu;
@@ -665,8 +688,7 @@ void updatePlaying() {
         }
     }
     if (keyPressed('K')) {
-        if (armorTier <= 0 || armorDurability <= 0)
-            setMessage(L"没有可用护甲");
+        if (armorTier <= 0 || armorDurability <= 0) setMessage(L"没有可用护甲");
         else {
             armorOn = !armorOn;
             setMessage(armorOn ? L"护甲已穿上" : L"护甲已脱下");
@@ -684,15 +706,16 @@ void updatePlaying() {
             } else {
                 setMessage(L"治疗请求发送失败");
             }
-        } else
-            setMessage(L"现在无法治疗");
+        } else setMessage(L"现在无法治疗");
     }
     if (keyPressed('F')) {
-        weaponMode = weaponMode == WeaponMode::Gun ? WeaponMode::Knife : WeaponMode::Gun;
-        setMessage(weaponMode == WeaponMode::Gun ? L"武器：枪械" : L"武器：战术刀", 800);
+        weaponMode =
+            weaponMode == WeaponMode::Gun ? WeaponMode::Knife : WeaponMode::Gun;
+        setMessage(weaponMode == WeaponMode::Gun ? L"武器：枪械" : L"武器：战术刀",
+                   800);
     }
-    if (keyPressed('R') && weaponMode == WeaponMode::Gun && !reloading && magazineAmmo < MagazineSize &&
-        ammo > 0) {
+    if (keyPressed('R') && weaponMode == WeaponMode::Gun && !reloading &&
+        magazineAmmo < MagazineSize && ammo > 0) {
         if (!networkActive || networkHost || sendReliableNetworkPacket("RELOAD")) {
             reloading = true;
             reloadStarted = now;
@@ -701,7 +724,8 @@ void updatePlaying() {
             setMessage(L"换弹请求发送失败");
         }
     }
-    if (reloading && now - reloadStarted >= std::chrono::milliseconds(ReloadDurationMs)) {
+    if (reloading &&
+        now - reloadStarted >= std::chrono::milliseconds(ReloadDurationMs)) {
         const int need = MagazineSize - magazineAmmo;
         const int take = std::min(need, ammo);
         magazineAmmo += take;
@@ -737,8 +761,7 @@ void updatePlaying() {
         if (networkActive && !networkHost) {
             if (sendReliableNetworkPacket("HEAL_DONE"))
                 setMessage(L"治疗完成，等待主机确认");
-            else
-                setMessage(L"治疗确认发送失败");
+            else setMessage(L"治疗确认发送失败");
         } else {
             health = std::min(MaxHealth, health + HealAmount);
             setMessage(L"治疗完成  +20 生命");
@@ -773,7 +796,7 @@ void updatePlaying() {
             setMessage(L"PVP 模式下战斗至最后一人，无法撤离");
         } else if (world[playerY][playerX] != ExitTile)
             setMessage(L"前往地图上的撤离点");
-        else if (std::any_of(enemies.begin(), enemies.end(), [](const Enemy& enemy) {
+        else if (std::any_of(enemies.begin(), enemies.end(), [](const Enemy &enemy) {
                      return enemy.boss && enemy.alive;
                  }))
             setMessage(L"击败区域 Boss 后才能撤离");
@@ -790,4 +813,4 @@ void updatePlaying() {
     }
 }
 
-} // namespace mokthyn
+}    // namespace mokthyn

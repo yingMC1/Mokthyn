@@ -1,16 +1,32 @@
 BasedOnStyle: LLVM
-IndentWidth: 4
-UseTab: Never
-TabWidth: 4
-BreakBeforeBraces: Attach
-SpaceBeforeParens: ControlStatements
-PointerAlignment: Left
-BreakAfterReturnType: None
-AllowShortFunctionsOnASingleLine: All
-ColumnLimit: 100
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
-SortIncludes: true
-AllowShortIfStatementsOnASingleLine: true
-AllowShortLoopsOnASingleLine: false
+
+# --- 行为：尽量允许一行写完 ---
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
 AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+
+# --- 行长（核心关键，不然上面全白给） ---
+ColumnLimit: 85
+
+# --- 缩进 ---
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# --- 访问修饰符 ---
+AccessModifierOffset: -2
+
+# --- 大括号风格 ---
+BreakBeforeBraces: Attach
+AlwaysBreakTemplateDeclarations: No
+
+# --- 指针与注释 ---
+PointerAlignment: Right
+SpacesBeforeTrailingComments: 4
+
+# --- 代码块间距 ---
+SeparateDefinitionBlocks: Always
+
+# --- 语言标准 ---
+Standard: Latest
