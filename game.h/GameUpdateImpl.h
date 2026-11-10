@@ -23,7 +23,13 @@ namespace updateDetail {
 // 全程没有跨线程的堆对象，避免静态链接 CRT 下线程退出时析构顺序的问题
 inline std::atomic<int> updateState{static_cast<int>(UpdateStatus::Idle)};
 inline char latestVersionBuffer[24] = {};
-inline bool threadStarted = false;
+// 每次检查结束递增一次，主线程据此判断缓存的宽字符版本号要不要重算（支持反复检查）
+inline std::atomic<unsigned> bufferGeneration{0};
+// 同一时刻只允许一个检查在跑，但允许反复发起：设置页的「检查更新」可以随时重查
+inline std::atomic<bool> checkRunning{false};
+// 发现新版本时置位，由主线程取走并打开下载页。ShellExecute 放在主线程执行更稳妥，
+// 后台线程只负责置标志
+inline std::atomic<bool> openRequested{false};
 
 inline std::string wideToAscii(const std::wstring& wide) {
     if (wide.empty()) return {};
@@ -155,9 +161,9 @@ inline std::string fetchVersionTextFrom(const wchar_t* host, const wchar_t* path
     return result;
 }
 
-// 依次尝试：Gitee raw（国内直连，实测可用）→ GitHub raw → 主站 HTTPS → 主站 HTTP。
-// 主站被免费主机的 aes.js 脚本校验挡在 PHP 之前，纯 HTTP 客户端拿不到正文，只留作换域名后的兜底；
-// 某一源拿到响应但解析不出合规版本号（典型就是那个 856 字节的验证页）就继续下一个源
+// 只认仓库源：Gitee raw（国内直连，实测可用）→ GitHub raw（海外备用，国内网络可能超时）。
+// 不再请求 mokthyn.rf.gd：免费主机在 PHP 之前强制一层 aes.js 脚本校验，纯 HTTP 客户端永远拿不到正文。
+// 某一源拿到响应但解析不出合规版本号就继续下一个源，两个都失败才算连不上
 inline std::string fetchRemoteVersion() {
     static const struct {
         const wchar_t* host;
@@ -166,8 +172,6 @@ inline std::string fetchRemoteVersion() {
     } sources[] = {
         {UpdateMirrorHostCn, UpdateMirrorPathCn, true},
         {UpdateMirrorHost, UpdateMirrorPath, true},
-        {UpdateCheckHost, UpdateCheckPath, true},
-        {UpdateCheckHost, UpdateCheckPath, false},
     };
     for (const auto& source : sources) {
         const std::string raw = fetchVersionTextFrom(source.host, source.path, source.secure);
@@ -181,6 +185,7 @@ inline std::string fetchRemoteVersion() {
 inline unsigned __stdcall checkThread(void*) {
     const std::string version = fetchRemoteVersion();
     const bool found = !version.empty();
+    // 逐段比较，所以 0.1.4 直接跳到 0.1.8 也能认出来，不需要逐个版本追
     const bool newer = found && newerThanCurrent(version);
     if (found) {
         const size_t length =
@@ -188,10 +193,13 @@ inline unsigned __stdcall checkThread(void*) {
         std::memcpy(latestVersionBuffer, version.c_str(), length);
         latestVersionBuffer[length] = '\0';
     }
+    bufferGeneration.fetch_add(1, std::memory_order_release);
+    if (newer) openRequested.store(true, std::memory_order_release);
     updateState.store(static_cast<int>(newer ? UpdateStatus::Available
                                              : (found ? UpdateStatus::UpToDate
                                                       : UpdateStatus::Failed)),
                       std::memory_order_release);
+    checkRunning.store(false, std::memory_order_release);
     return 0;
 }
 } // namespace updateDetail
@@ -202,9 +210,11 @@ inline UpdateStatus updateStatus() {
 
 inline const std::wstring& updateLatestVersion() {
     static std::wstring cached;
-    static bool built = false;
-    if (!built) {
-        built = true;
+    static unsigned cachedGeneration = 0;
+    const unsigned generation = updateDetail::bufferGeneration.load(std::memory_order_acquire);
+    if (generation != cachedGeneration) {
+        cachedGeneration = generation;
+        cached.clear();
         char buffer[sizeof(updateDetail::latestVersionBuffer)] = {};
         std::memcpy(buffer, updateDetail::latestVersionBuffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = '\0';
@@ -219,17 +229,24 @@ inline const std::wstring& updateLatestVersion() {
 }
 
 inline void startUpdateCheck() {
-    if (updateDetail::threadStarted) return;
-    updateDetail::threadStarted = true;
+    // 已有检查在跑就忽略这次请求；否则重新走一遍，状态回到 Checking
+    if (updateDetail::checkRunning.exchange(true)) return;
+    updateDetail::openRequested.store(false, std::memory_order_relaxed);
     updateDetail::updateState.store(static_cast<int>(UpdateStatus::Checking),
                                     std::memory_order_relaxed);
     const uintptr_t handle =
         _beginthreadex(nullptr, 0, updateDetail::checkThread, nullptr, 0, nullptr);
-    if (handle == 0)
+    if (handle == 0) {
+        updateDetail::checkRunning.store(false, std::memory_order_release);
         updateDetail::updateState.store(static_cast<int>(UpdateStatus::Failed),
                                         std::memory_order_release);
-    else
-        CloseHandle(reinterpret_cast<HANDLE>(handle));
+        return;
+    }
+    CloseHandle(reinterpret_cast<HANDLE>(handle));
+}
+
+inline bool consumeUpdateOpenRequest() {
+    return updateDetail::openRequested.exchange(false, std::memory_order_acq_rel);
 }
 
 inline bool openUpdateDownloadPage() {

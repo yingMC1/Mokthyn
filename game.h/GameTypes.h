@@ -35,16 +35,12 @@ inline constexpr int MedkitPickupCount = 14;
 inline constexpr wchar_t DownloadUrl[] = L"https://mokthyn-3xya338.maozi.io/";
 
 // ===== 更新检查 =====
-// 发布新版本时只需要改三处：这里的版本号、仓库根目录的 version.txt、服务器上的 check_update.php
+// 发布新版本时只需要改两处：这里的版本号、仓库根目录的 version.txt（GitHub 与 Gitee 各一份）
 inline constexpr wchar_t GameVersion[] = L"0.1.4";
-inline constexpr wchar_t UpdateCheckHost[] = L"mokthyn.rf.gd";
-// 注意：免费主机在 PHP 之前强制一层 aes.js 脚本校验，任何 UA、任何子路径（含 ?i=1）都只返回验证页，
-// 纯 HTTP 客户端拿不到正文。所以主站源只作为换域名后的兜底，实际生效的是下面两个仓库源
-inline constexpr wchar_t UpdateCheckPath[] = L"/check_update.php?i=1";
-// 首选源：Gitee 仓库 raw，国内直连、纯文本、无校验页，实测可用
+// 版本源只认仓库：Gitee raw 国内直连（首选）→ GitHub raw 海外备用。
+// 主站 mokthyn.rf.gd 在 PHP 之前强制一层 aes.js 脚本校验，纯 HTTP 客户端拿不到正文，已不再请求
 inline constexpr wchar_t UpdateMirrorHostCn[] = L"gitee.com";
 inline constexpr wchar_t UpdateMirrorPathCn[] = L"/yingMC/mokthyn/raw/main/version.txt";
-// 备用源：GitHub 仓库 raw，海外可用，国内网络可能超时
 inline constexpr wchar_t UpdateMirrorHost[] = L"raw.githubusercontent.com";
 inline constexpr wchar_t UpdateMirrorPath[] = L"/yingMC1/Mokthyn/main/version.txt";
 inline constexpr int UpdateCheckTimeoutMs = 4000;

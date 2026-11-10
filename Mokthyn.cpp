@@ -326,7 +326,8 @@ int main() {
                     if (designPointInRect(clickX, clickY, settingsResetButton()))
                         resetSettings();
                     else if (designPointInRect(clickX, clickY, settingsUpdateButton())) {
-                        if (!openUpdateDownloadPage()) setMessage(L"下载页面无法打开");
+                        startUpdateCheck();
+                        setMessage(L"正在检查更新...", 1200);
                     } else if (designPointInRect(clickX, clickY, settingsBackButton()))
                         screen = Screen::Menu;
                 }
@@ -349,7 +350,8 @@ int main() {
             } else if (resetPressed) {
                 resetSettings();
             } else if (keyPressed('U')) {
-                if (!openUpdateDownloadPage()) setMessage(L"下载页面无法打开");
+                startUpdateCheck();
+                setMessage(L"正在检查更新...", 1200);
             }
             drawSettings();
             break;
@@ -436,6 +438,15 @@ int main() {
         }
         settarget(nullptr);
         putimage(0, 0, frameBuffer);
+        // 后台检查发现新版本时，由主线程在菜单/设置页统一打开下载页；
+        // 对局中先不动手，避免浏览器抢焦点打断节奏，回到菜单再处理
+        if ((screen == Screen::Menu || screen == Screen::Settings) && consumeUpdateOpenRequest()) {
+            const std::wstring notice = L"发现新版本 v" + updateLatestVersion();
+            if (openUpdateDownloadPage())
+                setMessage(notice + L"，正在打开下载页", 4000);
+            else
+                setMessage(notice + L"，但下载页打不开", 4000);
+        }
         delay_fps(60);
     }
     settarget(nullptr);

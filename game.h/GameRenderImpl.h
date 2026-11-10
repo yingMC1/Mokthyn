@@ -1082,7 +1082,8 @@ void drawSettings() {
         versionText = english ? L"Checking for updates..." : L"正在检查更新...";
         break;
     case UpdateStatus::Available:
-        versionText = (english ? L"New version v" : L"发现新版本 v") + updateLatestVersion();
+        versionText = ((english ? L"New version v" : L"发现新版本 v") + updateLatestVersion()) +
+                      (english ? L"  ·  download page opened" : L"  ·  已自动打开下载页");
         versionColor = Green;
         break;
     case UpdateStatus::UpToDate:
