@@ -792,7 +792,10 @@ void updatePlaying() {
         return;
     }
     if (keyPressed('Q')) {
-        if (gameMode == GameMode::Pvp) {
+        if (extracting) {
+            // 撤离计时进行中再按 Q 不应重置 5 秒倒计时
+            setMessage(L"撤离进行中，保持位置", 2400);
+        } else if (gameMode == GameMode::Pvp) {
             setMessage(L"PVP 模式下战斗至最后一人，无法撤离");
         } else if (world[playerY][playerX] != ExitTile)
             setMessage(L"前往地图上的撤离点");

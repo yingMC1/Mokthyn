@@ -31,51 +31,6 @@ bool readArchiveInt(std::istream &input, int &value) {
     return result.ec == std::errc{} && result.ptr == token.data() + token.size();
 }
 
-void restoreLegacyArchiveSettings(const std::string &contents, int version) {
-    std::istringstream archive(contents);
-    std::vector<std::string> fields;
-    std::string field;
-    while (archive >> field) fields.push_back(std::move(field));
-    const auto readValue = [&fields](size_t index, int &value) {
-        if (index >= fields.size()) return false;
-        const std::string &token = fields[index];
-        const auto result =
-            std::from_chars(token.data(), token.data() + token.size(), value);
-        return result.ec == std::errc{} && result.ptr == token.data() + token.size();
-    };
-
-    int value = 0;
-    if (readValue(2, value) && validArchiveValue(value, 0, 1)) english = value != 0;
-    if (version < 2) return;
-
-    constexpr size_t fixedHeaderFieldCount = 13;
-    const size_t legacyMapFieldCount =
-        version >= 4 ? static_cast<size_t>(MapColumns * MapRows) : 24 * 18;
-    const size_t enemyCountIndex = 2 + fixedHeaderFieldCount + legacyMapFieldCount;
-    int enemyCount = 0;
-    if (!readValue(enemyCountIndex, enemyCount) ||
-        !validArchiveValue(enemyCount, 0, MaxEnemyCount))
-        return;
-    const size_t enemyFieldCount = version >= 4 ? 6 : 5;
-    const size_t settingsIndex =
-        enemyCountIndex + 1 + static_cast<size_t>(enemyCount) * enemyFieldCount;
-    if (readValue(settingsIndex, value) &&
-        validArchiveValue(value, MinUiScalePercent, MaxUiScalePercent) &&
-        (value - MinUiScalePercent) % UiScaleStepPercent == 0)
-        uiScalePercent = value;
-    if (version < 3) return;
-    int storedWidth = 0;
-    int storedHeight = 0;
-    if (readValue(settingsIndex + 1, storedWidth) &&
-        validArchiveValue(storedWidth, MinWindowWidth, MaxWindowWidth) &&
-        (storedWidth - MinWindowWidth) % WindowWidthStep == 0)
-        windowWidth = storedWidth;
-    if (readValue(settingsIndex + 2, storedHeight) &&
-        validArchiveValue(storedHeight, MinWindowHeight, MaxWindowHeight) &&
-        (storedHeight - MinWindowHeight) % WindowHeightStep == 0)
-        windowHeight = storedHeight;
-}
-
 bool loadVersion5Archive(std::istream &input, int version) {
     std::string marker;
     int storedEnglish = english ? 1 : 0;
@@ -263,6 +218,49 @@ bool unprotectArchive(const std::string &encrypted, std::string &plainText) {
 }
 }    // namespace
 
+inline unsigned long long lastSavedArchiveHash = ~0ULL;
+
+// 自动存档脏检测：把会写进存档的状态压成 64 位哈希，与上次成功保存一致就跳过整次
+// 磁盘写（DPAPI 加密 + FlushFileBuffers + 备份复制每 2 秒一次，跳过可消除暂停/挂机时的
+// 周期卡顿）。刻意排除敌人攻击计时 nextAttack：它随挂钟变化，纳入会让定时存档永远判
+// “脏”；它落盘时本就按 0..EnemyAttackIntervalMs 钳制，读档后最多让敌人晚一点攻击。
+inline unsigned long long archiveStateHash() {
+    unsigned long long hash = 1469598103934665603ULL;
+    const auto mix = [&hash](unsigned long long value) {
+        hash ^= value;
+        hash *= 1099511628211ULL;
+    };
+    mix(static_cast<unsigned long long>(playerX));
+    mix(static_cast<unsigned long long>(playerY));
+    mix(static_cast<unsigned long long>(health));
+    // 存档里存的是弹药总量（ammo + magazineAmmo），换弹在两者间搬运不该触发写盘
+    mix(static_cast<unsigned long long>(ammo + magazineAmmo));
+    mix(static_cast<unsigned long long>(medkits));
+    mix(static_cast<unsigned long long>(money));
+    mix(static_cast<unsigned long long>(armorTier));
+    mix(static_cast<unsigned long long>(armorDurability));
+    mix(static_cast<unsigned long long>(armorOn));
+    mix(static_cast<unsigned long long>(kills));
+    mix(static_cast<unsigned long long>(totalEnemies));
+    mix(static_cast<unsigned long long>(hasSavedRun));
+    mix(static_cast<unsigned long long>(english));
+    mix(static_cast<unsigned long long>(uiScalePercent));
+    mix(static_cast<unsigned long long>(windowWidth));
+    mix(static_cast<unsigned long long>(windowHeight));
+    for (const auto &row : world)
+        for (const int tile : row) mix(static_cast<unsigned long long>(tile));
+    mix(static_cast<unsigned long long>(enemies.size()));
+    for (const Enemy &enemy : enemies) {
+        mix(static_cast<unsigned long long>(enemy.x));
+        mix(static_cast<unsigned long long>(enemy.y));
+        mix(static_cast<unsigned long long>(enemy.hp));
+        mix(static_cast<unsigned long long>(enemy.alive));
+        mix(static_cast<unsigned long long>(enemy.awake));
+        mix(static_cast<unsigned long long>(enemy.boss));
+    }
+    return hash;
+}
+
 bool loadArchiveFromPath(const std::wstring &path) {
     if (path.empty()) {
         archiveStatus = L"无法读取 APPDATA 环境变量，存档功能不可用";
@@ -296,7 +294,6 @@ bool loadArchiveFromPath(const std::wstring &path) {
         return false;
     }
 
-    bool encryptedArchive = false;
     const size_t headerSize = sizeof(EncryptedArchiveHeader) - 1;
     if (contents.size() >= headerSize &&
         contents.compare(0, headerSize, EncryptedArchiveHeader, headerSize) == 0) {
@@ -306,7 +303,6 @@ bool loadArchiveFromPath(const std::wstring &path) {
             return false;
         }
         contents = std::move(plainText);
-        encryptedArchive = true;
     }
 
     std::istringstream input(contents);
@@ -317,138 +313,8 @@ bool loadArchiveFromPath(const std::wstring &path) {
         archiveStatus = L"存档格式无效或版本过旧，已使用默认数据";
         return false;
     }
-    if (version >= 5) return loadVersion5Archive(input, version);
-    restoreLegacyArchiveSettings(contents, version);
-
-    int storedEnglish = 0, savedRun = 0, storedHealth = 0, storedAmmo = 0,
-        storedMedkits = 0;
-    int storedMoney = 0, storedArmorTier = 0, storedArmorDurability = 0,
-        storedArmorOn = 0;
-    int storedPlayerX = 0, storedPlayerY = 0, storedKills = 0,
-        storedTotalEnemies = 0;
-    if (!(input >> storedEnglish >> savedRun >> storedHealth >> storedAmmo >>
-          storedMedkits >> storedMoney >> storedArmorTier >> storedArmorDurability >>
-          storedArmorOn >> storedPlayerX >> storedPlayerY >> storedKills >>
-          storedTotalEnemies) ||
-        !validArchiveValue(storedEnglish, 0, 1) ||
-        !validArchiveValue(savedRun, 0, 1) ||
-        !validArchiveValue(storedHealth, 0, MaxHealth) ||
-        !validArchiveValue(storedAmmo, 0, 100000) ||
-        !validArchiveValue(storedMedkits, 0, 10000) ||
-        !validArchiveValue(storedMoney, 0, 100000000) ||
-        !validArchiveValue(storedArmorTier, 0, 4) ||
-        !validArchiveValue(storedArmorDurability, 0, 125) ||
-        storedArmorDurability > ArmorDurability[storedArmorTier] ||
-        !validArchiveValue(storedArmorOn, 0, 1) ||
-        !validArchiveValue(storedPlayerX, 1, version >= 4 ? MapColumns - 2 : 22) ||
-        !validArchiveValue(storedPlayerY, 1, version >= 4 ? MapRows - 2 : 16) ||
-        !validArchiveValue(storedKills, 0, 100000) ||
-        !validArchiveValue(storedTotalEnemies, 0, 100000)) {
-        archiveStatus = L"存档格式无效，已使用默认数据";
-        return false;
-    }
-
-    std::array<std::array<int, MapColumns>, MapRows> storedWorld{};
-    for (auto &row : storedWorld) row.fill(Floor);
-    for (int x = 0; x < MapColumns; ++x)
-        storedWorld[0][x] = storedWorld[MapRows - 1][x] = Wall;
-    for (int y = 0; y < MapRows; ++y)
-        storedWorld[y][0] = storedWorld[y][MapColumns - 1] = Wall;
-    const int archiveColumns = version >= 4 ? MapColumns : 24;
-    const int archiveRows = version >= 4 ? MapRows : 18;
-    const int mapOffsetX = version >= 4 ? 0 : (MapColumns - archiveColumns) / 2;
-    const int mapOffsetY = version >= 4 ? 0 : (MapRows - archiveRows) / 2;
-    for (int y = 0; y < archiveRows; ++y) {
-        for (int x = 0; x < archiveColumns; ++x) {
-            int tile = Floor;
-            if (!(input >> tile) || !validArchiveValue(tile, Floor, MedkitPickup)) {
-                archiveStatus = L"存档地图数据无效，已使用默认数据";
-                return false;
-            }
-            storedWorld[y + mapOffsetY][x + mapOffsetX] = tile;
-        }
-    }
-
-    int enemyCount = 0;
-    if (!(input >> enemyCount) || !validArchiveValue(enemyCount, 0, MaxEnemyCount)) {
-        archiveStatus = L"存档敌人数据无效，已使用默认数据";
-        return false;
-    }
-    std::vector<Enemy> storedEnemies;
-    storedEnemies.reserve(static_cast<size_t>(enemyCount));
-    for (int i = 0; i < enemyCount; ++i) {
-        Enemy enemy;
-        int alive = 0, awake = 0;
-        int boss = 0;
-        if (!(input >> enemy.x >> enemy.y >> enemy.hp >> alive >> awake) ||
-            (version >= 4 && !(input >> boss)) ||
-            !validArchiveValue(enemy.x, 1, version >= 4 ? MapColumns - 2 : 22) ||
-            !validArchiveValue(enemy.y, 1, version >= 4 ? MapRows - 2 : 16) ||
-            !validArchiveValue(enemy.hp, 0, boss != 0 ? BossHealth : EnemyHealth) ||
-            !validArchiveValue(alive, 0, 1) || !validArchiveValue(awake, 0, 1) ||
-            !validArchiveValue(boss, 0, 1)) {
-            archiveStatus = L"存档敌人数据无效，已使用默认数据";
-            return false;
-        }
-        enemy.alive = alive != 0;
-        enemy.awake = awake != 0;
-        enemy.boss = boss != 0;
-        enemy.x += mapOffsetX;
-        enemy.y += mapOffsetY;
-        storedEnemies.push_back(enemy);
-    }
-    int storedUiScalePercent = 120;
-    int storedWindowWidth = DefaultWindowWidth;
-    int storedWindowHeight = DefaultWindowHeight;
-    if (version >= 2 &&
-        (!(input >> storedUiScalePercent) ||
-         !validArchiveValue(storedUiScalePercent, MinUiScalePercent,
-                            MaxUiScalePercent) ||
-         (storedUiScalePercent - MinUiScalePercent) % UiScaleStepPercent != 0)) {
-        archiveStatus = L"存档中的界面比例无效";
-        return false;
-    }
-    if (version >= 3 &&
-        (!(input >> storedWindowWidth >> storedWindowHeight) ||
-         !validArchiveValue(storedWindowWidth, MinWindowWidth, MaxWindowWidth) ||
-         (storedWindowWidth - MinWindowWidth) % WindowWidthStep != 0 ||
-         !validArchiveValue(storedWindowHeight, MinWindowHeight, MaxWindowHeight) ||
-         (storedWindowHeight - MinWindowHeight) % WindowHeightStep != 0)) {
-        archiveStatus = L"存档中的窗口尺寸无效";
-        return false;
-    }
-
-    english = storedEnglish != 0;
-    uiScalePercent = storedUiScalePercent;
-    windowWidth = storedWindowWidth;
-    windowHeight = storedWindowHeight;
-    hasSavedRun = savedRun != 0;
-    health = storedHealth;
-    ammo = storedAmmo;
-    magazineAmmo = 0;
-    reloading = false;
-    weaponMode = WeaponMode::Gun;
-    nextMelee = {};
-    if (hasSavedRun) {
-        magazineAmmo = std::min(MagazineSize, ammo);
-        ammo -= magazineAmmo;
-    }
-    medkits = storedMedkits;
-    money = storedMoney;
-    armorTier = storedArmorTier;
-    armorDurability = storedArmorDurability;
-    armorOn = storedArmorOn != 0 && armorTier > 0 && armorDurability > 0;
-    playerX = storedPlayerX + mapOffsetX;
-    playerY = storedPlayerY + mapOffsetY;
-    kills = storedKills;
-    totalEnemies = storedTotalEnemies;
-    world = storedWorld;
-    enemies = std::move(storedEnemies);
-    healing = extracting = false;
-    if (hasSavedRun) screen = Screen::Menu;
-    if (!encryptedArchive && !saveArchive())
-        archiveStatus = L"存档已读取，但自动加密迁移失败，下次启动将重试";
-    return true;
+    // version 已被强校验为 ==7（见上），旧版存档迁移解析永远不可达，已删除
+    return loadVersion5Archive(input, version);
 }
 
 bool loadArchive() {
@@ -529,6 +395,10 @@ bool saveArchive() {
         return true;
     }
     lastArchiveSave = Clock::now();
+    // 状态与上次成功保存完全一致就跳过写盘；只有保存成功才更新哈希，
+    // 失败下次仍会重试
+    const unsigned long long stateHash = archiveStateHash();
+    if (stateHash == lastSavedArchiveHash) return true;
     const std::wstring path = archivePath();
     if (path.empty()) {
         archiveStatus = L"无法读取 APPDATA 环境变量，存档功能不可用";
@@ -619,6 +489,7 @@ bool saveArchive() {
         archiveStatus = L"保存存档失败";
         return false;
     }
+    lastSavedArchiveHash = stateHash;
     archiveStatus.clear();
     return true;
 }

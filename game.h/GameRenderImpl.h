@@ -177,6 +177,17 @@ void drawTextCentered(const MenuRect &rect, const std::wstring &value, int size,
                       size, color);
 }
 
+// 长文本按可用宽度自适应缩小字号（设计坐标）：英文行明显比中文行长，
+// 高缩放档位下固定字号会超出画布右侧被裁，这里逐级降号直到放得下
+void drawTextFitted(int x, int y, const std::wstring &value, int size,
+                    ege::color_t color, int maxRightX) {
+    const std::wstring &shown = localize(value);
+    int fitted = size;
+    while (fitted > 14 && x + textWidthEstimate(shown, fitted) > maxRightX)
+        fitted -= 2;
+    drawTextLocalized(x, y, shown, fitted, color);
+}
+
 void drawButton(const MenuRect &rect, const std::wstring &label, int fontSize,
                 ege::color_t accent, bool enabled, int hoverX, int hoverY) {
     const bool hovered = enabled && designPointInRect(hoverX, hoverY, rect);
@@ -301,6 +312,7 @@ bool resizeGameWindow(int width, int height) {
     windowHeight = height;
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(Background, frameBuffer);
+    setbkcolor(Background, frameBuffer);
     ege_enable_aa(true, frameBuffer);
     delimage(previousBuffer);
     settarget(frameBuffer);
@@ -598,6 +610,7 @@ const std::wstring &localize(const std::wstring &value) {
         {L"前往地图上的撤离点", L"Reach the extraction point on the map"},
         {L"撤离开始，保持位置 5 秒",
          L"Extraction started; hold position for 5 seconds"},
+        {L"撤离进行中，保持位置", L"Extraction in progress; hold position"},
         {L"治疗中  ", L"Healing  "},
         {L"撤离中  ", L"Extracting  "},
         {L"下载：Mokthyn - Download", L"Download: Mokthyn - Download"},
@@ -1083,9 +1096,9 @@ void drawHud() {
 }
 
 void drawMenu() {
+    // cleardevice 已用 setbkcolor(Background) 统一刷成全屏背景色，
+    // 无需再 bar 一遍整个窗口（省一次全屏填充）
     cleardevice();
-    setfillcolor(Background);
-    bar(0, 0, windowWidth, windowHeight);
 
     int mouseX = 0, mouseY = 0;
     mousepos(&mouseX, &mouseY);
@@ -1098,10 +1111,14 @@ void drawMenu() {
     // 顶部更新徽标：只有真的发现新版本才出现，正常启动路径完全不受影响
     if (updateStatus() == UpdateStatus::Available) {
         static bool cachedEnglish = false;
+        static std::wstring cachedVersion;
         static std::wstring cachedLabel;
         const std::wstring &latestVersion = updateLatestVersion();
-        if (cachedLabel.empty() || cachedEnglish != english) {
+        // 缓存键必须含版本号：设置页重查后若发现的是另一个版本，徽标要跟着刷新
+        if (cachedLabel.empty() || cachedEnglish != english ||
+            cachedVersion != latestVersion) {
             cachedEnglish = english;
+            cachedVersion = latestVersion;
             cachedLabel = (english ? L"Update available  v" : L"发现新版本 v") +
                           latestVersion +
                           (english ? L"  ·  press U" : L"  ·  按 U 打开下载页");
@@ -1203,27 +1220,39 @@ void drawShop() {
     drawText(1175, 135, L"持有金币", 17, Muted);
     drawText(1320, 127, std::to_wstring(money), 32, Yellow);
 
-    const std::array<std::wstring, 4> armorNames = {L"一级护甲", L"二级护甲",
-                                                    L"三级护甲", L"四级护甲"};
-    std::array<std::wstring, 6> labels{};
-    for (int tier = 1; tier <= 4; ++tier) {
-        if (english) {
-            labels[tier - 1] =
-                L"Tier " + std::to_wstring(tier) + L" armor    durability " +
-                std::to_wstring(ArmorDurability[tier]) + L" / reduction " +
-                std::to_wstring(ArmorReduction[tier]) + L"    " +
-                std::to_wstring(ArmorPrices[tier]) + L" coins";
-        } else {
-            labels[tier - 1] = armorNames[tier - 1] + L"       耐久 " +
-                               std::to_wstring(ArmorDurability[tier]) + L" / 减伤 " +
-                               std::to_wstring(ArmorReduction[tier]) + L"       " +
-                               std::to_wstring(ArmorPrices[tier]) + L" 金";
+    // 商品标签只随语言变化（价格/耐久都是编译期常量）：切语言时重建一次，
+    // 不再每帧拼接 12 段字符串
+    static bool labelsReady = false;
+    static bool cachedLanguage = false;
+    static std::array<std::wstring, ShopItemCount> cachedLabels;
+    if (!labelsReady || cachedLanguage != english) {
+        const std::array<std::wstring, 4> armorNames = {L"一级护甲", L"二级护甲",
+                                                        L"三级护甲", L"四级护甲"};
+        std::array<std::wstring, ShopItemCount> base{};
+        for (int tier = 1; tier <= 4; ++tier) {
+            if (english) {
+                base[tier - 1] =
+                    L"Tier " + std::to_wstring(tier) + L" armor    durability " +
+                    std::to_wstring(ArmorDurability[tier]) + L" / reduction " +
+                    std::to_wstring(ArmorReduction[tier]) + L"    " +
+                    std::to_wstring(ArmorPrices[tier]) + L" coins";
+            } else {
+                base[tier - 1] = armorNames[tier - 1] + L"       耐久 " +
+                                 std::to_wstring(ArmorDurability[tier]) +
+                                 L" / 减伤 " + std::to_wstring(ArmorReduction[tier]) +
+                                 L"       " + std::to_wstring(ArmorPrices[tier]) +
+                                 L" 金";
+            }
         }
+        base[4] = english ? L"Ammo supply       +10 rounds       5 coins"
+                          : L"弹药补给       +10 发       5 金";
+        base[5] = english ? L"Medkit       +1       20 coins"
+                          : L"医疗包         +1 个       20 金";
+        for (int i = 0; i < ShopItemCount; ++i)
+            cachedLabels[i] = std::to_wstring(i + 1) + L".  " + base[i];
+        cachedLanguage = english;
+        labelsReady = true;
     }
-    labels[4] = english ? L"Ammo supply       +10 rounds       5 coins"
-                        : L"弹药补给       +10 发       5 金";
-    labels[5] = english ? L"Medkit       +1       20 coins"
-                        : L"医疗包         +1 个       20 金";
 
     int mouseX = 0, mouseY = 0;
     mousepos(&mouseX, &mouseY);
@@ -1231,7 +1260,7 @@ void drawShop() {
     mouseDesignPos(mouseX, mouseY, hoverX, hoverY);
 
     for (int i = 0; i < ShopItemCount; ++i)
-        drawButton(shopItemRect(i), std::to_wstring(i + 1) + L".  " + labels[i], 20,
+        drawButton(shopItemRect(i), cachedLabels[i], 20,
                    shopSelection == i ? Green : Text, true, hoverX, hoverY);
     drawButton(shopBackButton(), L"返回  0", 20, Cyan, true, hoverX, hoverY);
     drawText(155, 766, L"护甲升级会替换当前护甲。", 17, Muted);
@@ -1241,7 +1270,8 @@ void drawShop() {
 void drawHelp() {
     cleardevice();
     fillRect(0, 0, visibleDesignWidth(), visibleDesignHeight(), Panel);
-    const std::array<std::array<std::wstring, 8>, 3> pages = {
+    // 页面文案只依赖语言与编译期常量，static 一次构建，不再每帧重建 24 个 wstring
+    static const std::array<std::array<std::wstring, 8>, 3> pages = {
         {{{L"行动简报 · 操作与战斗", L"W A S D        在地图中移动",
            L"方向键          朝对应方向射击；子弹遇墙会停止",
            L"E               拾取脚下的弹药或医疗包",
@@ -1266,9 +1296,10 @@ void drawHelp() {
                L"；若无法连接，请检查防火墙和路由器设置。",
            L"下载：Mokthyn - Download"}}}};
     drawText(150, 110, pages[helpPage][0], 46, Text);
+    // 英文行明显比中文长，按可用宽度自适应缩小字号，避免高缩放档位下超出画布被裁
     for (int i = 1; i < 8; ++i)
-        drawText(160, 180 + (i - 1) * 54, pages[helpPage][i], 26,
-                 i == 7 ? Green : Text);
+        drawTextFitted(160, 180 + (i - 1) * 54, pages[helpPage][i], 26,
+                       i == 7 ? Green : Text, visibleDesignWidth() - 40);
     drawText(160, 580, L"下载地址：Mokthyn - Download", 19, Cyan);
     drawText(160, 612, DownloadUrl, 19, Cyan);
 
@@ -1291,8 +1322,6 @@ void drawHelp() {
 
 void drawSettings() {
     cleardevice();
-    setfillcolor(Background);
-    bar(0, 0, windowWidth, windowHeight);
     fillRect(80, 80, visibleDesignWidth() - 80, visibleDesignHeight() - 80, Panel);
     drawText(130, 115, L"设置", 42, Text);
 
@@ -1382,7 +1411,7 @@ void drawResult() {
     drawText(720, 370, std::to_wstring(ammo + magazineAmmo), 38, Yellow);
     drawText(1040, 332, L"持有金币", 20, Muted);
     drawText(1040, 370, std::to_wstring(money), 38, Yellow);
-    drawText(345, 500, L"护甲", 20, Muted);
+    drawText(345, 440, L"护甲", 20, Muted);
     const bool hasArmor = armorTier > 0 && armorDurability > 0;
     const std::wstring armorDescription =
         hasArmor
@@ -1406,8 +1435,6 @@ void drawResult() {
 
 void drawPlaying() {
     cleardevice();
-    setfillcolor(Background);
-    bar(0, 0, windowWidth, windowHeight);
     drawText(64, 51, L"OPERATIONS / EXTRACTION ZONE", 16, Muted);
     drawMap();
     drawHud();

@@ -848,11 +848,13 @@ void processNetwork() {
         }
     }
     // 客户端对局中连续收不到主机数据时主动重发 CONNECT，尝试恢复连接
+    // 按 lastConnectAttempt 节流：没有节流时主循环 60 帧/秒都会重发一次
     if (!networkHost && peerConnected &&
         (screen == Screen::Playing || screen == Screen::Paused) &&
         peerAddress.sin_addr.s_addr != 0 && peerAddress.sin_port != 0 &&
         now - lastNetworkReceive >=
-            std::chrono::milliseconds(NetworkClientTimeoutMs)) {
+            std::chrono::milliseconds(NetworkClientTimeoutMs) &&
+        now - lastConnectAttempt >= std::chrono::milliseconds(500)) {
         sendto(networkSocket, "CONNECT", 7, 0,
                reinterpret_cast<const sockaddr *>(&peerAddress),
                sizeof(peerAddress));

@@ -199,6 +199,9 @@ inline unsigned __stdcall checkThread(void *) {
     const bool found = !version.empty();
     // 逐段比较，所以 0.1.4 直接跳到 0.1.8 也能认出来，不需要逐个版本追
     const bool newer = found && newerThanCurrent(version);
+    // seqlock：先 +1 进入奇数（=正在写缓冲区），写完再 +1 回到偶数（=内容有效）。
+    // 主线程只复制偶数代次的缓冲区，避免读到写了一半的版本号
+    bufferGeneration.fetch_add(1, std::memory_order_release);
     if (found) {
         const size_t length =
             std::min(version.size(), sizeof(latestVersionBuffer) - 1);
@@ -224,14 +227,24 @@ inline UpdateStatus updateStatus() {
 inline const std::wstring &updateLatestVersion() {
     static std::wstring cached;
     static unsigned cachedGeneration = 0;
-    const unsigned generation =
-        updateDetail::bufferGeneration.load(std::memory_order_acquire);
+    // 后台线程写完缓冲区才会把代次 bump 成偶数：只复制偶数代次，
+    // 复制完再对一次代次，变了说明新结果已就绪，重新复制
+    char buffer[sizeof(updateDetail::latestVersionBuffer)] = {};
+    unsigned generation = 0;
+    for (int attempt = 0; attempt < 16; ++attempt) {
+        generation =
+            updateDetail::bufferGeneration.load(std::memory_order_acquire);
+        if (generation & 1u) continue;
+        std::memcpy(buffer, updateDetail::latestVersionBuffer, sizeof(buffer));
+        if (updateDetail::bufferGeneration.load(std::memory_order_acquire) ==
+            generation)
+            break;
+    }
+    if (generation & 1u) return cached;    // 写窗口只有一次 memcpy，几乎不可能撞上
+    buffer[sizeof(buffer) - 1] = '\0';
     if (generation != cachedGeneration) {
         cachedGeneration = generation;
         cached.clear();
-        char buffer[sizeof(updateDetail::latestVersionBuffer)] = {};
-        std::memcpy(buffer, updateDetail::latestVersionBuffer, sizeof(buffer));
-        buffer[sizeof(buffer) - 1] = '\0';
         const int length = MultiByteToWideChar(CP_UTF8, 0, buffer, -1, nullptr, 0);
         if (length > 1) {
             cached.resize(static_cast<size_t>(length));

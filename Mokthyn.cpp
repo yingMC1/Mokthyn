@@ -35,6 +35,8 @@ int main() {
     ++frameBufferGeneration;
     setbkmode(TRANSPARENT, frameBuffer);
     setfontbkcolor(Background, frameBuffer);
+    // cleardevice 用背景色整屏填充：不设的话各屏留边会露默认黑而不是 Background
+    setbkcolor(Background, frameBuffer);
     ege_enable_aa(true, frameBuffer);
     while (is_run()) {
         processNetwork();
@@ -404,7 +406,9 @@ int main() {
                     exitPauseToMenu();
             }
             drawPlaying();
-            fillRect(0, 0, DesignWidth, DesignHeight, EGEARGB(170, 5, 10, 13));
+            // 遮罩盖满整个窗口（含等比留边），比只盖设计画布更一致
+            setfillcolor(EGEARGB(170, 5, 10, 13));
+            bar(0, 0, windowWidth, windowHeight);
             drawText(630, 365, L"已暂停", 48, Text);
             drawText(594, 435,
                      networkPause ? L"主机暂停中  /  ESC 返回菜单"
