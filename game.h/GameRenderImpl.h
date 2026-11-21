@@ -700,6 +700,38 @@ void fillCircle(int x, int y, int radius, ege::color_t color) {
     fillcircle(scaledX(x), scaledY(y), std::max(1, scaledLength(radius)));
 }
 
+void fillEllipse(int x, int y, int radiusX, int radiusY, ege::color_t color) {
+    setfillcolor(color);
+    fillellipse(scaledX(x), scaledY(y), std::max(1, scaledLength(radiusX)),
+                std::max(1, scaledLength(radiusY)));
+}
+
+// 俯视小人：双腿/躯干/双臂/头盔，比例全部相对格宽 tileSize 计算，
+// body 画躯干与头盔，dark 画四肢，替代原来没有辨识度的纯色圆
+void drawHumanoid(int cx, int cy, int tileSize, ege::color_t body,
+                  ege::color_t dark) {
+    const int ts = tileSize;
+    const int headR = std::max(2, ts * 16 / 100);
+    const int headY = cy - ts * 26 / 100;
+    const int bodyRx = std::max(3, ts * 24 / 100);
+    const int bodyRy = std::max(4, ts * 30 / 100);
+    const int bodyY = cy + ts * 4 / 100;
+    const int armR = std::max(2, ts * 11 / 100);
+    const int armY = cy - ts * 2 / 100;
+    const int armDx = ts * 24 / 100;
+    const int legRx = std::max(2, ts * 10 / 100);
+    const int legRy = std::max(2, ts * 13 / 100);
+    const int legY = cy + ts * 32 / 100;
+    const int legDx = ts * 11 / 100;
+    fillEllipse(cx - legDx, legY, legRx, legRy, dark);
+    fillEllipse(cx + legDx, legY, legRx, legRy, dark);
+    fillEllipse(cx, bodyY, bodyRx, bodyRy, body);
+    fillEllipse(cx - armDx, armY, armR, armR, dark);
+    fillEllipse(cx + armDx, armY, armR, armR, dark);
+    fillEllipse(cx, headY, headR, headR, body);
+    fillCircle(cx - headR / 2, headY - headR / 2, std::max(1, ts / 16), Text);
+}
+
 void drawTextLocalized(int x, int y, const std::wstring &displayed, int size,
                        ege::color_t color) {
     // 背景透明模式与字体只在目标画布/字号真正变化时重设，避免每段文字都调一次 GDI
@@ -896,15 +928,12 @@ void drawMap() {
         peerY > 0 && peerY < MapRows - 1 && visible[peerY][peerX]) {
         const int peerCenterX = tileScreenX(peerX) + tileSize / 2;
         const int peerCenterY = tileScreenY(peerY) + tileSize / 2;
-        fillCircle(peerCenterX, peerCenterY, tileSize * 2 / 5, EGERGB(37, 55, 76));
-        fillCircle(peerCenterX, peerCenterY, tileSize / 4, Cyan);
+        drawHumanoid(peerCenterX, peerCenterY, tileSize, Cyan, EGERGB(37, 55, 76));
     }
 
     const int playerCenterX = tileScreenX(playerX) + tileSize / 2;
     const int playerCenterY = tileScreenY(playerY) + tileSize / 2;
-    fillCircle(playerCenterX, playerCenterY, tileSize / 2, EGERGB(37, 70, 62));
-    fillCircle(playerCenterX, playerCenterY, tileSize / 3, Green);
-    fillCircle(playerCenterX + 3, playerCenterY - 3, tileSize / 10, Text);
+    drawHumanoid(playerCenterX, playerCenterY, tileSize, Green, EGERGB(37, 70, 62));
 
     // 视口外的撤离点、队友和存活 Boss 方向标记（PVP 不显示对手位置，避免透视）
     if (gameMode != GameMode::Pvp) {
