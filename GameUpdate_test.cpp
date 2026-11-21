@@ -1,4 +1,7 @@
 // 版本更新检查的纯逻辑自测：只验证解析与比较，不联网、不开窗口
+#include <winsock2.h>    // 必须先于 windows.h
+#include <windows.h>     // GameUpdateImpl.h 里 shellapi.h 排在 windows.h 之前，
+                         // 主程序 TU 由 Mokthyn.cpp 先包含，测试这里补齐顺序
 #include "game.h/GameUpdateImpl.h"
 #include <cstdio>
 #include <string>
