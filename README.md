@@ -8,8 +8,8 @@
 ![EGE](https://img.shields.io/badge/Graphics-EGE-orange?style=flat-square)
 ![CMake](https://img.shields.io/badge/Build-CMake-red?style=flat-square&logo=cmake)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square&logo=windows)
-[![Stars](https://img.shields.io/github/stars/yingMC1/Mokthyn-public?style=flat-square&logo=github&label=Stars&color=yellow)](https://github.com/yingMC1/Mokthyn-public)
-[![Issues](https://img.shields.io/github/issues/yingMC1/Mokthyn-public?style=flat-square&label=Issues&color=green)](https://github.com/yingMC1/Mokthyn-public/issues)
+[![Stars](https://img.shields.io/github/stars/yingMC1/Mokthyn?style=flat-square&logo=github&label=Stars&color=yellow)](https://github.com/yingMC1/Mokthyn)
+[![Issues](https://img.shields.io/github/issues/yingMC1/Mokthyn?style=flat-square&label=Issues&color=green)](https://github.com/yingMC1/Mokthyn/issues)
 
 > 一款用 C++ 和 EGE 写的「逃离雅科夫模式」战术撤离射击游戏，玩法就三个字：搜、打、撤。
 
